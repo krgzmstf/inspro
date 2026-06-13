@@ -1,0 +1,28 @@
+# Bağımlılıklar
+**/node_modules/
+**/.pnp
+.pnp.*
+
+# Next.js / build
+**/.next/
+**/out/
+**/build/
+**/dist/
+**/coverage/
+
+# Ortam değişkenleri (ANAHTARLAR — asla commit'lenmez)
+**/.env
+**/.env.*
+!**/.env.example
+
+# TypeScript / araçlar
+**/*.tsbuildinfo
+**/next-env.d.ts
+
+# Editör / işletim sistemi
+.DS_Store
+*.pem
+*.log
+.vercel
+.idea/
+.vscode/
