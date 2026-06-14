@@ -332,8 +332,8 @@ export default function MaliyetPage() {
               <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-relaxed text-amber-800">
                 ⚠️ Bu hesaplama <b>ön fizibilite tahminidir</b>; arsa bedeli, zemin
                 koşulları, proje detayı ve piyasa dalgalanmalarına göre değişir.
-                Kesin maliyet için keşif-metraj modülüyle poz bazlı hesap yapın
-                (yakında) ve profesyonel destek alın.
+                Kesin maliyet için Keşif &amp; Metraj modülüyle poz bazlı hesap
+                yapın ve profesyonel destek alın.
               </p>
             </div>
           )}

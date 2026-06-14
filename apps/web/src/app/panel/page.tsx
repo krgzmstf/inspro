@@ -13,6 +13,7 @@ import {
 import { loadMuhasebe, muhasebeOzeti } from "@/lib/muhasebe";
 import { loadSaha } from "@/lib/saha";
 import { loadIsSurecleri, isOzeti } from "@/lib/isSurecleri";
+import YedekKart from "./YedekKart";
 
 interface ProjeStat {
   gelir: number; gider: number;
@@ -226,6 +227,9 @@ export default function PanelPage() {
             );
           })}
         </div>
+
+        {/* Veri yedekleme / geri yükleme */}
+        <YedekKart />
       </div>
     </div>
   );

@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const NAV = [
+type NavItem = { href: string; label: string; icon: string; active: boolean; img?: string };
+
+const NAV: NavItem[] = [
   { href: "/panel", label: "Projeler", icon: "🏗️", active: true },
   { href: "/panel/is-surecleri", label: "İş Süreçleri", icon: "📋", active: true },
   { href: "/panel/metraj", label: "Keşif & Metraj", icon: "📏", active: true },
@@ -18,7 +20,7 @@ const NAV = [
   { href: "/panel/saha", label: "Saha Takibi", icon: "📸", active: true },
   { href: "/panel/3d", label: "3B Görselleştirme", icon: "🏢", active: true },
   { href: "/panel/plan3d", label: "Plan → 3B Stüdyo", icon: "🧊", active: true },
-  { href: "/panel/mk-ai", label: "mk_ai (Risk)", icon: "🤖", active: true },
+  { href: "/panel/mk-ai", label: "mk_ai (Risk)", icon: "🤖", img: "/mk-ai-logo.jpg", active: true },
 ];
 
 export default function PanelLayout({
@@ -41,36 +43,26 @@ export default function PanelLayout({
           </Link>
         </div>
         <nav className="flex-1 space-y-1 p-4">
-          {NAV.map((item) =>
-            item.active ? (
-              <Link
-                key={item.label}
-                href={item.href}
-                className={`flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
-                  pathname === item.href ||
-                  (item.href === "/panel" &&
-                    pathname.startsWith("/panel/proje"))
-                    ? "bg-brand-500 text-white shadow-lg shadow-brand-500/20"
-                    : "text-white/80 hover:bg-white/10 hover:text-white"
-                }`}
-              >
+          {NAV.map((item) => (
+            <Link
+              key={item.label}
+              href={item.href}
+              className={`flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
+                pathname === item.href ||
+                (item.href === "/panel" && pathname.startsWith("/panel/proje"))
+                  ? "bg-brand-500 text-white shadow-lg shadow-brand-500/20"
+                  : "text-white/80 hover:bg-white/10 hover:text-white"
+              }`}
+            >
+              {item.img ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={item.img} alt="" className="h-5 w-5 shrink-0 rounded object-cover" />
+              ) : (
                 <span>{item.icon}</span>
-                {item.label}
-              </Link>
-            ) : (
-              <span
-                key={item.label}
-                className="flex cursor-not-allowed items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-semibold text-white/35"
-                title="Yakında"
-              >
-                <span className="opacity-60">{item.icon}</span>
-                {item.label}
-                <span className="ml-auto rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-bold text-white/50">
-                  YAKINDA
-                </span>
-              </span>
-            ),
-          )}
+              )}
+              {item.label}
+            </Link>
+          ))}
         </nav>
         <div className="border-t border-white/10 p-4 text-xs text-white/50">
           <Link href="/tema" className="block transition hover:text-white">

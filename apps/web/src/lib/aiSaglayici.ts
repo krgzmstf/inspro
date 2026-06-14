@@ -20,7 +20,7 @@
 import { createOpenAI } from "@ai-sdk/openai";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createDeepSeek } from "@ai-sdk/deepseek";
-import { generateObject, generateText, type LanguageModel } from "ai";
+import { generateObject, generateText, stepCountIs, type LanguageModel, type ToolSet } from "ai";
 import type { ZodType } from "zod";
 
 export type SaglayiciId = "groq" | "gemini" | "deepseek" | "github";
@@ -190,6 +190,44 @@ export async function mkAiSohbet(opts: {
       return { text, saglayici: t.id };
     } catch (e) {
       sonHata = e;
+    }
+  }
+  throw sonHata ?? new Error("Aktif sağlayıcı yok.");
+}
+
+/**
+ * Agentic sohbet: mk_ai'nin ARAÇ ÇAĞIRABİLDİĞİ (tool use) çok-adımlı
+ * üretim. Model gerek gördüğünde verilen araçları (ör. yönetmelik
+ * arama) çağırır, sonucu okuyup nihai cevabı yazar. Aktif sağlayıcıları
+ * sırayla dener (fallback).
+ *
+ * @returns Hiç sağlayıcı tanımlı değilse `null` (çağıran demo'ya düşsün).
+ */
+export async function mkAiAjan(opts: {
+  system: string;
+  messages: SohbetMesaj[];
+  tools: ToolSet;
+  temperature?: number;
+  tercih?: SaglayiciId;
+  maxAdim?: number;
+}): Promise<{ text: string; saglayici: SaglayiciId } | null> {
+  const sira = siralaTanimlar(opts.tercih);
+  if (sira.length === 0) return null;
+
+  let sonHata: unknown;
+  for (const t of sira) {
+    try {
+      const { text } = await generateText({
+        model: t.model(),
+        system: opts.system,
+        messages: opts.messages,
+        tools: opts.tools,
+        stopWhen: stepCountIs(opts.maxAdim ?? 4),
+        temperature: opts.temperature ?? 0.3,
+      });
+      return { text, saglayici: t.id };
+    } catch (e) {
+      sonHata = e; // tool-use desteklemeyen/patlayan sağlayıcıyı atla
     }
   }
   throw sonHata ?? new Error("Aktif sağlayıcı yok.");

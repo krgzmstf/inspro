@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { type Project, loadProjects, getProject, formatTL } from "@/lib/projects";
 import { loadMuhasebe } from "@/lib/muhasebe";
@@ -14,10 +14,19 @@ import { mkAiProjeDosyasi } from "@/lib/mkAiDosya";
 import { pollinationsUrl } from "@/lib/gorsel";
 
 interface AiYorum { yorum: string; oneriler: string[]; demoMode: boolean; saglayici: string | null; guven: number | null }
+interface Kaynak { id: string; baslik: string; kaynak: string }
+interface Mesaj { role: "user" | "assistant"; content: string; kaynaklar?: Kaynak[]; demo?: boolean }
 
 const SAGLAYICI_ETIKET: Record<string, string> = {
   groq: "Groq", gemini: "Gemini", deepseek: "DeepSeek", github: "GitHub Models",
 };
+
+const HIZLI_SORULAR = [
+  "Bu projedeki en büyük risk ne, nasıl kapatırım?",
+  "Ön bahçe çekme mesafesi ne kadar olmalı?",
+  "Betonarmede pas payı kaç mm olmalı?",
+  "Otopark sayısı nasıl hesaplanır?",
+];
 
 export default function MkAiPage() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -27,16 +36,20 @@ export default function MkAiPage() {
   const [ai, setAi] = useState<AiYorum | null>(null);
   const [yukleniyor, setYukleniyor] = useState(false);
   const [hata, setHata] = useState("");
-  const [mesajlar, setMesajlar] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
+  const [mesajlar, setMesajlar] = useState<Mesaj[]>([]);
   const [soru, setSoru] = useState("");
   const [sohbetYukleniyor, setSohbetYukleniyor] = useState(false);
   const [sohbetSaglayici, setSohbetSaglayici] = useState<string | null>(null);
+  const sohbetSonuRef = useRef<HTMLDivElement>(null);
   const [gorselIstek, setGorselIstek] = useState("");
   const [gorselUrl, setGorselUrl] = useState("");
   const [gorselPrompt, setGorselPrompt] = useState("");
   const [gorselYukleniyor, setGorselYukleniyor] = useState(false);
   const [imgYukleniyor, setImgYukleniyor] = useState(false);
   const [gorselHata, setGorselHata] = useState("");
+  const [yuklenenGorsel, setYuklenenGorsel] = useState<{ dataUrl: string; mime: string } | null>(null);
+  const [gorselMotor, setGorselMotor] = useState<string | null>(null);
+  const dosyaRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const ps = loadProjects();
@@ -47,10 +60,23 @@ export default function MkAiPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Yeni mesaj geldikçe sohbeti en alta kaydır.
+  useEffect(() => {
+    sohbetSonuRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [mesajlar, sohbetYukleniyor]);
+
   function seçProje(id: string) {
     setProjectId(id);
     setAi(null);
     setHata("");
+    // Proje değişince sohbet ve görsel önceki projeye aitti → temizle.
+    setMesajlar([]);
+    setSohbetSaglayici(null);
+    setGorselUrl("");
+    setGorselPrompt("");
+    setGorselHata("");
+    setYuklenenGorsel(null);
+    setGorselMotor(null);
     const project = getProject(id);
     if (!project) { setGirdi(null); setRapor(null); return; }
     const g: RiskGirdi = {
@@ -90,11 +116,9 @@ export default function MkAiPage() {
     }
   }
 
-  async function soruGonder(e: React.FormEvent) {
-    e.preventDefault();
-    const q = soru.trim();
-    if (!q || sohbetYukleniyor) return;
-    const yeni = [...mesajlar, { role: "user" as const, content: q }];
+  async function soruySor(q: string) {
+    if (!q.trim() || sohbetYukleniyor) return;
+    const yeni: Mesaj[] = [...mesajlar, { role: "user", content: q.trim() }];
     setMesajlar(yeni);
     setSoru("");
     setSohbetYukleniyor(true);
@@ -104,7 +128,8 @@ export default function MkAiPage() {
       const baglam = [dosya, riskOzet && `## RİSK ANALİZİ (kural motoru)\n${riskOzet}`]
         .filter(Boolean)
         .join("\n\n") || undefined;
-      const res = await fetch("/api/mk-ai/sohbet", {
+      // Agentic uç: mk_ai gerekirse yönetmelik aracını çağırır, kaynak getirir.
+      const res = await fetch("/api/mk-ai/danis", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: yeni, baglam }),
@@ -112,7 +137,10 @@ export default function MkAiPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "İstek başarısız.");
       setSohbetSaglayici(data.saglayici ?? null);
-      setMesajlar([...yeni, { role: "assistant", content: data.text ?? "" }]);
+      setMesajlar([
+        ...yeni,
+        { role: "assistant", content: data.text ?? "", kaynaklar: data.kaynaklar ?? [], demo: !!data.demoMode },
+      ]);
     } catch (err) {
       setMesajlar([...yeni, { role: "assistant", content: "⚠️ " + (err as Error).message }]);
     } finally {
@@ -120,23 +148,73 @@ export default function MkAiPage() {
     }
   }
 
+  function soruGonder(e: React.FormEvent) {
+    e.preventDefault();
+    soruySor(soru);
+  }
+
+  function dosyaSec(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    if (!f.type.startsWith("image/")) { setGorselHata("Lütfen bir görsel dosyası seçin."); return; }
+    if (f.size > 8 * 1024 * 1024) { setGorselHata("Görsel 8 MB'tan küçük olmalı."); return; }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setYuklenenGorsel({ dataUrl: String(reader.result), mime: f.type });
+      setGorselHata("");
+    };
+    reader.readAsDataURL(f);
+  }
+
   async function gorselUret() {
     if (gorselYukleniyor) return;
     setGorselYukleniyor(true);
     setGorselHata("");
     setGorselUrl("");
+    setGorselMotor(null);
     try {
       const dosya = projectId ? mkAiProjeDosyasi(projectId) : "";
+      // 1) İngilizce prompt üret (proje verisi + istek). Yükleme varsa düzenleme ipucu ekle.
+      const ekIstek = yuklenenGorsel
+        ? `${gorselIstek ? gorselIstek + ". " : ""}Use the provided image as the base; transform it into a clean photorealistic architectural render while keeping its overall composition.`
+        : gorselIstek;
       const res = await fetch("/api/mk-ai/gorsel", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ baglam: dosya, istek: gorselIstek }),
+        body: JSON.stringify({ baglam: dosya, istek: ekIstek }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "İstek başarısız.");
-      setGorselPrompt(data.prompt ?? "");
+      const prompt = data.prompt ?? "";
+      setGorselPrompt(prompt);
+
+      // 2) Önce Gemini (Nano Banana) dene — hem üretir hem yüklenen görseli düzenler.
+      const gRes = await fetch("/api/mk-ai/gorsel-uret", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt,
+          gorselBase64: yuklenenGorsel?.dataUrl,
+          mimeType: yuklenenGorsel?.mime,
+        }),
+      });
+      const gData = await gRes.json();
+      if (gData.yapildi && gData.dataUrl) {
+        setImgYukleniyor(false);
+        const etiket = gData.saglayici === "huggingface"
+          ? "Hugging Face"
+          : gData.saglayici === "gemini"
+          ? "Gemini (Nano Banana)"
+          : (gData.saglayici ?? "AI");
+        setGorselMotor(gData.not ? `${etiket} — ${gData.not}` : yuklenenGorsel ? `${etiket} — görsel dönüştürüldü` : etiket);
+        setGorselUrl(gData.dataUrl);
+        return;
+      }
+
+      // 3) Yedek: Pollinations (anahtarsız). Not: yüklenen görseli kullanamaz.
       setImgYukleniyor(true);
-      setGorselUrl(pollinationsUrl(data.prompt ?? "", { seed: Math.floor(Math.random() * 1_000_000) }));
+      setGorselMotor(yuklenenGorsel ? "Pollinations (yedek — yüklenen görsel kullanılamadı)" : "Pollinations (yedek)");
+      setGorselUrl(pollinationsUrl(prompt, { seed: Math.floor(Math.random() * 1_000_000) }));
     } catch (e) {
       setGorselHata((e as Error).message);
     } finally {
@@ -182,7 +260,9 @@ export default function MkAiPage() {
               <p className="mt-3 text-sm leading-relaxed text-slate-700">{rapor.ozet}</p>
               <button onClick={aiYorumAl} disabled={yukleniyor}
                 className="mt-4 inline-flex items-center gap-2 rounded-xl bg-ink-900 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-ink-800 disabled:opacity-50">
-                {yukleniyor ? "🤖 mk_ai düşünüyor…" : "🤖 mk_ai yorumu al"}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/mk-ai-logo.jpg" alt="mk" className="h-5 w-auto rounded" />
+                {yukleniyor ? "mk_ai düşünüyor…" : "mk_ai yorumu al"}
               </button>
               {hata && <p className="mt-2 text-xs font-semibold text-red-600">{hata}</p>}
             </div>
@@ -235,8 +315,9 @@ export default function MkAiPage() {
           {ai && (
             <div className="mt-5 rounded-2xl border-2 border-ink-900/15 bg-gradient-to-br from-ink-900 to-ink-800 p-5 text-white shadow-sm">
               <div className="flex items-center gap-2">
-                <span className="text-lg">🤖</span>
-                <h3 className="text-sm font-extrabold">mk_ai Değerlendirmesi</h3>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/mk-ai-logo.jpg" alt="mk_ai" className="h-6 w-auto rounded" />
+                <h3 className="text-sm font-extrabold">Değerlendirmesi</h3>
                 {ai.demoMode && <span className="rounded-full bg-amber-400/90 px-2 py-0.5 text-[10px] font-bold text-amber-950">DEMO — anahtar yok</span>}
                 {!ai.demoMode && ai.saglayici && (
                   <span className="rounded-full bg-emerald-400/90 px-2 py-0.5 text-[10px] font-bold text-emerald-950">
@@ -263,25 +344,49 @@ export default function MkAiPage() {
             </div>
           )}
 
-          {/* mk_ai sohbet */}
+          {/* mk_ai sohbet (agentic — yönetmelik aracı + RAG) */}
           <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="text-lg">💬</span>
-              <h3 className="text-sm font-extrabold text-slate-800">mk_ai&apos;ye Sor</h3>
+              <h3 className="text-sm font-extrabold text-slate-800">mk&apos;ye Sor</h3>
+              <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-bold text-sky-700" title="Gerektiğinde Türk inşaat mevzuatı bilgi tabanında arama yapıp kaynak gösterir">
+                📚 mevzuat destekli
+              </span>
               {sohbetSaglayici && (
                 <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
                   {SAGLAYICI_ETIKET[sohbetSaglayici] ?? sohbetSaglayici}
                 </span>
               )}
+              {mesajlar.length > 0 && (
+                <button
+                  onClick={() => { setMesajlar([]); setSohbetSaglayici(null); }}
+                  className="ml-auto text-[11px] font-semibold text-slate-400 transition hover:text-rose-500"
+                >
+                  Sohbeti temizle
+                </button>
+              )}
             </div>
 
             {mesajlar.length === 0 ? (
-              <p className="mt-2 text-xs leading-relaxed text-slate-500">
-                Bu proje hakkında soru sor: <em>&quot;En büyük risk ne?&quot;</em>, <em>&quot;Bütçeyi nasıl
-                toparlarım?&quot;</em>, <em>&quot;Hangi işe öncelik vermeliyim?&quot;</em>
-              </p>
+              <div className="mt-2">
+                <p className="text-xs leading-relaxed text-slate-500">
+                  Proje verisi <em>veya</em> mevzuat sor; mk_ai gerektiğinde yönetmelik bilgi tabanında arar ve kaynak gösterir.
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {HIZLI_SORULAR.map((q) => (
+                    <button
+                      key={q}
+                      onClick={() => soruySor(q)}
+                      disabled={sohbetYukleniyor}
+                      className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-ink-900 hover:text-ink-900 disabled:opacity-50"
+                    >
+                      {q}
+                    </button>
+                  ))}
+                </div>
+              </div>
             ) : (
-              <div className="mt-3 max-h-80 space-y-3 overflow-y-auto pr-1">
+              <div className="mt-3 max-h-96 space-y-3 overflow-y-auto pr-1">
                 {mesajlar.map((m, i) => (
                   <div key={i} className={m.role === "user" ? "text-right" : "text-left"}>
                     <div
@@ -290,10 +395,26 @@ export default function MkAiPage() {
                       }`}
                     >
                       <p className="whitespace-pre-wrap leading-relaxed">{m.content}</p>
+                      {m.kaynaklar && m.kaynaklar.length > 0 && (
+                        <div className="mt-2 border-t border-slate-200 pt-2">
+                          <div className="text-[10px] font-bold uppercase tracking-wide text-slate-400">📚 Kaynaklar</div>
+                          <ul className="mt-1 space-y-0.5">
+                            {m.kaynaklar.map((k) => (
+                              <li key={k.id} className="text-[11px] text-slate-500">
+                                <span className="font-semibold text-slate-700">{k.baslik}</span> — {k.kaynak}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {m.demo && (
+                        <div className="mt-1.5 text-[10px] font-bold text-amber-600">DEMO — AI anahtarı yok</div>
+                      )}
                     </div>
                   </div>
                 ))}
-                {sohbetYukleniyor && <div className="text-xs text-slate-400">mk_ai yazıyor…</div>}
+                {sohbetYukleniyor && <div className="text-xs text-slate-400">mk_ai düşünüyor… (gerekirse mevzuat aranıyor)</div>}
+                <div ref={sohbetSonuRef} />
               </div>
             )}
 
@@ -301,7 +422,7 @@ export default function MkAiPage() {
               <input
                 value={soru}
                 onChange={(e) => setSoru(e.target.value)}
-                placeholder="mk_ai'ye bir soru yaz…"
+                placeholder="mk'ye bir soru yaz… (proje veya mevzuat)"
                 className="flex-1 rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:border-ink-900"
               />
               <button
@@ -312,6 +433,9 @@ export default function MkAiPage() {
                 Gönder
               </button>
             </form>
+            <p className="mt-2 text-[10px] text-slate-400">
+              ⚠️ Mevzuat özetleri bilgilendirme amaçlıdır; uygulamadan önce resmî güncel metinle (mevzuat.gov.tr / ÇŞB) teyit edin.
+            </p>
           </div>
 
           {/* mk_ai görsel üretimi */}
@@ -323,8 +447,38 @@ export default function MkAiPage() {
             </div>
             <p className="mt-2 text-xs leading-relaxed text-slate-500">
               mk_ai proje verisinden fotogerçekçi bir mimari render üretir. İstersen tarz belirt (ör.
-              &quot;gece, modern cephe&quot;, &quot;kuş bakışı site&quot;).
+              &quot;gece, modern cephe&quot;, &quot;kuş bakışı site&quot;). <strong>Bir eskiz/fotoğraf yükle</strong> →
+              mk_ai onu render&apos;a dönüştürür (Gemini ile).
             </p>
+
+            {/* Görsel yükleme (referans / düzenleme) */}
+            <input ref={dosyaRef} type="file" accept="image/*" onChange={dosyaSec} className="hidden" />
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => dosyaRef.current?.click()}
+                disabled={gorselYukleniyor}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-violet-500 hover:text-violet-700 disabled:opacity-50"
+              >
+                ⬆️ Görsel Yükle
+              </button>
+              {yuklenenGorsel && (
+                <div className="flex items-center gap-2 rounded-xl border border-violet-200 bg-violet-50 py-1 pl-1 pr-2">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={yuklenenGorsel.dataUrl} alt="referans" className="h-9 w-9 rounded-lg object-cover" />
+                  <span className="text-[11px] font-semibold text-violet-700">referans yüklendi</span>
+                  <button
+                    type="button"
+                    onClick={() => { setYuklenenGorsel(null); if (dosyaRef.current) dosyaRef.current.value = ""; }}
+                    className="text-violet-400 transition hover:text-rose-500"
+                    title="Kaldır"
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
+            </div>
+
             <div className="mt-3 flex gap-2">
               <input
                 value={gorselIstek}
@@ -338,9 +492,10 @@ export default function MkAiPage() {
                 disabled={gorselYukleniyor}
                 className="rounded-xl bg-violet-600 px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
               >
-                {gorselYukleniyor ? "Hazırlanıyor…" : "🎨 Üret"}
+                {gorselYukleniyor ? "Hazırlanıyor…" : yuklenenGorsel ? "🎨 Dönüştür" : "🎨 Üret"}
               </button>
             </div>
+            {gorselMotor && <p className="mt-2 text-[11px] font-semibold text-slate-400">Motor: {gorselMotor}</p>}
             {gorselHata && <p className="mt-2 text-xs font-semibold text-rose-600">⚠️ {gorselHata}</p>}
             {gorselUrl && (
               <div className="mt-3">
@@ -439,10 +594,16 @@ function Kutu({ l, v, alt, renk }: { l: string; v: string; alt?: string; renk: s
 function Baslik() {
   return (
     <div>
-      <h1 className="flex items-center gap-2 text-2xl font-extrabold text-slate-900">
-        🤖 mk_ai <span className="rounded-lg bg-ink-900 px-2 py-0.5 text-xs font-bold text-brand-500">Risk Asistanı</span>
-      </h1>
-      <p className="mt-1 text-sm text-slate-500">Proje verinizden otomatik risk skoru, faktör analizi ve öneriler.</p>
+      <div className="flex items-center gap-3">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/mk-ai-logo.jpg"
+          alt="MK_AI"
+          className="h-12 w-auto rounded-lg shadow-sm sm:h-14"
+        />
+        <span className="rounded-lg bg-ink-900 px-2 py-0.5 text-xs font-bold text-brand-500">Risk Asistanı</span>
+      </div>
+      <p className="mt-1.5 text-sm text-slate-500">Proje verinizden otomatik risk skoru, faktör analizi ve öneriler.</p>
     </div>
   );
 }
