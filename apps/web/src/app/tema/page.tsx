@@ -213,7 +213,7 @@ export default function TemaPage() {
               </span>
             </div>
             <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/15">
-              <div className="h-full w-[62%] rounded-full bg-gradient-to-r from-brand-500 to-yellow-300" />
+              <div className="h-full w-[62%] rounded-full bg-gradient-to-r from-brand-500 to-sky-300" />
             </div>
             <div className="mt-3 rounded-lg border border-brand-500/30 bg-brand-500/10 p-2 text-[11px]">
               <span className="font-bold text-brand-400">🧠 AI:</span> Don

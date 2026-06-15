@@ -3,15 +3,15 @@
 @theme {
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 
-  /* insPRO marka renkleri */
-  /* ink: koyu mavi-turkuaz · brand: sarıya yakın amber */
-  --color-ink-950: #126b85;
-  --color-ink-900: #17809e;
-  --color-ink-800: #1e96b8;
-  --color-ink-700: #28abd1;
-  --color-brand-400: #fcd34d;
-  --color-brand-500: #f5b80b;
-  --color-brand-600: #d99e06;
+  /* insPRO marka renkleri — LOGO paleti */
+  /* ink: koyu lacivert (logo zemini) · brand: elektrik mavisi (logo parıltısı) */
+  --color-ink-950: #0b1f3d;
+  --color-ink-900: #122a52;
+  --color-ink-800: #1a3a6b;
+  --color-ink-700: #244e8a;
+  --color-brand-400: #5cb3ff;
+  --color-brand-500: #2b8eff;
+  --color-brand-600: #1769d6;
 }
 
 html {

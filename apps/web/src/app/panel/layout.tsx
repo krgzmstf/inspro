@@ -21,6 +21,7 @@ const NAV: NavItem[] = [
   { href: "/panel/3d", label: "3B Görselleştirme", icon: "🏢", active: true },
   { href: "/panel/plan3d", label: "Plan → 3B Stüdyo", icon: "🧊", active: true },
   { href: "/panel/mk-ai", label: "mk_ai (Risk)", icon: "🤖", img: "/mk-ai-logo.jpg", active: true },
+  { href: "/panel/bilgi", label: "Bilgi Tabanı", icon: "📚", active: true },
 ];
 
 export default function PanelLayout({

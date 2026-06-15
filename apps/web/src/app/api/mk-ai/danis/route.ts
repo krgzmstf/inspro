@@ -6,7 +6,7 @@ import {
   type SohbetMesaj,
   type SaglayiciId,
 } from "@/lib/aiSaglayici";
-import { yonetmelikAra, type YonetmelikIsabet } from "@/lib/yonetmelik";
+import { yonetmelikAra, type YonetmelikIsabet, type YonetmelikKayit } from "@/lib/yonetmelik";
 
 /* ──────────────────────────────────────────────────────────
    mk_ai — Agentic danışma (araç çağıran sohbet + RAG)
@@ -36,6 +36,7 @@ interface Govde {
   messages?: SohbetMesaj[];
   baglam?: string;
   tercih?: SaglayiciId;
+  ekBilgi?: YonetmelikKayit[]; // kullanıcının bilgi tabanı kayıtları
 }
 
 const TEMEL_SISTEM =
@@ -66,12 +67,17 @@ export async function POST(req: Request) {
     return Response.json({ error: "Mesaj yok." }, { status: 400 });
   }
 
+  // Kullanıcının bilgi tabanı (yerleşik mevzuatla birlikte aranır)
+  const ekBilgi = Array.isArray(body.ekBilgi)
+    ? body.ekBilgi.filter((k) => k && typeof k.metin === "string" && k.metin.trim())
+    : [];
+
   // ── Demo modu (hiç sağlayıcı anahtarı yok) ──
   if (aktifSaglayicilar().length === 0) {
     // Sağlayıcı yoksa da yönetmelik aramayı yerel çalıştırıp en azından
     // ilgili maddeleri gösterelim (RAG kısmı LLM'siz de değerli).
     const sonSoru = [...messages].reverse().find((m) => m.role === "user")?.content ?? "";
-    const isabet = yonetmelikAra(sonSoru, 3);
+    const isabet = yonetmelikAra(sonSoru, 3, ekBilgi);
     const metin = isabet.length
       ? "**mk_ai (demo).** AI sağlayıcısı bağlı değil; yine de mevzuat bilgi tabanından ilgili maddeleri buldum:\n\n" +
         isabet.map((k) => `• **${k.baslik}** — ${k.metin}\n  _Kaynak: ${k.kaynak}_`).join("\n\n")
@@ -93,7 +99,7 @@ export async function POST(req: Request) {
           .describe("Aranacak konu/anahtar kelimeler, ör. 'beton pas payı', 'ön bahçe çekme mesafesi', 'yangın merdiveni', 'otopark'."),
       }),
       execute: async ({ sorgu }: { sorgu: string }) => {
-        const isabet = yonetmelikAra(sorgu, 4);
+        const isabet = yonetmelikAra(sorgu, 4, ekBilgi);
         for (const k of isabet) toplanan.set(k.id, k);
         if (isabet.length === 0) return { bulunan: 0, sonuclar: [], not: "Bilgi tabanında eşleşme yok." };
         return {

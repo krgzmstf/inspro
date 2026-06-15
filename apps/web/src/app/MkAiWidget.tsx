@@ -9,6 +9,7 @@
    ────────────────────────────────────────────────────────── */
 
 import { useEffect, useRef, useState } from "react";
+import { loadBilgiler } from "@/lib/bilgiTabani";
 
 interface Kaynak { id: string; baslik: string; kaynak: string }
 interface Mesaj { role: "user" | "assistant"; content: string; kaynaklar?: Kaynak[]; demo?: boolean }
@@ -40,7 +41,7 @@ export default function MkAiWidget() {
       const res = await fetch("/api/mk-ai/danis", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: yeni }),
+        body: JSON.stringify({ messages: yeni, ekBilgi: loadBilgiler() }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "İstek başarısız.");

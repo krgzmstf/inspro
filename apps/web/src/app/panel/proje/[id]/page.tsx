@@ -176,7 +176,7 @@ export default function ProjeDetayPage() {
         </div>
         <div className="mt-5 h-2.5 overflow-hidden rounded-full bg-white/15">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-brand-500 to-yellow-300 transition-all"
+            className="h-full rounded-full bg-gradient-to-r from-brand-500 to-sky-300 transition-all"
             style={{ width: `${progress}%` }}
           />
         </div>

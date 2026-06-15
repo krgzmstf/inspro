@@ -1,5 +1,18 @@
 import Link from "next/link";
 import MkAiWidget from "./MkAiWidget";
+import { YONETMELIK } from "@/lib/yonetmelik";
+
+/* Ana sayfada öne çıkarılacak mevzuat başlıkları */
+const MEVZUAT_VITRIN = [
+  "deprem-tbdy", "betonarme-paspayi", "yangin", "otopark", "erisilebilirlik", "enerji-bep",
+];
+
+const ISTATISTIKLER = [
+  { sayi: "1.876", etiket: "ÇŞB birim fiyat pozu" },
+  { sayi: "13", etiket: "İnşaat süreç aşaması" },
+  { sayi: "9", etiket: "Entegre modül" },
+  { sayi: "%100", etiket: "Türkçe · KVKK uyumlu" },
+];
 
 /* ──────────────────────────────────────────────────────────
    insPRO Vitrin Ana Sayfası
@@ -199,6 +212,9 @@ export default function Home() {
             <a href="#surec" className="transition hover:text-white">
               İnşaat Süreci
             </a>
+            <a href="#mevzuat" className="transition hover:text-white">
+              Mevzuat
+            </a>
             <a href="#fiyat" className="transition hover:text-white">
               Fiyatlandırma
             </a>
@@ -290,7 +306,7 @@ export default function Home() {
                 </span>
               </div>
               <div className="mb-4 h-2 overflow-hidden rounded-full bg-white/10">
-                <div className="h-full w-[62%] rounded-full bg-gradient-to-r from-brand-500 to-yellow-300" />
+                <div className="h-full w-[62%] rounded-full bg-gradient-to-r from-brand-500 to-sky-300" />
               </div>
               <div className="grid grid-cols-3 gap-3 text-center">
                 {[
@@ -328,6 +344,18 @@ export default function Home() {
             </div>
             <div className="absolute -bottom-5 -left-5 -z-10 h-full w-full rounded-2xl border border-brand-500/20" />
           </div>
+        </div>
+      </section>
+
+      {/* ── İSTATİSTİK ŞERİDİ ──────────────────────────────── */}
+      <section className="border-y border-slate-200 bg-white">
+        <div className="mx-auto grid max-w-7xl grid-cols-2 gap-px bg-slate-200 sm:grid-cols-4">
+          {ISTATISTIKLER.map((s) => (
+            <div key={s.etiket} className="bg-white px-4 py-8 text-center">
+              <div className="text-3xl font-extrabold text-brand-600 sm:text-4xl">{s.sayi}</div>
+              <div className="mt-1 text-xs font-semibold text-slate-500 sm:text-sm">{s.etiket}</div>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -429,6 +457,82 @@ export default function Home() {
               </li>
             ))}
           </ol>
+        </div>
+      </section>
+
+      {/* ── MEVZUAT / YÖNETMELİK ───────────────────────────── */}
+      <section id="mevzuat" className="scroll-mt-20 py-20 sm:py-24">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+          <div className="mx-auto max-w-2xl text-center">
+            <span className="inline-flex items-center gap-2 rounded-full bg-sky-100 px-4 py-1.5 text-xs font-bold text-sky-700">
+              📚 mk_ai · mevzuat destekli
+            </span>
+            <h2 className="mt-4 text-3xl font-extrabold tracking-tight text-ink-900 sm:text-4xl">
+              İnşaat mevzuatı <span className="text-brand-600">parmaklarınızın ucunda</span>
+            </h2>
+            <p className="mt-4 text-lg text-slate-600">
+              mk_ai; deprem, yangın, otopark, erişilebilirlik, enerji ve yapı denetimi
+              gibi konularda <b>kaynak göstererek</b> yanıt verir. İşte bilgi tabanından örnekler:
+            </p>
+          </div>
+          <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {MEVZUAT_VITRIN.map((id) => {
+              const m = YONETMELIK.find((y) => y.id === id);
+              if (!m) return null;
+              const ozet = m.metin.length > 180 ? m.metin.slice(0, 178) + "…" : m.metin;
+              return (
+                <div key={m.id} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-sky-300 hover:shadow-lg">
+                  <h3 className="text-base font-bold text-ink-900">{m.baslik}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-slate-600">{ozet}</p>
+                  <div className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-[11px] font-bold text-slate-600">
+                    📑 {m.kaynak}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <p className="mx-auto mt-8 max-w-2xl text-center text-xs leading-relaxed text-slate-400">
+            ⚠️ Özetler bilgilendirme amaçlıdır; uygulamadan önce resmî güncel metinle
+            (mevzuat.gov.tr / ÇŞB) teyit edin. Sağ alttaki <b>mk&apos;ye Sor</b> balonundan hemen deneyebilirsiniz.
+          </p>
+        </div>
+      </section>
+
+      {/* ── MOBİL ──────────────────────────────────────────── */}
+      <section className="overflow-hidden bg-slate-50 py-20 sm:py-24">
+        <div className="mx-auto grid max-w-7xl items-center gap-12 px-4 sm:px-6 lg:grid-cols-2">
+          <div>
+            <span className="inline-flex items-center gap-2 rounded-full bg-brand-500/10 px-4 py-1.5 text-xs font-bold text-brand-600">
+              📱 iOS & Android
+            </span>
+            <h2 className="mt-4 text-3xl font-extrabold tracking-tight text-ink-900 sm:text-4xl">
+              Şantiye cebinizde, ofis masanızda
+            </h2>
+            <p className="mt-4 text-lg leading-relaxed text-slate-600">
+              Saha ekibi fotoğrafı, puantajı ve iş emrini telefondan girer; ofis web
+              panelinden anında görür. Tek hesap, her cihazda senkron.
+            </p>
+            <ul className="mt-6 space-y-3 text-sm text-slate-700">
+              {[
+                "Fotoğraflı saha kaydı ve kusur takibi",
+                "Mobil puantaj — usta/işçi günlük giriş",
+                "Yol haritası ilerlemesi ve onay akışı",
+                "mk_ai'ye her yerden soru sorma",
+              ].map((f) => (
+                <li key={f} className="flex items-start gap-2.5">
+                  <span className="mt-0.5 font-bold text-brand-500">✓</span>{f}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="flex justify-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/mobil.png"
+              alt="insPRO mobil uygulama"
+              className="max-h-[520px] w-auto rounded-3xl object-contain drop-shadow-2xl"
+            />
+          </div>
         </div>
       </section>
 

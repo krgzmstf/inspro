@@ -11,6 +11,7 @@ import {
   mkAiRiskAnaliz, riskRenk, skorRenk, riskOzetMetni, SEVIYE_LABEL, KATEGORI_LABEL,
 } from "@/lib/mkAi";
 import { mkAiProjeDosyasi } from "@/lib/mkAiDosya";
+import { loadBilgiler } from "@/lib/bilgiTabani";
 import {
   type Tespit, type YerelCevap,
   mkAiSorgu, mkAiTespitler, uygulaTespit,
@@ -175,7 +176,7 @@ export default function MkAiPage() {
       const res = await fetch("/api/mk-ai/danis", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: yeni, baglam }),
+        body: JSON.stringify({ messages: yeni, baglam, ekBilgi: loadBilgiler() }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "İstek başarısız.");

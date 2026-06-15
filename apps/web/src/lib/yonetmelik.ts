@@ -174,11 +174,16 @@ export interface YonetmelikIsabet extends YonetmelikKayit {
  * etiket (ağırlık 3) > başlık (2) > metin (1) alanlarında eşler,
  * skora göre sıralayıp en iyi `adet` kaydı döner.
  */
-export function yonetmelikAra(sorgu: string, adet = 4): YonetmelikIsabet[] {
+export function yonetmelikAra(
+  sorgu: string,
+  adet = 4,
+  ekKayitlar: YonetmelikKayit[] = [],
+): YonetmelikIsabet[] {
   const qs = tokenlar(sorgu);
   if (qs.length === 0) return [];
 
-  const isabetler: YonetmelikIsabet[] = YONETMELIK.map((k) => {
+  const corpus = ekKayitlar.length ? [...YONETMELIK, ...ekKayitlar] : YONETMELIK;
+  const isabetler: YonetmelikIsabet[] = corpus.map((k) => {
     const etiketMetni = normalize(k.etiketler.join(" "));
     const baslikMetni = normalize(k.baslik);
     const govdeMetni = normalize(k.metin);

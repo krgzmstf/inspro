@@ -183,7 +183,7 @@ export default function PanelPage() {
                 </div>
                 <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100">
                   <div
-                    className="h-full rounded-full bg-gradient-to-r from-brand-500 to-yellow-300 transition-all"
+                    className="h-full rounded-full bg-gradient-to-r from-brand-500 to-sky-300 transition-all"
                     style={{ width: `${progress}%` }}
                   />
                 </div>
