@@ -83,6 +83,22 @@ export function deleteHakedis(id: string) {
   saveAll(loadAll().filter((h) => h.id !== id));
 }
 
+/** Bir tekliften (kabul edilen) hakediş sözleşme kalemleri üretir.
+   Sözleşme bedeli = teklifte müşterinin onayladığı birim fiyatlar. */
+export function hakedisKalemleriTekliften(
+  kalemler: { aciklama: string; miktar: number; birim: string; birimFiyat: number }[],
+): HakedisKalem[] {
+  return kalemler.map((k) => ({
+    id: crypto.randomUUID(),
+    aciklama: k.aciklama,
+    birim: k.birim,
+    sozlesmeMiktar: k.miktar,
+    birimFiyat: Math.round(k.birimFiyat),
+    kumulatifMiktar: 0,
+    oncekiKumulatif: 0,
+  }));
+}
+
 export interface HakedisKalemHesap extends HakedisKalem {
   buDonemMiktar: number;
   sozlesmeTutar: number;

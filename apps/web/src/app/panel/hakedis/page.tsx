@@ -13,7 +13,9 @@ import {
   saveHakedis,
   deleteHakedis,
   hakedisHesapla,
+  hakedisKalemleriTekliften,
 } from "@/lib/hakedis";
+import { type Teklif, loadTeklifler, teklifToplam } from "@/lib/teklif";
 import { excelYaz, pdfBelge } from "@/lib/disaAktar";
 
 type Baz = "piyasa" | "csb" | "kendi";
@@ -27,6 +29,8 @@ export default function HakedisPage() {
   const [pozlar, setPozlar] = useState<Poz[]>([]);
   const [baz, setBaz] = useState<Baz>("piyasa");
   const [msg, setMsg] = useState("");
+  const [teklifler, setTeklifler] = useState<Teklif[]>([]);
+  const [seciliTeklif, setSeciliTeklif] = useState("");
 
   useEffect(() => {
     const ps = loadProjects();
@@ -40,6 +44,8 @@ export default function HakedisPage() {
   function seçProje(id: string) {
     setProjectId(id);
     setList(loadHakedisler(id));
+    setTeklifler(loadTeklifler(id));
+    setSeciliTeklif("");
     setH(null);
     const p = getProject(id);
     const lib = p?.pozKutuphane === "kut1" ? "kut1" : p?.pozKutuphane === "kut3" ? "kut3" : "kut2";
@@ -77,6 +83,18 @@ export default function HakedisPage() {
     });
     setH({ ...h, kalemler });
     setMsg(`✓ ${kalemler.length} sözleşme kalemi yüklendi (${BAZ_LABEL[baz]}).`);
+  }
+
+  // Sözleşme kalemlerini kabul edilen teklif­ten yükle (zincir: teklif → hakediş)
+  function tekliftenYukle() {
+    if (!h) return;
+    const t = teklifler.find((x) => x.id === seciliTeklif);
+    if (!t) { setMsg("Önce bir teklif seçin."); return; }
+    if (t.kalemler.length === 0) { setMsg("Seçilen teklifte kalem yok."); return; }
+    if (h.kalemler.length > 0 && !confirm("Mevcut sözleşme kalemleri değiştirilsin mi?")) return;
+    const kalemler = hakedisKalemleriTekliften(t.kalemler);
+    setH({ ...h, kalemler, taseron: h.taseron || t.musteriFirma || t.musteriAd });
+    setMsg(`✓ ${kalemler.length} sözleşme kalemi "${t.no}" teklifinden yüklendi (sözleşme bedeli ${formatTL(teklifToplam(t).araToplam)}).`);
   }
 
   function kalemGuncelle(id: string, patch: Partial<HakedisKalem>) {
@@ -245,19 +263,47 @@ export default function HakedisPage() {
               </div>
             </div>
 
-            {/* Keşiften sözleşme yükle (kalem boşken öne çıkar) */}
+            {/* Sözleşme kalemlerini yükle (kalem boşken öne çıkar) */}
             {h.kalemler.length === 0 && (
               <div className="rounded-2xl border-2 border-brand-500/40 bg-white p-5 shadow-sm">
-                <h2 className="text-sm font-extrabold text-slate-900">Sözleşme Kalemlerini Keşiften Yükle</h2>
-                <div className="mt-3 flex flex-wrap items-end gap-3">
-                  <Fld label="Birim Fiyat Bazı">
-                    <select value={baz} onChange={(e) => setBaz(e.target.value as Baz)} className={inp}>
-                      {(["piyasa", "csb", "kendi"] as Baz[]).map((b) => <option key={b} value={b}>{BAZ_LABEL[b]}</option>)}
-                    </select>
-                  </Fld>
-                  <button onClick={kesiftenYukle} className="rounded-xl bg-ink-900 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-ink-800">↻ Keşiften Yükle ({kesif.length})</button>
+                <h2 className="text-sm font-extrabold text-slate-900">Sözleşme Kalemlerini Yükle</h2>
+
+                {/* Tekliften (zincir: keşif → teklif → hakediş) */}
+                <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50/60 p-3">
+                  <div className="text-xs font-bold text-emerald-700">📄 Kabul edilen teklif­ten (önerilen)</div>
+                  <p className="mt-0.5 text-[11px] text-slate-500">Sözleşme bedeli, müşterinin onayladığı teklif fiyatlarıyla gelir.</p>
+                  <div className="mt-2 flex flex-wrap items-end gap-3">
+                    <Fld label="Teklif">
+                      <select value={seciliTeklif} onChange={(e) => setSeciliTeklif(e.target.value)} className={inp}>
+                        <option value="">— Teklif seç —</option>
+                        {teklifler.map((t) => (
+                          <option key={t.id} value={t.id}>{t.no} · {t.musteriFirma || t.musteriAd || "müşteri"} · {formatTL(teklifToplam(t).araToplam)}</option>
+                        ))}
+                      </select>
+                    </Fld>
+                    <button onClick={tekliftenYukle} disabled={!seciliTeklif}
+                      className="rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-emerald-700 disabled:opacity-50">
+                      ↻ Teklif­ten Yükle
+                    </button>
+                  </div>
+                  {teklifler.length === 0 && (
+                    <p className="mt-2 text-[11px] text-amber-600">Bu projede henüz teklif yok. Önce Teklif modülünden keşiften teklif oluşturun.</p>
+                  )}
                 </div>
-                <p className="mt-2 text-[11px] text-slate-400">Sözleşme miktarı = keşif metrajı. Sonraki hakedişlerde bu kalemler otomatik devreder.</p>
+
+                {/* Keşiften (taslak) */}
+                <div className="mt-3 border-t border-slate-100 pt-3">
+                  <div className="text-xs font-bold text-slate-600">📐 Doğrudan keşiften (taslak)</div>
+                  <div className="mt-2 flex flex-wrap items-end gap-3">
+                    <Fld label="Birim Fiyat Bazı">
+                      <select value={baz} onChange={(e) => setBaz(e.target.value as Baz)} className={inp}>
+                        {(["piyasa", "csb", "kendi"] as Baz[]).map((b) => <option key={b} value={b}>{BAZ_LABEL[b]}</option>)}
+                      </select>
+                    </Fld>
+                    <button onClick={kesiftenYukle} className="rounded-xl bg-ink-900 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-ink-800">↻ Keşiften Yükle ({kesif.length})</button>
+                  </div>
+                  <p className="mt-2 text-[11px] text-slate-400">Sözleşme miktarı = keşif metrajı. Sonraki hakedişlerde bu kalemler otomatik devreder.</p>
+                </div>
               </div>
             )}
 

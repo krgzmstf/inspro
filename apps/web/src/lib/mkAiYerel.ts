@@ -21,7 +21,7 @@ import { loadSaha } from "./saha";
 import { loadIsSurecleri, isOzeti } from "./isSurecleri";
 import { loadMetraj } from "./metraj";
 import { loadPersonel } from "./personel";
-import { loadHakedisler } from "./hakedis";
+import { loadHakedisler, hakedisHesapla } from "./hakedis";
 import { loadTeklifler, teklifToplam } from "./teklif";
 import {
   type AsamaKalem, projeTumKalemler, asamaToplamFiyat, asamaToplamAlinan,
@@ -52,8 +52,9 @@ export interface ProjeOzet {
   personelAktif: number; gunlukYevmiye: number;
   // keşif / metraj
   metrajSatir: number; metrajMahal: number; kesifCsb: number; kesifPiyasa: number;
-  // diğer modüller
-  hakedisSayi: number; teklifAdet: number; teklifToplam: number;
+  // diğer modüller + zincir
+  hakedisSayi: number; hakedisSozlesme: number; hakedisKumulatif: number;
+  teklifAdet: number; teklifToplam: number;
   // risk (kural motoru)
   risk: RiskRapor;
 }
@@ -84,6 +85,9 @@ export function projeOzet(projectId: string): ProjeOzet | null {
   const kesifCsb = Math.round(kesif.reduce((s, r) => s + r.csbTutar, 0));
   const kesifPiyasa = Math.round(kesif.reduce((s, r) => s + r.piyasaTutar, 0));
 
+  const sonHakedis = hakedisler[hakedisler.length - 1];
+  const sonHakedisToplam = sonHakedis ? hakedisHesapla(sonHakedis).toplam : null;
+
   const aktifPersonel = personel.filter((k) => k.aktif);
   const kusur = saha.filter((s) => s.tip === "kusur" && s.durum !== "tamam");
   const isemri = saha.filter((s) => s.tip === "isemri" && s.durum !== "tamam");
@@ -113,6 +117,8 @@ export function projeOzet(projectId: string): ProjeOzet | null {
     metrajMahal: new Set(metraj.map((x) => x.mahal)).size,
     kesifCsb, kesifPiyasa,
     hakedisSayi: hakedisler.length,
+    hakedisSozlesme: sonHakedisToplam?.sozlesme ?? 0,
+    hakedisKumulatif: sonHakedisToplam?.kumulatif ?? 0,
     teklifAdet: teklifler.length,
     teklifToplam: teklifler.reduce((s, t) => s + teklifToplam(t).genelToplam, 0),
     risk,
@@ -260,12 +266,19 @@ const NIYETLER: Niyet[] = [
     },
   },
   {
-    baslik: "Teklif & Hakediş",
-    anahtarlar: ["teklif", "hakedis", "taseron", "istihkak"],
+    baslik: "Teklif & Hakediş (zincir)",
+    anahtarlar: ["teklif", "hakedis", "taseron", "istihkak", "sozlesme", "zincir"],
     yanit: (o) => {
       const sat: string[] = [];
-      sat.push(o.teklifAdet > 0 ? `${o.teklifAdet} teklif, toplam ${tl(o.teklifToplam)}.` : "Henüz teklif yok.");
-      sat.push(o.hakedisSayi > 0 ? `${o.hakedisSayi} hakediş kaydı var.` : "Hakediş kaydı yok.");
+      // Zincir: keşif → teklif → hakediş
+      if (o.kesifPiyasa > 0) sat.push(`Keşif (maliyet) ${tl(o.kesifPiyasa)}.`);
+      sat.push(o.teklifAdet > 0 ? `${o.teklifAdet} teklif, toplam ${tl(o.teklifToplam)}.` : "Henüz teklif yok (keşiften oluşturulabilir).");
+      if (o.hakedisSayi > 0) {
+        const ilerleme = o.hakedisSozlesme > 0 ? Math.round((o.hakedisKumulatif / o.hakedisSozlesme) * 100) : 0;
+        sat.push(`${o.hakedisSayi} hakediş; sözleşme ${tl(o.hakedisSozlesme)}, kümülatif imalat ${tl(o.hakedisKumulatif)} (%${ilerleme}).`);
+      } else {
+        sat.push("Hakediş yok (kabul edilen teklif­ten sözleşme yüklenebilir).");
+      }
       return sat.join(" ");
     },
   },
