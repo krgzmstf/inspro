@@ -11,6 +11,7 @@ import {
   deleteIsKalemi,
   isOzeti,
 } from "@/lib/isSurecleri";
+import { senkronAsamaIsSurecleri } from "@/lib/entegrasyon";
 
 const GUN_MS = 86400000;
 const ETIKET_W = 176; // px — sol iş adı sütunu
@@ -33,6 +34,7 @@ export default function IsSurecleriPage() {
     const initial = id && list.some((p) => p.id === id) ? id : (list[0]?.id ?? "");
     if (initial) {
       setProjectId(initial);
+      senkronAsamaIsSurecleri(initial); // İş Takibi kalemlerini programa yansıt
       setKalemler(loadIsSurecleri(initial));
     }
   }, []);
@@ -50,6 +52,7 @@ export default function IsSurecleriPage() {
 
   function switchProject(id: string) {
     setProjectId(id);
+    if (id) senkronAsamaIsSurecleri(id);
     setKalemler(id ? loadIsSurecleri(id) : []);
     setAcikDep(null);
   }

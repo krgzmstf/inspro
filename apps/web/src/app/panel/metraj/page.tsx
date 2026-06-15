@@ -19,6 +19,7 @@ import {
 import { type Poz, ensurePozlarSeeded, pozIndex, etkinFiyat, POZ_DATA_DATE } from "@/lib/pozlar";
 import { kesifOzeti } from "@/lib/calc/kesif";
 import { type KesifSatir, kesifHesapla } from "@/lib/kesifEslesme";
+import { type AsamaKalem, projeTumKalemler, asamaToplamFiyat } from "@/lib/asamaKalem";
 import { excelYaz, pdfYazdir } from "@/lib/disaAktar";
 
 export default function MetrajPage() {
@@ -26,6 +27,7 @@ export default function MetrajPage() {
   const [projectId, setProjectId] = useState("");
   const [items, setItems] = useState<MetrajItem[]>([]);
   const [pozlar, setPozlar] = useState<Poz[]>([]);
+  const [asamaKalemler, setAsamaKalemler] = useState<AsamaKalem[]>([]);
 
   // yeni satır formu
   const [mahal, setMahal] = useState("");
@@ -78,6 +80,7 @@ export default function MetrajPage() {
     if (initial) {
       setProjectId(initial);
       setItems(loadMetraj(initial));
+      setAsamaKalemler(Object.values(projeTumKalemler(initial)).flat());
     }
   }, []);
 
@@ -96,8 +99,11 @@ export default function MetrajPage() {
   function switchProject(id: string) {
     setProjectId(id);
     setItems(id ? loadMetraj(id) : []);
+    setAsamaKalemler(id ? Object.values(projeTumKalemler(id)).flat() : []);
     setError("");
   }
+
+  const asamaToplam = useMemo(() => asamaToplamFiyat(asamaKalemler), [asamaKalemler]);
 
   function handleAdd(e: React.FormEvent) {
     e.preventDefault();
@@ -211,6 +217,61 @@ export default function MetrajPage() {
           Bu projede henüz eşleştirilebilir metraj yok. Proje sihirbazında daire/bina detaylarını
           girin; buraya otomatik gelsin. (Aşağıdan elle de poz ekleyebilirsiniz.)
         </div>
+      )}
+
+      {/* ═══ İş Takibi Kalemleri (yol haritası) — keşfe dahil ═══ */}
+      {asamaKalemler.length > 0 && (
+        <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h2 className="text-lg font-extrabold text-slate-900">🗂️ İş Takibi Kalemleri</h2>
+              <p className="text-xs text-slate-500">
+                Yol haritası aşamalarına eklediğiniz işler/bedeller (ruhsat, harç, proje, taşeron…). Keşif maliyetine eklenir.
+              </p>
+            </div>
+            <div className="rounded-xl bg-ink-950 px-4 py-2 text-right">
+              <div className="text-[10px] font-semibold uppercase text-white/60">İş Takibi Toplamı</div>
+              <div className="text-lg font-extrabold text-brand-400">{formatTL(asamaToplam)}</div>
+            </div>
+          </div>
+          <div className="mt-3 overflow-x-auto rounded-xl border border-slate-200">
+            <table className="w-full min-w-[640px] text-sm">
+              <thead>
+                <tr className="bg-slate-50 text-left text-[11px] font-bold uppercase tracking-wide text-slate-500">
+                  <th className="px-3 py-2">Aşama</th>
+                  <th className="px-3 py-2">İş Kalemi</th>
+                  <th className="px-3 py-2">Kişi/Firma</th>
+                  <th className="px-3 py-2 text-center">Durum</th>
+                  <th className="px-3 py-2 text-right">Planlanan</th>
+                </tr>
+              </thead>
+              <tbody>
+                {asamaKalemler.filter((k) => (k.fiyat ?? 0) > 0).map((k) => (
+                  <tr key={k.id} className="border-t border-slate-100 hover:bg-slate-50/60">
+                    <td className="px-3 py-2 text-xs text-slate-500">{k.asama}</td>
+                    <td className="px-3 py-2 font-semibold text-slate-800">{k.ad}</td>
+                    <td className="px-3 py-2 text-xs text-slate-600">{k.personelAd || "—"}</td>
+                    <td className="px-3 py-2 text-center">
+                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${k.durum === "tamam" ? "bg-emerald-100 text-emerald-700" : k.durum === "devam" ? "bg-blue-100 text-blue-700" : "bg-slate-100 text-slate-500"}`}>
+                        {k.durum === "tamam" ? "Tamam" : k.durum === "devam" ? "Devam" : "Bekliyor"}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2 text-right font-bold text-slate-900">{formatTL(k.fiyat ?? 0)}</td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr className="border-t-2 border-slate-200 bg-slate-50 font-extrabold">
+                  <td colSpan={4} className="px-3 py-2.5 text-right text-xs uppercase text-slate-500">İş Takibi Toplamı</td>
+                  <td className="px-3 py-2.5 text-right text-brand-600">{formatTL(asamaToplam)}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+          <p className="mt-2 text-[11px] text-slate-400">
+            Bu kalemler İş Takibi&apos;nde (proje detayı → yol haritası) yönetilir; tutar değişince keşif buradan güncellenir.
+          </p>
+        </section>
       )}
 
       {projects.length === 0 ? (
@@ -411,6 +472,17 @@ export default function MetrajPage() {
               <div className="mt-1 text-xs text-white/60">
                 {items.length} satır · {mahaller.length} mahal
               </div>
+
+              {asamaToplam > 0 && (
+                <div className="mt-3 space-y-1 rounded-xl border border-white/10 bg-white/5 p-3 text-xs">
+                  <div className="flex justify-between"><span className="text-white/60">Metraj keşfi</span><b>{formatTL(ozet.genelToplam)}</b></div>
+                  <div className="flex justify-between"><span className="text-white/60">İş Takibi kalemleri</span><b>{formatTL(asamaToplam)}</b></div>
+                  <div className="mt-1 flex justify-between border-t border-white/10 pt-1 text-sm">
+                    <span className="text-white/80">Toplam proje maliyeti</span>
+                    <b className="text-brand-400">{formatTL(ozet.genelToplam + asamaToplam)}</b>
+                  </div>
+                </div>
+              )}
 
               {project?.budget != null && project.budget > 0 && (
                 <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-3 text-xs">
