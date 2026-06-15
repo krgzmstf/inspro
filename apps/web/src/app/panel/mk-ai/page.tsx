@@ -11,6 +11,10 @@ import {
   mkAiRiskAnaliz, riskRenk, skorRenk, riskOzetMetni, SEVIYE_LABEL, KATEGORI_LABEL,
 } from "@/lib/mkAi";
 import { mkAiProjeDosyasi } from "@/lib/mkAiDosya";
+import {
+  type Tespit, type YerelCevap,
+  mkAiSorgu, mkAiTespitler, uygulaTespit,
+} from "@/lib/mkAiYerel";
 import { pollinationsUrl } from "@/lib/gorsel";
 
 interface AiYorum { yorum: string; oneriler: string[]; demoMode: boolean; saglayici: string | null; guven: number | null }
@@ -50,6 +54,12 @@ export default function MkAiPage() {
   const [yuklenenGorsel, setYuklenenGorsel] = useState<{ dataUrl: string; mime: string } | null>(null);
   const [gorselMotor, setGorselMotor] = useState<string | null>(null);
   const dosyaRef = useRef<HTMLInputElement>(null);
+  // Yerel asistan (AI'sız)
+  const [yerelSoru, setYerelSoru] = useState("");
+  const [yerelGecmis, setYerelGecmis] = useState<(YerelCevap & { soru: string })[]>([]);
+  const [tespitler, setTespitler] = useState<Tespit[]>([]);
+  const [duzeltId, setDuzeltId] = useState<string | null>(null);
+  const [duzeltMesaj, setDuzeltMesaj] = useState("");
 
   useEffect(() => {
     const ps = loadProjects();
@@ -77,8 +87,11 @@ export default function MkAiPage() {
     setGorselHata("");
     setYuklenenGorsel(null);
     setGorselMotor(null);
+    setYerelGecmis([]);
+    setYerelSoru("");
+    setDuzeltMesaj("");
     const project = getProject(id);
-    if (!project) { setGirdi(null); setRapor(null); return; }
+    if (!project) { setGirdi(null); setRapor(null); setTespitler([]); return; }
     const g: RiskGirdi = {
       project,
       muhasebe: loadMuhasebe(id),
@@ -87,6 +100,36 @@ export default function MkAiPage() {
     };
     setGirdi(g);
     setRapor(mkAiRiskAnaliz(g));
+    setTespitler(mkAiTespitler(id));
+  }
+
+  function yerelSorgula(q: string) {
+    if (!q.trim() || !projectId) return;
+    const cevap = mkAiSorgu(projectId, q.trim());
+    setYerelGecmis((g) => [...g, { soru: q.trim(), ...cevap }]);
+    setYerelSoru("");
+  }
+
+  async function duzelt(id: string) {
+    if (!projectId || duzeltId) return;
+    setDuzeltId(id);
+    setDuzeltMesaj("");
+    try {
+      const sonuc = await uygulaTespit(projectId, id);
+      setDuzeltMesaj((sonuc.ok ? "✓ " : "⚠️ ") + sonuc.mesaj);
+      // Düzeltme veriyi değiştirdi → analizi ve tespitleri tazele
+      const project = getProject(projectId);
+      if (project) {
+        const g: RiskGirdi = { project, muhasebe: loadMuhasebe(projectId), saha: loadSaha(projectId), isKalemleri: loadIsSurecleri(projectId) };
+        setGirdi(g);
+        setRapor(mkAiRiskAnaliz(g));
+      }
+      setTespitler(mkAiTespitler(projectId));
+    } catch (e) {
+      setDuzeltMesaj("⚠️ " + (e as Error).message);
+    } finally {
+      setDuzeltId(null);
+    }
   }
 
   const proje = useMemo(() => (projectId ? getProject(projectId) : undefined), [projectId]);
@@ -265,6 +308,88 @@ export default function MkAiPage() {
                 {yukleniyor ? "mk_ai düşünüyor…" : "mk_ai yorumu al"}
               </button>
               {hata && <p className="mt-2 text-xs font-semibold text-red-600">{hata}</p>}
+            </div>
+          </div>
+
+          {/* Yerel Asistan (AI'sız) — anında, çevrimdışı */}
+          <div className="mt-5 rounded-2xl border-2 border-ink-900/15 bg-white p-5 shadow-sm">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-lg">🧠</span>
+              <h3 className="text-sm font-extrabold text-slate-800">Yerel Asistan</h3>
+              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700" title="Hiçbir yapay zeka servisine bağlanmaz; tüm modül verinizi yerel kurallarla analiz eder">
+                AI'sız · anında · çevrimdışı
+              </span>
+            </div>
+            <p className="mt-2 text-xs leading-relaxed text-slate-500">
+              Tüm modülleri (bütçe, nakit, takvim, saha, personel, yol haritası kalemleri) birleştirip yanıtlar.
+              Anahtar yok, internet yok — sadece sizin verileriniz.
+            </p>
+
+            {/* Soru-cevap geçmişi */}
+            {yerelGecmis.length > 0 && (
+              <div className="mt-3 max-h-72 space-y-2 overflow-y-auto pr-1">
+                {yerelGecmis.map((m, i) => (
+                  <div key={i} className="rounded-xl bg-slate-50 p-3">
+                    <div className="text-xs font-bold text-ink-900">› {m.soru}</div>
+                    <div className="mt-1 text-[11px] font-bold uppercase tracking-wide text-emerald-600">{m.baslik}</div>
+                    <p className="mt-0.5 whitespace-pre-wrap text-sm leading-relaxed text-slate-700">{m.cevap}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Hızlı sorular */}
+            <div className="mt-3 flex flex-wrap gap-2">
+              {["Bütçe ne durumda?", "Bekleyen ödeme var mı?", "Gecikme var mı?", "En büyük risk ne?", "Kaç kişi çalışıyor?", "Yol haritası kalemleri ne durumda?"].map((q) => (
+                <button key={q} onClick={() => yerelSorgula(q)}
+                  className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-ink-900 hover:text-ink-900">
+                  {q}
+                </button>
+              ))}
+            </div>
+
+            <form onSubmit={(e) => { e.preventDefault(); yerelSorgula(yerelSoru); }} className="mt-3 flex gap-2">
+              <input value={yerelSoru} onChange={(e) => setYerelSoru(e.target.value)}
+                placeholder="Projeyle ilgili sor (yerel, anında)…"
+                className="flex-1 rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:border-ink-900" />
+              <button type="submit" disabled={!yerelSoru.trim()}
+                className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-emerald-700 disabled:opacity-50">
+                Sor
+              </button>
+            </form>
+
+            {/* Tespitler & otomatik düzeltmeler */}
+            <div className="mt-5 border-t border-slate-100 pt-4">
+              <div className="flex items-center gap-2">
+                <h4 className="text-xs font-extrabold uppercase tracking-wide text-slate-500">🔧 Tespitler & Otomatik Düzeltmeler</h4>
+                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500">{tespitler.length}</span>
+              </div>
+              {duzeltMesaj && (
+                <p className={`mt-2 rounded-lg px-3 py-2 text-xs font-semibold ${duzeltMesaj.startsWith("✓") ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>{duzeltMesaj}</p>
+              )}
+              {tespitler.length === 0 ? (
+                <p className="mt-2 text-sm text-emerald-600">✓ Modüller arası tutarsızlık veya bekleyen entegrasyon yok.</p>
+              ) : (
+                <div className="mt-2 space-y-2">
+                  {tespitler.map((t) => {
+                    const renk = t.tur === "uyari" ? "border-amber-200 bg-amber-50" : t.tur === "firsat" ? "border-sky-200 bg-sky-50" : "border-slate-200 bg-slate-50";
+                    return (
+                      <div key={t.id} className={`flex flex-wrap items-center gap-3 rounded-xl border p-3 ${renk}`}>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-sm font-bold text-slate-800">{t.baslik}</div>
+                          <p className="text-xs text-slate-600">{t.aciklama}</p>
+                        </div>
+                        {t.duzeltme && (
+                          <button onClick={() => duzelt(t.id)} disabled={duzeltId !== null}
+                            className="shrink-0 rounded-lg bg-ink-900 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-ink-800 disabled:opacity-50">
+                            {duzeltId === t.id ? "Uygulanıyor…" : `🔧 ${t.duzeltme}`}
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
 

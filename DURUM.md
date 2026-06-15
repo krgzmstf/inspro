@@ -37,6 +37,13 @@
 4. **Veri yedekleme/geri yükleme** (`lib/yedek.ts` + dashboard `YedekKart`): tüm inspro-* verisini JSON indir/geri yükle.
 5. **Fiyat Ajanı çok-sağlayıcıya taşındı** (`/api/fiyat-guncelle`): Anthropic kaldırıldı → router + generateObject. (Not: ücretsiz sağlayıcı web araması yapamaz → "AI tahmini" aralık.)
 
+## mk_ai Yerel Beyin + Modül Entegrasyonu (15 Haziran — yeni)
+`lib/mkAiYerel.ts` — **hiçbir yapay zekâ servisine bağlanmadan** tüm modülleri birleştirir:
+- `projeOzet()` — projeler + iş süreçleri + keşif/metraj + personel + muhasebe + saha + aşama kalemleri + hakediş + teklif tek bütünleşik resimde (tek doğruluk kaynağı).
+- `mkAiSorgu()` — kural-bazlı soru-cevap (Türkçe anahtar eşleme): bütçe, nakit/ödeme, takvim/gecikme, saha/kusur, personel, risk, teklif/hakediş, yol haritası kalemleri.
+- `mkAiTespitler()` + `uygulaTespit()` — modüller arası tutarsızlık tespiti ve **mk_ai'nin kendi başına düzeltmesi**: (1) keşiften bütçe yaz, (2) ödenmiş aşama kalemlerini muhasebeye gider olarak aktar (belgeNo `ASAMA:<id>` ile izlenir), (3) aşama durumlarını kalem onayına göre eşitle.
+- mk-ai panelinde "🧠 Yerel Asistan (AI'sız · anında · çevrimdışı)" bölümü: hızlı sorular + tespit/düzelt butonları. Mevcut harici-AI sohbeti/görseli aynen duruyor.
+
 ## Profesyonel Muhasebe (15 Haziran — yeni)
 `lib/muhasebe.ts` (yeniden yazıldı, eski kayıtlarla geriye uyumlu) + `lib/finansHesap.ts` (yeni) + sekmeli sayfa:
 - **KDV + tevkifat motoru**: matrah/oran/tutar + KDV tevkifatı (yapı işleri 4/10 ön tanımlı), brüt/net otomatik.

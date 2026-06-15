@@ -47,7 +47,7 @@ export default function PanelLayout({
             <Link
               key={item.label}
               href={item.href}
-              className={`flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
+              className={`flex items-center gap-3 rounded-xl px-4 py-2.5 text-base font-semibold transition ${
                 pathname === item.href ||
                 (item.href === "/panel" && pathname.startsWith("/panel/proje"))
                   ? "bg-brand-500 text-white shadow-lg shadow-brand-500/20"
@@ -56,7 +56,7 @@ export default function PanelLayout({
             >
               {item.img ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={item.img} alt="" className="h-5 w-5 shrink-0 rounded object-cover" />
+                <img src={item.img} alt="" className="h-6 w-6 shrink-0 rounded object-cover" />
               ) : (
                 <span>{item.icon}</span>
               )}
@@ -64,7 +64,7 @@ export default function PanelLayout({
             </Link>
           ))}
         </nav>
-        <div className="border-t border-white/10 p-4 text-xs text-white/50">
+        <div className="border-t border-white/10 p-4 text-sm text-white/50">
           <Link href="/tema" className="block transition hover:text-white">
             🎨 Tema Ayarları
           </Link>

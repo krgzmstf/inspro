@@ -158,6 +158,26 @@ export function deleteMuhasebe(id: string) {
   saveAll(loadAll().filter((k) => k.id !== id));
 }
 
+/** Bir kaydı günceller; matrah/oran değişirse türetilenleri yeniden hesaplar.
+   patch.durum verilmezse ödenen tutara göre durum yeniden türetilir. */
+export function updateMuhasebe(id: string, patch: Partial<MuhasebeKayit>): MuhasebeKayit | undefined {
+  const hepsi = loadAll();
+  const i = hepsi.findIndex((k) => k.id === id);
+  if (i < 0) return undefined;
+  let k = { ...hepsi[i], ...patch };
+  const h = hesaplaTutarlar(k.matrah, k.kdvOran, k.tevkifatOran);
+  k = { ...k, ...h };
+  k.odenenTutar = Math.min(k.net, Math.max(0, k.odenenTutar));
+  if (patch.durum === undefined) {
+    k.durum = k.odenenTutar <= 0 ? "acik" : k.odenenTutar >= k.net ? "odendi" : "kismi";
+  } else if (k.durum === "odendi") {
+    k.odenenTutar = k.net;
+  }
+  hepsi[i] = k;
+  saveAll(hepsi);
+  return k;
+}
+
 /** Tahsilat / ödeme kaydet — ödenen tutarı artırır, durumu günceller. */
 export function odemeKaydet(id: string, ekTutar: number, hesapId?: string): MuhasebeKayit | undefined {
   const hepsi = loadAll();

@@ -19,6 +19,7 @@ import {
   loadMuhasebe,
   addMuhasebe,
   deleteMuhasebe,
+  updateMuhasebe,
   odemeKaydet,
   hesaplaTutarlar,
   muhasebeOzeti,
@@ -40,6 +41,10 @@ import {
 import { type Poz, ensurePozlarSeeded } from "@/lib/pozlar";
 import { kesifHesapla } from "@/lib/kesifEslesme";
 import { pdfYazdir, excelYaz } from "@/lib/disaAktar";
+import {
+  type BekleyenMuh,
+  senkronAsamaMuhasebe, bekleyenMuhasebelestirme,
+} from "@/lib/entegrasyon";
 
 type Sekme = "hareketler" | "cari" | "kasa" | "raporlar";
 
@@ -63,6 +68,17 @@ export default function MuhasebePage() {
   const [pozlar, setPozlar] = useState<Poz[]>([]);
   const [hesaplar, setHesaplar] = useState<FinansHesap[]>([]);
   const [sekme, setSekme] = useState<Sekme>("hareketler");
+  const [bekleyenler, setBekleyenler] = useState<BekleyenMuh[]>([]);
+  // Muhasebeleştirme modalı (eksik alanları doldurup onayla)
+  const [muhMod, setMuhMod] = useState<BekleyenMuh | null>(null);
+  const [mMatrah, setMMatrah] = useState("");
+  const [mKdv, setMKdv] = useState(20);
+  const [mTevkifat, setMTevkifat] = useState(0);
+  const [mKategori, setMKategori] = useState<string>(GIDER_KATEGORILERI[0]);
+  const [mTaraf, setMTaraf] = useState("");
+  const [mBelge, setMBelge] = useState("");
+  const [mTarih, setMTarih] = useState(bugun());
+  const [mHesap, setMHesap] = useState("");
 
   // form
   const [tip, setTip] = useState<KayitTipi>("gider");
@@ -95,7 +111,9 @@ export default function MuhasebePage() {
     const initial = id && list.some((p) => p.id === id) ? id : (list[0]?.id ?? "");
     if (initial) {
       setProjectId(initial);
+      senkronAsamaMuhasebe(initial); // İş Takibi kalemlerini muhasebeye yansıt (açık)
       setKayitlar(loadMuhasebe(initial));
+      setBekleyenler(bekleyenMuhasebelestirme(initial));
     }
   }, []);
 
@@ -134,9 +152,46 @@ export default function MuhasebePage() {
 
   function switchProject(id: string) {
     setProjectId(id);
+    if (id) senkronAsamaMuhasebe(id);
     setKayitlar(id ? loadMuhasebe(id) : []);
+    setBekleyenler(id ? bekleyenMuhasebelestirme(id) : []);
     setSeciliCari(null);
   }
+
+  // Muhasebeleştirme modalını aç — kayıttaki mevcut değerleri yükle
+  function muhAc(b: BekleyenMuh) {
+    const kayit = kayitlar.find((k) => k.id === b.muhasebeId);
+    setMuhMod(b);
+    setMMatrah(String(kayit?.matrah ?? b.matrah));
+    setMKdv(kayit?.kdvOran ?? 20);
+    setMTevkifat(kayit?.tevkifatOran ?? 0);
+    setMKategori(kayit?.kategori ?? GIDER_KATEGORILERI[0]);
+    setMTaraf(kayit?.taraf ?? b.kisi ?? "");
+    setMBelge("");
+    setMTarih(kayit?.tarih ?? bugun());
+    setMHesap(kayit?.hesapId ?? hesaplar[0]?.id ?? "");
+  }
+
+  function muhOnayla() {
+    if (!muhMod || !projectId) return;
+    const matrah = parseFloat(mMatrah);
+    if (!matrah || matrah <= 0) return;
+    updateMuhasebe(muhMod.muhasebeId, {
+      matrah, kdvOran: mKdv, tevkifatOran: mTevkifat,
+      kategori: mKategori, taraf: mTaraf.trim(),
+      aciklama: `${muhMod.asama} — ${muhMod.ad}${mBelge.trim() ? ` (${mBelge.trim()})` : ""}`,
+      tarih: mTarih, hesapId: mHesap || undefined,
+      durum: "odendi",
+    });
+    setKayitlar(loadMuhasebe(projectId));
+    setBekleyenler(bekleyenMuhasebelestirme(projectId));
+    setMuhMod(null);
+  }
+
+  const muhOnizleme = useMemo(
+    () => hesaplaTutarlar(parseFloat(mMatrah) || 0, mKdv, mTevkifat),
+    [mMatrah, mKdv, mTevkifat],
+  );
 
   function handleTipDegis(t: KayitTipi) {
     setTip(t);
@@ -269,6 +324,38 @@ export default function MuhasebePage() {
           {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
       </div>
+
+      {/* Muhasebeleştirme bekleyenler — turuncu, yanıp sönen kutucuklar */}
+      {bekleyenler.length > 0 && (
+        <div className="mt-5 rounded-2xl border-2 border-orange-300 bg-orange-50 p-4 shadow-sm">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-lg">🔔</span>
+            <h2 className="text-sm font-extrabold text-orange-800">Muhasebeleştirme bekliyor ({bekleyenler.length})</h2>
+          </div>
+          <p className="mt-1 text-xs text-orange-700">
+            İş Takibi&apos;nde ödenen bu işler <b>henüz muhasebeleşmedi</b>. Eksik bilgileri (KDV, tevkifat, kategori, hesap) doldurup onaylayın.
+          </p>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            {bekleyenler.map((b) => (
+              <button
+                key={b.muhasebeId}
+                onClick={() => muhAc(b)}
+                className="flex animate-pulse items-center gap-2 rounded-xl border-2 border-orange-400 bg-orange-100 p-3 text-left transition hover:animate-none hover:bg-orange-200"
+              >
+                <span className="text-lg">🟠</span>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-sm font-bold text-orange-900">{b.ad}</div>
+                  <div className="truncate text-[11px] text-orange-700">{b.asama}{b.kisi ? ` · ${b.kisi}` : ""}</div>
+                </div>
+                <div className="shrink-0 text-right">
+                  <div className="text-sm font-extrabold text-orange-900">{formatTL(b.matrah)}</div>
+                  <div className="text-[10px] font-bold text-orange-600">Muhasebeleştir →</div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Özet kartları */}
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -667,6 +754,85 @@ export default function MuhasebePage() {
             <div className="mt-5 flex gap-2">
               <button onClick={() => setOdemeKayit(null)} className="flex-1 rounded-xl border-2 border-slate-200 py-2.5 text-sm font-bold text-slate-500 hover:bg-slate-50">Vazgeç</button>
               <button onClick={odemeOnayla} className="flex-1 rounded-xl bg-brand-500 py-2.5 text-sm font-bold text-white hover:bg-brand-600">Kaydet</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Muhasebeleştirme modalı (eksik alanları doldur → onayla) */}
+      {muhMod && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 sm:p-8" onClick={() => setMuhMod(null)}>
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start justify-between">
+              <div>
+                <div className="text-[11px] font-bold uppercase tracking-wide text-orange-600">Muhasebeleştir</div>
+                <h3 className="text-lg font-extrabold text-slate-900">{muhMod.ad}</h3>
+                <p className="text-xs text-slate-500">{muhMod.asama}{muhMod.kisi ? ` · ${muhMod.kisi}` : ""}</p>
+              </div>
+              <button onClick={() => setMuhMod(null)} className="rounded-lg px-2 py-1 text-xl text-slate-400 hover:bg-slate-100">✕</button>
+            </div>
+
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <label className="block text-sm font-semibold text-slate-700">Matrah (₺, KDV hariç)
+                <input type="number" min="0" step="0.01" value={mMatrah} onChange={(e) => setMMatrah(e.target.value)}
+                  className="mt-1 w-full rounded-xl border-2 border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500" />
+              </label>
+              <label className="block text-sm font-semibold text-slate-700">KDV Oranı
+                <select value={mKdv} onChange={(e) => setMKdv(Number(e.target.value))}
+                  className="mt-1 w-full rounded-xl border-2 border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand-500">
+                  {KDV_ORANLARI.map((o) => <option key={o} value={o}>%{o}</option>)}
+                </select>
+              </label>
+            </div>
+            <label className="mt-3 block text-sm font-semibold text-slate-700">KDV Tevkifatı
+              <select value={mTevkifat} onChange={(e) => setMTevkifat(Number(e.target.value))}
+                className="mt-1 w-full rounded-xl border-2 border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand-500">
+                {TEVKIFAT_ORANLARI.map((t) => <option key={t.etiket} value={t.oran}>{t.etiket}</option>)}
+              </select>
+            </label>
+
+            <div className="mt-3 rounded-xl bg-slate-50 p-3 text-xs">
+              <Satir k="KDV" v={muhOnizleme.kdvTutar} />
+              {mTevkifat > 0 && <Satir k="Tevkifat (−)" v={-muhOnizleme.tevkifatTutar} />}
+              <Satir k="Brüt" v={muhOnizleme.tutar} kalin />
+              <Satir k="Ödenen (net)" v={muhOnizleme.net} kalin renk="brand" />
+            </div>
+
+            <label className="mt-3 block text-sm font-semibold text-slate-700">Kategori
+              <select value={mKategori} onChange={(e) => setMKategori(e.target.value)}
+                className="mt-1 w-full rounded-xl border-2 border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand-500">
+                {GIDER_KATEGORILERI.map((k) => <option key={k}>{k}</option>)}
+              </select>
+            </label>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <label className="block text-sm font-semibold text-slate-700">Taraf / Firma
+                <input value={mTaraf} onChange={(e) => setMTaraf(e.target.value)} placeholder="tedarikçi / usta"
+                  className="mt-1 w-full rounded-xl border-2 border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500" />
+              </label>
+              <label className="block text-sm font-semibold text-slate-700">Belge / Fatura No
+                <input value={mBelge} onChange={(e) => setMBelge(e.target.value)} placeholder="ör: A-001234"
+                  className="mt-1 w-full rounded-xl border-2 border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500" />
+              </label>
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <label className="block text-sm font-semibold text-slate-700">Tarih
+                <input type="date" value={mTarih} onChange={(e) => setMTarih(e.target.value)}
+                  className="mt-1 w-full rounded-xl border-2 border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500" />
+              </label>
+              {hesaplar.length > 0 && (
+                <label className="block text-sm font-semibold text-slate-700">Ödendiği hesap
+                  <select value={mHesap} onChange={(e) => setMHesap(e.target.value)}
+                    className="mt-1 w-full rounded-xl border-2 border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand-500">
+                    <option value="">— Belirtilmedi —</option>
+                    {hesaplar.map((h) => <option key={h.id} value={h.id}>{h.ad}</option>)}
+                  </select>
+                </label>
+              )}
+            </div>
+
+            <div className="mt-5 flex gap-2">
+              <button onClick={() => setMuhMod(null)} className="flex-1 rounded-xl border-2 border-slate-200 py-2.5 text-sm font-bold text-slate-500 hover:bg-slate-50">Vazgeç</button>
+              <button onClick={muhOnayla} className="flex-1 rounded-xl bg-emerald-600 py-2.5 text-sm font-bold text-white hover:bg-emerald-700">✓ Onayla & Muhasebeleştir</button>
             </div>
           </div>
         </div>
