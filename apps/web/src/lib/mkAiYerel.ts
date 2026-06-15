@@ -27,7 +27,7 @@ import {
   type AsamaKalem, projeTumKalemler, asamaToplamFiyat, asamaToplamAlinan,
 } from "./asamaKalem";
 import { mkAiRiskAnaliz, type RiskRapor } from "./mkAi";
-import { ensurePozlarSeeded } from "./pozlar";
+import { ensurePozlarSeeded, loadPozlar, type LibId } from "./pozlar";
 import { kesifHesapla } from "./kesifEslesme";
 
 const tl = (n: number) => formatTL(n);
@@ -50,8 +50,10 @@ export interface ProjeOzet {
   acikKusur: number; acilKusur: number; acikIsemri: number; gecikenIsemri: number;
   // personel
   personelAktif: number; gunlukYevmiye: number;
+  // keşif / metraj
+  metrajSatir: number; metrajMahal: number; kesifCsb: number; kesifPiyasa: number;
   // diğer modüller
-  metrajSatir: number; hakedisSayi: number; teklifAdet: number; teklifToplam: number;
+  hakedisSayi: number; teklifAdet: number; teklifToplam: number;
   // risk (kural motoru)
   risk: RiskRapor;
 }
@@ -75,6 +77,12 @@ export function projeOzet(projectId: string): ProjeOzet | null {
   const m = muhasebeOzeti(muhasebe);
   const io = isOzeti(isler);
   const g = bugun();
+
+  // Keşif (metraj + poz) — sync: localStorage'daki pozları kullanır
+  const lib: LibId = proje.pozKutuphane === "kut1" ? "kut1" : proje.pozKutuphane === "kut3" ? "kut3" : "kut2";
+  const kesif = metraj.length ? kesifHesapla(proje, loadPozlar(lib)) : [];
+  const kesifCsb = Math.round(kesif.reduce((s, r) => s + r.csbTutar, 0));
+  const kesifPiyasa = Math.round(kesif.reduce((s, r) => s + r.piyasaTutar, 0));
 
   const aktifPersonel = personel.filter((k) => k.aktif);
   const kusur = saha.filter((s) => s.tip === "kusur" && s.durum !== "tamam");
@@ -102,6 +110,8 @@ export function projeOzet(projectId: string): ProjeOzet | null {
     personelAktif: aktifPersonel.length,
     gunlukYevmiye: aktifPersonel.reduce((s, k) => s + (k.yevmiye || 0), 0),
     metrajSatir: metraj.length,
+    metrajMahal: new Set(metraj.map((x) => x.mahal)).size,
+    kesifCsb, kesifPiyasa,
     hakedisSayi: hakedisler.length,
     teklifAdet: teklifler.length,
     teklifToplam: teklifler.reduce((s, t) => s + teklifToplam(t).genelToplam, 0),
@@ -143,6 +153,47 @@ const NIYETLER: Niyet[] = [
       }
       const p = o.risk.projeksiyon;
       if (p.nihaiMaliyet) sat.push(`Mevcut hızla tahmini nihai maliyet (EAC) ~${tl(p.nihaiMaliyet)}${p.cpi ? `, CPI ${p.cpi.toFixed(2)}` : ""}.`);
+      if (o.kesifPiyasa > 0) sat.push(`Keşfe göre tahmini maliyet ~${tl(o.kesifPiyasa)} (piyasa).`);
+      return sat.join(" ");
+    },
+  },
+  {
+    baslik: "Keşif & Metraj",
+    anahtarlar: ["kesif", "metraj", "mahal", "imalat tutari", "poz", "tahmini maliyet", "kac para tutar"],
+    yanit: (o) => {
+      if (o.metrajSatir === 0) return "Henüz metraj girilmemiş. Keşif & Metraj modülünden mahal bazlı metraj girince keşif otomatik hesaplanır.";
+      const sat = [`${o.metrajSatir} metraj satırı, ${o.metrajMahal} mahal.`];
+      if (o.kesifPiyasa > 0) sat.push(`Keşif tutarı: ÇŞB ${tl(o.kesifCsb)}, piyasa ${tl(o.kesifPiyasa)}.`);
+      if (o.butce != null && o.kesifPiyasa > 0) {
+        const fark = o.butce - o.kesifPiyasa;
+        sat.push(fark >= 0 ? `Bütçe keşfin ${tl(fark)} üstünde (uyumlu).` : `⚠️ Keşif bütçeyi ${tl(-fark)} aşıyor.`);
+      } else if (o.butce == null && o.kesifPiyasa > 0) {
+        sat.push("Bütçe tanımsız — Tespitler'den keşif tutarını bütçeye yazabilirim.");
+      }
+      return sat.join(" ");
+    },
+  },
+  {
+    baslik: "Öncelik / Ne yapmalıyım",
+    anahtarlar: ["ne yapmali", "oncelik", "siradaki", "aksiyon", "yapilacak", "ilk once", "neye odaklan", "yapmam gereken"],
+    yanit: (o) => {
+      const yap: string[] = [];
+      if (o.risk.faktorler[0]) yap.push(`Risk: ${o.risk.faktorler[0].oneri}`);
+      if (o.acikBorc > 0) yap.push(`Ödenecek ${tl(o.acikBorc)} açık borç var — ödeme planı yapın.`);
+      if (o.isGeciken > 0) yap.push(`${o.isGeciken} geciken işi yeniden terminleyin.`);
+      if (o.acilKusur > 0) yap.push(`${o.acilKusur} acil/yüksek kusuru kapatın.`);
+      if (o.gecikenIsemri > 0) yap.push(`${o.gecikenIsemri} termini geçmiş iş emrini yeniden atayın.`);
+      if (o.butce == null && o.kesifPiyasa > 0) yap.push("Bütçeyi keşiften belirleyin.");
+      if (yap.length === 0) return "Acil bir aksiyon görünmüyor; proje sağlıklı. Veri girişini güncel tutun.";
+      return "Öncelik sırası:\n" + yap.map((s, i) => `${i + 1}. ${s}`).join("\n");
+    },
+  },
+  {
+    baslik: "Gelir / Tahsilat",
+    anahtarlar: ["gelir", "tahsilat", "satis", "kapora", "kat karsiligi", "ne kazandik"],
+    yanit: (o) => {
+      const sat = [`Toplam gelir ${tl(o.gelir)}, tahsil edilen ${tl(o.gelir - o.acikAlacak)}.`];
+      if (o.acikAlacak > 0) sat.push(`Tahsil edilecek açık alacak ${tl(o.acikAlacak)}.`);
       return sat.join(" ");
     },
   },
@@ -311,6 +362,15 @@ export function mkAiTespitler(projectId: string): Tespit[] {
       baslik: "Aşama durumları kalemlerle uyumsuz",
       aciklama: `${uyumsuz.length} aşamanın durumu, içindeki kalemlerin onay durumuyla örtüşmüyor. İlerlemeye göre güncelleyebilirim.`,
       duzeltme: "Durumları eşitle",
+    });
+  }
+
+  // 3b) Keşif bütçeyi aşıyor (planlama uyarısı)
+  if (o.butce != null && o.kesifPiyasa > 0 && o.kesifPiyasa > o.butce * 1.1) {
+    t.push({
+      id: "kesif-butce", tur: "uyari",
+      baslik: "Keşif bütçeyi aşıyor",
+      aciklama: `Keşif piyasa tutarı ${tl(o.kesifPiyasa)}, bütçe ${tl(o.butce)} — %${Math.round((o.kesifPiyasa / o.butce - 1) * 100)} üzerinde. Bütçeyi revize edin veya kapsamı gözden geçirin.`,
     });
   }
 

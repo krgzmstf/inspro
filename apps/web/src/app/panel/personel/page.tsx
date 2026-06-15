@@ -15,6 +15,7 @@ import {
   ayinGunleri,
   personelGun,
 } from "@/lib/personel";
+import { senkronPuantajMuhasebe } from "@/lib/entegrasyon";
 
 type Sekme = "calisanlar" | "puantaj";
 
@@ -37,6 +38,18 @@ export default function PersonelPage() {
   // puantaj
   const [ay, setAy] = useState(new Date().toISOString().slice(0, 7));
   const [puantaj, setPuantajMap] = useState<Map<string, PuantajDeger>>(new Map());
+  const [muhMesaj, setMuhMesaj] = useState("");
+
+  function ayiMuhasebeyeIsle() {
+    if (!projectId) return;
+    const s = senkronPuantajMuhasebe(projectId, ay);
+    const toplam = s.olusturulan + s.guncellenen;
+    setMuhMesaj(
+      toplam === 0 && s.silinen === 0
+        ? "Değişiklik yok (bu ay için kayıtlar güncel)."
+        : `✓ Muhasebeye işlendi: ${s.olusturulan} yeni, ${s.guncellenen} güncellendi${s.silinen ? `, ${s.silinen} kaldırıldı` : ""}. Muhasebede "İşçilik" açık gideri olarak görünür.`,
+    );
+  }
 
   useEffect(() => {
     const list = loadProjects();
@@ -269,7 +282,16 @@ export default function PersonelPage() {
               </table>
             </div>
           )}
-          <p className="mt-2 text-xs text-slate-500">💡 Tam gün = 1, yarım = 0,5. Tutar = toplam gün × yevmiye. Bu toplam muhasebeye işçilik gideri olarak girilebilir.</p>
+          {liste.length > 0 && (
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <button onClick={ayiMuhasebeyeIsle}
+                className="rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-emerald-700">
+                📒 Bu ayı muhasebeye işle (işçilik)
+              </button>
+              {muhMesaj && <span className="text-xs font-semibold text-slate-600">{muhMesaj}</span>}
+            </div>
+          )}
+          <p className="mt-2 text-xs text-slate-500">💡 Tam gün = 1, yarım = 0,5. Tutar = toplam gün × yevmiye. Kişi başı bir &quot;İşçilik&quot; açık gideri oluşturur (cari = çalışan); ödeme yapınca muhasebede &quot;ödendi&quot; yapın.</p>
         </div>
       )}
 

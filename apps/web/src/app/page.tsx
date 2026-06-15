@@ -1,4 +1,5 @@
 import Link from "next/link";
+import MkAiWidget from "./MkAiWidget";
 
 /* ──────────────────────────────────────────────────────────
    insPRO Vitrin Ana Sayfası
@@ -235,6 +236,12 @@ export default function Home() {
         />
         <div className="relative mx-auto grid max-w-7xl gap-12 px-4 py-20 sm:px-6 lg:grid-cols-2 lg:items-center lg:py-28">
           <div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/inspro-logo.png"
+              alt="insPRO"
+              className="mb-6 h-28 w-auto object-contain drop-shadow-2xl sm:h-36"
+            />
             <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-brand-500/40 bg-brand-500/10 px-4 py-1.5 text-xs font-semibold text-brand-400">
               <span className="h-2 w-2 animate-pulse rounded-full bg-brand-500" />
               Yapay zeka destekli inşaat platformu
@@ -589,6 +596,9 @@ export default function Home() {
           </p>
         </div>
       </footer>
+
+      {/* Yüzen mk_ai sohbet balonu */}
+      <MkAiWidget />
     </main>
   );
 }

@@ -21,6 +21,7 @@ export interface IsKalemi {
   bitis: string;       // ISO gün | ""
   ilerleme: number;    // 0-100
   oncekiler?: string[]; // önce bitmesi gereken iş kalemlerinin id'leri (bağımlılık)
+  kaynakKalemId?: string; // bağlı olduğu aşama kalemi (otomatik senkron için)
 }
 
 const STORAGE_KEY = "inspro-issurecleri";
@@ -74,6 +75,11 @@ export function loadIsSurecleri(projectId: string): IsKalemi[] {
 
 function siralaTarih(k: IsKalemi[]): IsKalemi[] {
   return [...k].sort((a, b) => (a.baslangic || "9999").localeCompare(b.baslangic || "9999"));
+}
+
+/** Tohumlama YAPMADAN projenin mevcut iş kalemlerini döndürür (senkron için). */
+export function isKalemleriHam(projectId: string): IsKalemi[] {
+  return loadAll().filter((k) => k.projectId === projectId);
 }
 
 export function addIsKalemi(data: Omit<IsKalemi, "id">): IsKalemi {

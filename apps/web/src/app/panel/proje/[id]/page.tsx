@@ -31,7 +31,7 @@ import {
   projeTumKalemler,
 } from "@/lib/asamaKalem";
 import { type Personel, loadPersonel } from "@/lib/personel";
-import { senkronAsamaMuhasebe } from "@/lib/entegrasyon";
+import { senkronAsamaMuhasebe, senkronAsamaIsSurecleri } from "@/lib/entegrasyon";
 
 const STATUS_FLOW: Record<PhaseStatus, PhaseStatus> = {
   bekliyor: "devam",
@@ -77,7 +77,8 @@ export default function ProjeDetayPage() {
   }, [id]);
 
   function takipYenile() {
-    senkronAsamaMuhasebe(id); // İş Takibi → Muhasebe (planlanan açık, ödenen ödendi)
+    senkronAsamaMuhasebe(id);       // İş Takibi → Muhasebe (planlanan açık)
+    senkronAsamaIsSurecleri(id);    // İş Takibi → İş Süreçleri (Gantt)
     setTakipler(projeTumKalemler(id));
     setSayilar(projeAsamaSayilari(id));
   }
@@ -106,7 +107,8 @@ export default function ProjeDetayPage() {
   }
 
   function kalemleriYenile(asama: string) {
-    senkronAsamaMuhasebe(id); // değişiklikleri muhasebeye yansıt
+    senkronAsamaMuhasebe(id);       // değişiklikleri muhasebeye yansıt
+    senkronAsamaIsSurecleri(id);    // İş Süreçleri'ne yansıt
     setKalemler(loadAsamaKalemleri(id, asama));
     setSayilar(projeAsamaSayilari(id));
     setTakipler(projeTumKalemler(id));

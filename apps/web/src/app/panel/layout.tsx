@@ -34,13 +34,12 @@ export default function PanelLayout({
     <div className="flex min-h-screen bg-slate-100">
       {/* Kenar çubuğu */}
       <aside className="hidden w-64 shrink-0 flex-col bg-ink-950 text-white lg:flex">
-        <div className="flex h-16 items-center border-b border-white/10 px-6">
-          <Link href="/" className="text-xl font-extrabold tracking-tight">
-            ins<span className="text-brand-500">PRO</span>
-            <span className="ml-2 text-xs font-medium text-white/60">
-              Panel
-            </span>
+        <div className="flex flex-col items-center gap-1 border-b border-white/10 px-4 py-5">
+          <Link href="/" className="block">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/inspro-logo.png" alt="insPRO" className="h-24 w-auto object-contain" />
           </Link>
+          <span className="text-xs font-medium uppercase tracking-widest text-white/50">Panel</span>
         </div>
         <nav className="flex-1 space-y-1 p-4">
           {NAV.map((item) => (
