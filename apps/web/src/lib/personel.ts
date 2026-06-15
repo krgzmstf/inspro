@@ -9,9 +9,15 @@
    Geçici: localStorage.
    ────────────────────────────────────────────────────────── */
 
+export const PERSONEL_TURLERI = [
+  "Çalışan", "Taşeron / Usta", "Mühendis", "Mimar", "Şantiye Şefi", "Müşavir", "Diğer",
+] as const;
+
 export interface Personel {
   id: string;
   projectId: string;
+  tur?: string;        // Çalışan / Taşeron / Mühendis…
+  firma?: string;      // bağlı olduğu firma (rehberden)
   ad: string;
   soyad: string;
   tc: string;
@@ -54,6 +60,7 @@ export function loadPersonel(projectId: string): Personel[] {
 export function bosPersonel(projectId: string): Personel {
   return {
     id: crypto.randomUUID(), projectId,
+    tur: "Çalışan", firma: "",
     ad: "", soyad: "", tc: "", telefon: "", adres: "", gorev: "",
     yevmiye: 0, sgkGiris: "", sgkCikis: "", iban: "", iseGiris: "",
     aktif: true, not: "",

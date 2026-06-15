@@ -16,6 +16,7 @@ import {
   hakedisKalemleriTekliften,
 } from "@/lib/hakedis";
 import { type Teklif, loadTeklifler, teklifToplam } from "@/lib/teklif";
+import { type IsimOneri, isimOnerileri, firmaYakala } from "@/lib/firma";
 import { excelYaz, pdfBelge } from "@/lib/disaAktar";
 
 type Baz = "piyasa" | "csb" | "kendi";
@@ -31,6 +32,9 @@ export default function HakedisPage() {
   const [msg, setMsg] = useState("");
   const [teklifler, setTeklifler] = useState<Teklif[]>([]);
   const [seciliTeklif, setSeciliTeklif] = useState("");
+  const [oneriler, setOneriler] = useState<IsimOneri[]>([]);
+
+  useEffect(() => { setOneriler(isimOnerileri()); }, []);
 
   useEffect(() => {
     const ps = loadProjects();
@@ -60,6 +64,7 @@ export default function HakedisPage() {
   function kaydet() {
     if (!h) return;
     saveHakedis(h);
+    if (h.taseron.trim()) { firmaYakala(h.taseron.trim(), "taseron"); setOneriler(isimOnerileri()); }
     setList(loadHakedisler(projectId));
     setMsg("✓ Hakediş kaydedildi.");
   }
@@ -203,6 +208,9 @@ export default function HakedisPage() {
 
   return (
     <div className="mx-auto max-w-6xl">
+      <datalist id="cari-rehber">
+        {oneriler.map((o) => <option key={o.ad} value={o.ad}>{o.etiket}</option>)}
+      </datalist>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-extrabold text-slate-900">🧾 Hakediş</h1>
@@ -255,7 +263,7 @@ export default function HakedisPage() {
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 <Fld label="Hakediş No"><input type="number" value={h.no} onChange={(e) => setH({ ...h, no: parseInt(e.target.value) || 1 })} className={inp} /></Fld>
                 <Fld label="Tarih"><input type="date" value={h.tarih} onChange={(e) => setH({ ...h, tarih: e.target.value })} className={inp} /></Fld>
-                <Fld label="Taşeron / Yüklenici"><input value={h.taseron} onChange={(e) => setH({ ...h, taseron: e.target.value })} className={inp} /></Fld>
+                <Fld label="Taşeron / Yüklenici"><input list="cari-rehber" value={h.taseron} onChange={(e) => setH({ ...h, taseron: e.target.value })} className={inp} /></Fld>
                 <Fld label="Avans Mahsubu (TL)"><input type="number" value={h.avansMahsup} onChange={(e) => setH({ ...h, avansMahsup: parseFloat(e.target.value) || 0 })} className={inp} /></Fld>
                 <Fld label="Teminat (%)"><input type="number" value={h.teminatOran} onChange={(e) => setH({ ...h, teminatOran: parseFloat(e.target.value) || 0 })} className={inp} /></Fld>
                 <Fld label="Stopaj (%)"><input type="number" value={h.stopajOran} onChange={(e) => setH({ ...h, stopajOran: parseFloat(e.target.value) || 0 })} className={inp} /></Fld>

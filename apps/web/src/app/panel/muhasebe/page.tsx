@@ -45,6 +45,7 @@ import {
   type BekleyenMuh,
   senkronAsamaMuhasebe, bekleyenMuhasebelestirme,
 } from "@/lib/entegrasyon";
+import { type IsimOneri, isimOnerileri, firmaYakala } from "@/lib/firma";
 
 type Sekme = "hareketler" | "cari" | "kasa" | "raporlar";
 
@@ -69,6 +70,7 @@ export default function MuhasebePage() {
   const [hesaplar, setHesaplar] = useState<FinansHesap[]>([]);
   const [sekme, setSekme] = useState<Sekme>("hareketler");
   const [bekleyenler, setBekleyenler] = useState<BekleyenMuh[]>([]);
+  const [oneriler, setOneriler] = useState<IsimOneri[]>([]);
   // Muhasebeleştirme modalı (eksik alanları doldurup onayla)
   const [muhMod, setMuhMod] = useState<BekleyenMuh | null>(null);
   const [mMatrah, setMMatrah] = useState("");
@@ -107,6 +109,7 @@ export default function MuhasebePage() {
     const list = loadProjects();
     setProjects(list);
     setHesaplar(loadHesaplar());
+    setOneriler(isimOnerileri());
     const id = new URLSearchParams(window.location.search).get("proje");
     const initial = id && list.some((p) => p.id === id) ? id : (list[0]?.id ?? "");
     if (initial) {
@@ -183,6 +186,7 @@ export default function MuhasebePage() {
       tarih: mTarih, hesapId: mHesap || undefined,
       durum: "odendi",
     });
+    if (mTaraf.trim()) { firmaYakala(mTaraf.trim(), "tedarikci"); setOneriler(isimOnerileri()); }
     setKayitlar(loadMuhasebe(projectId));
     setBekleyenler(bekleyenMuhasebelestirme(projectId));
     setMuhMod(null);
@@ -212,6 +216,7 @@ export default function MuhasebePage() {
       durum, odenenTutar: 0,
       hesapId: durum === "odendi" ? (hesapId || undefined) : undefined,
     });
+    if (taraf.trim()) { firmaYakala(taraf.trim(), tip === "gelir" ? "musteri" : "tedarikci"); setOneriler(isimOnerileri()); }
     setKayitlar(loadMuhasebe(projectId));
     setAciklama(""); setTaraf(""); setBelgeNo(""); setMatrah("");
   }
@@ -324,6 +329,11 @@ export default function MuhasebePage() {
           {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
       </div>
+
+      {/* Cari/firma rehberi — autocomplete */}
+      <datalist id="cari-rehber">
+        {oneriler.map((o) => <option key={o.ad} value={o.ad}>{o.etiket}</option>)}
+      </datalist>
 
       {/* Muhasebeleştirme bekleyenler — turuncu, yanıp sönen kutucuklar */}
       {bekleyenler.length > 0 && (
@@ -443,7 +453,7 @@ export default function MuhasebePage() {
               </div>
 
               <label className="mt-3 block text-sm font-semibold text-slate-700">{tip === "gider" ? "Tedarikçi / Usta" : "Müşteri / Taraf"}
-                <input value={taraf} onChange={(e) => setTaraf(e.target.value)} placeholder="ör: Demir Yapı Ltd."
+                <input list="cari-rehber" value={taraf} onChange={(e) => setTaraf(e.target.value)} placeholder="rehberden seç / yaz"
                   className="mt-1 w-full rounded-xl border-2 border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500" />
               </label>
               <div className="mt-3 grid grid-cols-2 gap-2">
@@ -806,7 +816,7 @@ export default function MuhasebePage() {
             </label>
             <div className="mt-3 grid grid-cols-2 gap-2">
               <label className="block text-sm font-semibold text-slate-700">Taraf / Firma
-                <input value={mTaraf} onChange={(e) => setMTaraf(e.target.value)} placeholder="tedarikçi / usta"
+                <input list="cari-rehber" value={mTaraf} onChange={(e) => setMTaraf(e.target.value)} placeholder="rehberden seç / yaz"
                   className="mt-1 w-full rounded-xl border-2 border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500" />
               </label>
               <label className="block text-sm font-semibold text-slate-700">Belge / Fatura No

@@ -6,6 +6,7 @@ import { type Project, loadProjects, formatTL } from "@/lib/projects";
 import {
   type Personel,
   type PuantajDeger,
+  PERSONEL_TURLERI,
   loadPersonel,
   bosPersonel,
   savePersonel,
@@ -15,9 +16,18 @@ import {
   ayinGunleri,
   personelGun,
 } from "@/lib/personel";
+import {
+  type Firma,
+  type FirmaTip,
+  FIRMA_TIP_LABEL,
+  loadFirmalar,
+  bosFirma,
+  saveFirma,
+  deleteFirma,
+} from "@/lib/firma";
 import { senkronPuantajMuhasebe } from "@/lib/entegrasyon";
 
-type Sekme = "calisanlar" | "puantaj";
+type Sekme = "calisanlar" | "firmalar" | "puantaj";
 
 const PUANTAJ_DONGU: (PuantajDeger | null)[] = [null, 1, 0.5, 0];
 const PUANTAJ_SEM: Record<string, { s: string; c: string }> = {
@@ -34,6 +44,10 @@ export default function PersonelPage() {
 
   // çalışan formu
   const [form, setForm] = useState<Personel | null>(null);
+
+  // firma rehberi
+  const [firmalar, setFirmalar] = useState<Firma[]>([]);
+  const [firmaForm, setFirmaForm] = useState<Firma | null>(null);
 
   // puantaj
   const [ay, setAy] = useState(new Date().toISOString().slice(0, 7));
@@ -54,6 +68,7 @@ export default function PersonelPage() {
   useEffect(() => {
     const list = loadProjects();
     setProjects(list);
+    setFirmalar(loadFirmalar());
     const id = new URLSearchParams(window.location.search).get("proje");
     const initial = id && list.some((p) => p.id === id) ? id : (list[0]?.id ?? "");
     if (initial) {
@@ -61,6 +76,20 @@ export default function PersonelPage() {
       setListe(loadPersonel(initial));
     }
   }, []);
+
+  function firmaYenile() { setFirmalar(loadFirmalar()); }
+  function firmaKaydet(e: React.FormEvent) {
+    e.preventDefault();
+    if (!firmaForm || !firmaForm.ad.trim()) return;
+    saveFirma({ ...firmaForm, ad: firmaForm.ad.trim() });
+    setFirmaForm(null);
+    firmaYenile();
+  }
+  function firmaSil(id: string) {
+    if (!confirm("Firma silinsin mi?")) return;
+    deleteFirma(id);
+    firmaYenile();
+  }
 
   useEffect(() => {
     if (projectId) setPuantajMap(loadPuantajAy(projectId, ay));
@@ -132,7 +161,7 @@ export default function PersonelPage() {
 
       {/* Sekmeler */}
       <div className="mt-5 flex gap-2">
-        {([["calisanlar", `👥 Çalışan Listesi (${liste.length})`], ["puantaj", "🗓️ Puantaj"]] as const).map(([s, l]) => (
+        {([["calisanlar", `👥 Çalışan Listesi (${liste.length})`], ["firmalar", `🏢 Firmalar (${firmalar.length})`], ["puantaj", "🗓️ Puantaj"]] as const).map(([s, l]) => (
           <button key={s} onClick={() => setSekme(s)}
             className={`rounded-xl px-4 py-2 text-sm font-bold transition ${sekme === s ? "bg-ink-900 text-white" : "bg-slate-100 text-slate-500 hover:bg-slate-200"}`}>
             {l}
@@ -144,8 +173,12 @@ export default function PersonelPage() {
       {sekme === "calisanlar" && (
         <div className="mt-5">
           {!form && (
-            <button onClick={() => setForm(bosPersonel(projectId))}
-              className="rounded-xl bg-brand-500 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-brand-600">+ Çalışan Ekle</button>
+            <div className="flex flex-wrap gap-2">
+              <button onClick={() => setForm(bosPersonel(projectId))}
+                className="rounded-xl bg-brand-500 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-brand-600">+ Çalışan Ekle</button>
+              <button onClick={() => { setSekme("firmalar"); setFirmaForm(bosFirma()); }}
+                className="rounded-xl border-2 border-ink-900 px-5 py-2.5 text-sm font-bold text-ink-900 transition hover:bg-ink-900 hover:text-white">🏢 Firma Ekle</button>
+            </div>
           )}
 
           {form && (
@@ -154,6 +187,14 @@ export default function PersonelPage() {
               <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 <F label="Ad *"><input value={form.ad} onChange={(e) => setForm({ ...form, ad: e.target.value })} className={inp} /></F>
                 <F label="Soyad"><input value={form.soyad} onChange={(e) => setForm({ ...form, soyad: e.target.value })} className={inp} /></F>
+                <F label="Tür">
+                  <select value={form.tur ?? "Çalışan"} onChange={(e) => setForm({ ...form, tur: e.target.value })} className={inp}>
+                    {PERSONEL_TURLERI.map((t) => <option key={t}>{t}</option>)}
+                  </select>
+                </F>
+                <F label="Bağlı Firma">
+                  <input list="firma-listesi" value={form.firma ?? ""} onChange={(e) => setForm({ ...form, firma: e.target.value })} placeholder="rehberden seç / yaz" className={inp} />
+                </F>
                 <F label="Görev / Meslek"><input value={form.gorev} onChange={(e) => setForm({ ...form, gorev: e.target.value })} placeholder="ör: Demirci, Kalıpçı" className={inp} /></F>
                 <F label="T.C. Kimlik No"><input value={form.tc} onChange={(e) => setForm({ ...form, tc: e.target.value })} inputMode="numeric" className={inp} /></F>
                 <F label="Telefon"><input value={form.telefon} onChange={(e) => setForm({ ...form, telefon: e.target.value })} inputMode="tel" placeholder="05.." className={inp} /></F>
@@ -217,6 +258,94 @@ export default function PersonelPage() {
           )}
           {liste.length === 0 && !form && (
             <p className="mt-4 text-sm text-slate-400">Henüz çalışan yok. &quot;Çalışan Ekle&quot; ile başlayın.</p>
+          )}
+        </div>
+      )}
+
+      {/* firma adlarını her yerde öneren datalist */}
+      <datalist id="firma-listesi">
+        {firmalar.map((f) => <option key={f.id} value={f.ad} />)}
+      </datalist>
+
+      {/* ───── FİRMALAR ───── */}
+      {sekme === "firmalar" && (
+        <div className="mt-5">
+          {!firmaForm && (
+            <button onClick={() => setFirmaForm(bosFirma())}
+              className="rounded-xl bg-brand-500 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-brand-600">+ Firma Ekle</button>
+          )}
+
+          {firmaForm && (
+            <form onSubmit={firmaKaydet} className="rounded-2xl border-2 border-brand-500/40 bg-white p-5 shadow-md">
+              <h2 className="text-base font-bold text-slate-900">{firmaForm.ad ? "Firmayı Düzenle" : "Yeni Firma"}</h2>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <F label="Firma Ünvanı *"><input value={firmaForm.ad} onChange={(e) => setFirmaForm({ ...firmaForm, ad: e.target.value })} className={inp} /></F>
+                <F label="Tür">
+                  <select value={firmaForm.tip} onChange={(e) => setFirmaForm({ ...firmaForm, tip: e.target.value as FirmaTip })} className={inp}>
+                    {(Object.keys(FIRMA_TIP_LABEL) as FirmaTip[]).map((t) => <option key={t} value={t}>{FIRMA_TIP_LABEL[t]}</option>)}
+                  </select>
+                </F>
+                <F label="Sahibi / Yetkili"><input value={firmaForm.yetkili} onChange={(e) => setFirmaForm({ ...firmaForm, yetkili: e.target.value })} className={inp} /></F>
+                <F label="Telefon"><input value={firmaForm.telefon} onChange={(e) => setFirmaForm({ ...firmaForm, telefon: e.target.value })} inputMode="tel" className={inp} /></F>
+                <F label="E-posta"><input value={firmaForm.email} onChange={(e) => setFirmaForm({ ...firmaForm, email: e.target.value })} inputMode="email" className={inp} /></F>
+                <F label="Vergi Dairesi"><input value={firmaForm.vergiDairesi} onChange={(e) => setFirmaForm({ ...firmaForm, vergiDairesi: e.target.value })} className={inp} /></F>
+                <F label="Vergi / TC No"><input value={firmaForm.vergiNo} onChange={(e) => setFirmaForm({ ...firmaForm, vergiNo: e.target.value })} inputMode="numeric" className={inp} /></F>
+                <F label="IBAN"><input value={firmaForm.iban} onChange={(e) => setFirmaForm({ ...firmaForm, iban: e.target.value })} placeholder="TR.." className={inp} /></F>
+                <F label="Adres"><input value={firmaForm.adres} onChange={(e) => setFirmaForm({ ...firmaForm, adres: e.target.value })} className={inp} /></F>
+                <F label="Çalışanları (virgülle)">
+                  <input value={firmaForm.calisanlar.join(", ")} onChange={(e) => setFirmaForm({ ...firmaForm, calisanlar: e.target.value.split(",").map((x) => x.trim()).filter(Boolean) })} placeholder="Ahmet Y., Mehmet K." className={inp} />
+                </F>
+                <F label="Giriş Kullanıcı (program)"><input value={firmaForm.girisKullanici} onChange={(e) => setFirmaForm({ ...firmaForm, girisKullanici: e.target.value })} className={inp} /></F>
+                <F label="Giriş Şifre"><input value={firmaForm.girisSifre} onChange={(e) => setFirmaForm({ ...firmaForm, girisSifre: e.target.value })} className={inp} /></F>
+                <F label="Not"><input value={firmaForm.not} onChange={(e) => setFirmaForm({ ...firmaForm, not: e.target.value })} className={inp} /></F>
+              </div>
+              <label className="mt-3 flex items-center gap-2 text-sm font-semibold text-slate-600">
+                <input type="checkbox" checked={firmaForm.aktif} onChange={(e) => setFirmaForm({ ...firmaForm, aktif: e.target.checked })} className="h-4 w-4 accent-[var(--color-brand-500)]" />
+                Aktif
+              </label>
+              <div className="mt-4 flex gap-2">
+                <button type="submit" className="rounded-xl bg-ink-900 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-ink-800">Kaydet</button>
+                <button type="button" onClick={() => setFirmaForm(null)} className="rounded-xl border-2 border-slate-200 px-6 py-2.5 text-sm font-bold text-slate-600">Vazgeç</button>
+              </div>
+              <p className="mt-2 text-[11px] text-slate-400">⚠️ Giriş şifresi bu cihazda (demo) saklanır; gerçek kullanıcı girişi Supabase Auth ile gelecek.</p>
+            </form>
+          )}
+
+          {firmalar.length > 0 && (
+            <div className="mt-4 overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
+              <table className="w-full min-w-[760px] text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200 bg-slate-50 text-left text-[11px] font-bold uppercase text-slate-500">
+                    <th className="px-3 py-2.5">Firma</th>
+                    <th className="px-3 py-2.5">Tür</th>
+                    <th className="px-3 py-2.5">Yetkili</th>
+                    <th className="px-3 py-2.5">Telefon</th>
+                    <th className="px-3 py-2.5">Vergi No</th>
+                    <th className="px-2 py-2.5" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {firmalar.map((f) => (
+                    <tr key={f.id} className="border-b border-slate-100 hover:bg-slate-50/60">
+                      <td className="px-3 py-2 font-semibold text-slate-800">{f.ad}
+                        {f.calisanlar.length > 0 && <div className="text-[10px] font-normal text-slate-400">{f.calisanlar.length} çalışan</div>}
+                      </td>
+                      <td className="px-3 py-2"><span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600">{FIRMA_TIP_LABEL[f.tip]}</span></td>
+                      <td className="px-3 py-2 text-slate-600">{f.yetkili || "—"}</td>
+                      <td className="px-3 py-2 text-slate-600">{f.telefon || "—"}</td>
+                      <td className="px-3 py-2 text-xs text-slate-500">{f.vergiNo || "—"}</td>
+                      <td className="px-2 py-2 text-center whitespace-nowrap">
+                        <button onClick={() => setFirmaForm(f)} className="rounded-lg px-2 py-1 text-slate-400 transition hover:bg-slate-100" title="Düzenle">✎</button>
+                        <button onClick={() => firmaSil(f.id)} className="rounded-lg px-2 py-1 text-slate-300 transition hover:bg-red-50 hover:text-red-500">🗑</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          {firmalar.length === 0 && !firmaForm && (
+            <p className="mt-4 text-sm text-slate-400">Henüz firma yok. Taşeron, tedarikçi, müşteri firmalarını ekleyin; isimleri programın her yerinde önerilir.</p>
           )}
         </div>
       )}
