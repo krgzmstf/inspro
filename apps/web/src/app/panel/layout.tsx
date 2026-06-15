@@ -1,7 +1,11 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import type { User } from "@supabase/supabase-js";
+import { supabaseVar, aktifKullanici, cikisYap, oturumDinle } from "@/lib/supabase/auth";
+import { yerelKullanici, yerelCikis } from "@/lib/yerelOturum";
 
 type NavItem = { href: string; label: string; icon: string; active: boolean; img?: string };
 
@@ -30,6 +34,44 @@ export default function PanelLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [kullanici, setKullanici] = useState<User | null>(null);
+  const [yerelAd, setYerelAd] = useState<string | null>(null);
+  const [kontrol, setKontrol] = useState(false);
+
+  useEffect(() => {
+    let iptal = false;
+    const yad = yerelKullanici();
+    setYerelAd(yad);
+    if (supabaseVar()) {
+      aktifKullanici().then((u) => {
+        if (iptal) return;
+        setKullanici(u);
+        setKontrol(true);
+        if (!u && !yad) router.replace("/giris");
+      });
+      const cikisAboneligi = oturumDinle((u) => setKullanici(u));
+      return () => { iptal = true; cikisAboneligi(); };
+    }
+    // Supabase yoksa: yalnız yerel kullanıcı adı kapısı
+    setKontrol(true);
+    if (!yad) router.replace("/giris");
+  }, [router]);
+
+  async function cikis() {
+    yerelCikis();
+    setYerelAd(null);
+    if (supabaseVar()) await cikisYap();
+    router.replace("/giris");
+  }
+
+  const erisim = !!kullanici || !!yerelAd;
+  if (!kontrol) {
+    return <div className="flex min-h-screen items-center justify-center bg-slate-100 text-sm text-slate-500">Yükleniyor…</div>;
+  }
+  if (!erisim) {
+    return <div className="flex min-h-screen items-center justify-center bg-slate-100 text-sm text-slate-500">Giriş sayfasına yönlendiriliyor…</div>;
+  }
 
   return (
     <div className="flex min-h-screen bg-slate-100">
@@ -93,12 +135,23 @@ export default function PanelLayout({
             })}
           </div>
           <div className="flex items-center gap-3">
-            <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-700">
-              DEMO — veriler bu tarayıcıda saklanır
-            </span>
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-ink-900 text-sm font-bold text-white">
-              K
-            </div>
+            {(() => {
+              const ad = kullanici?.email ?? yerelAd ?? "Kullanıcı";
+              return (
+                <>
+                  {!kullanici && yerelAd && (
+                    <span className="hidden rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-bold text-amber-700 sm:block">kayıtsız</span>
+                  )}
+                  <span className="hidden text-xs font-semibold text-slate-600 sm:block">{ad}</span>
+                  <button onClick={cikis} className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-bold text-slate-600 transition hover:border-red-300 hover:bg-red-50 hover:text-red-600">
+                    Çıkış
+                  </button>
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-ink-900 text-sm font-bold uppercase text-white">
+                    {ad.charAt(0)}
+                  </div>
+                </>
+              );
+            })()}
           </div>
         </header>
         <main className="flex-1 p-4 sm:p-6 lg:p-8">{children}</main>
