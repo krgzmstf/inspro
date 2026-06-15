@@ -6,6 +6,7 @@ import {
   type Project,
   TYPE_LABELS,
   loadProjects,
+  saveProjects,
   deleteProject,
   projectProgress,
   formatTL,
@@ -13,6 +14,7 @@ import {
 import { loadMuhasebe, muhasebeOzeti } from "@/lib/muhasebe";
 import { loadSaha } from "@/lib/saha";
 import { loadIsSurecleri, isOzeti } from "@/lib/isSurecleri";
+import { projeleriSenkronla } from "@/lib/projeSenkron";
 import YedekKart from "./YedekKart";
 
 interface ProjeStat {
@@ -25,11 +27,7 @@ export default function PanelPage() {
   const [loaded, setLoaded] = useState(false);
   const [statlar, setStatlar] = useState<Record<string, ProjeStat>>({});
 
-  useEffect(() => {
-    const list = loadProjects();
-    setProjects(list);
-    setLoaded(true);
-    // Modüller arası özet (localStorage — sync)
+  function hesaplaStatlar(list: Project[]) {
     const s: Record<string, ProjeStat> = {};
     for (const p of list) {
       const mu = muhasebeOzeti(loadMuhasebe(p.id));
@@ -44,6 +42,21 @@ export default function PanelPage() {
       };
     }
     setStatlar(s);
+  }
+
+  useEffect(() => {
+    const list = loadProjects();
+    setProjects(list);
+    setLoaded(true);
+    hesaplaStatlar(list);
+    // Bulut senkronu (Supabase oturumu varsa) — kalıcı projeler
+    projeleriSenkronla(list).then((bulut) => {
+      if (bulut) {
+        saveProjects(bulut);
+        setProjects(bulut);
+        hesaplaStatlar(bulut);
+      }
+    });
   }, []);
 
   function handleDelete(id: string, projectName: string) {

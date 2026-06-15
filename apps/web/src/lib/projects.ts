@@ -4,6 +4,8 @@
    API çağrılarıyla değiştirilecek; arayüz aynı kalacak.
    ────────────────────────────────────────────────────────── */
 
+import { projeyiBulutaYaz, projeyiBuluttanSil } from "./projeSenkron";
+
 export type ProjectType = "konut" | "villa" | "ticari";
 export type PhaseStatus = "bekliyor" | "devam" | "tamam";
 
@@ -202,7 +204,7 @@ export function loadProjects(): Project[] {
   }
 }
 
-function saveProjects(projects: Project[]) {
+export function saveProjects(projects: Project[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
 }
 
@@ -220,28 +222,34 @@ export function createProject(
     phases: PHASE_NAMES.map((name) => ({ name, status: "bekliyor" })),
   };
   saveProjects([project, ...loadProjects()]);
+  void projeyiBulutaYaz(project); // bulut senkronu (oturum varsa)
   return project;
 }
 
 export function updateProject(updated: Project) {
   saveProjects(loadProjects().map((p) => (p.id === updated.id ? updated : p)));
+  void projeyiBulutaYaz(updated);
 }
 
 export function deleteProject(id: string) {
   saveProjects(loadProjects().filter((p) => p.id !== id));
+  void projeyiBuluttanSil(id);
 }
 
 /** Bir keşif kalemi için kendi (gerçekleşen) birim fiyatını kaydeder. */
 export function setKendiFiyat(projectId: string, kalemKey: string, birimFiyat: number | undefined) {
+  let degisen: Project | undefined;
   saveProjects(
     loadProjects().map((p) => {
       if (p.id !== projectId) return p;
       const kendiFiyat = { ...(p.kendiFiyat ?? {}) };
       if (birimFiyat === undefined || birimFiyat <= 0) delete kendiFiyat[kalemKey];
       else kendiFiyat[kalemKey] = birimFiyat;
-      return { ...p, kendiFiyat };
+      degisen = { ...p, kendiFiyat };
+      return degisen;
     }),
   );
+  if (degisen) void projeyiBulutaYaz(degisen);
 }
 
 /** Tamamlanan aşama oranı (0-100). Devam eden aşama yarım sayılır. */
