@@ -17,7 +17,7 @@
 | Hakediş | `/panel/hakedis` | ✓ dönemsel istihkak, kesintiler, PDF/Excel |
 | Poz Kütüphaneleri (Küt-1/2/3) | `/panel/pozlar?lib=` | ✓ Excel içe/dışa |
 | Personel & Puantaj | `/panel/personel` | ✓ SGK + aylık puantaj |
-| Muhasebe | `/panel/muhasebe` | ✓ gelir/gider |
+| Muhasebe (profesyonel) | `/panel/muhasebe` | ✓ KDV/tevkifat · cari hesap · vade/yaşlandırma · kasa-banka · raporlar |
 | Saha Takibi | `/panel/saha` | ✓ iş emri/kusur/foto |
 | 3B Görselleştirme | `/panel/3d` | ✓ kat verisinden bina kütlesi (three.js) |
 | Plan → 3B Stüdyo | `/panel/plan3d` | ✓ BETA: PDF/DXF/JPEG → 3B + animasyon + WebM |
@@ -36,6 +36,15 @@
 3. mk_ai paneli logolu (a1.jpg → `public/mk-ai-logo.jpg`); sohbet cilası (hızlı sorular, kaynak rozetleri, oto-kaydırma).
 4. **Veri yedekleme/geri yükleme** (`lib/yedek.ts` + dashboard `YedekKart`): tüm inspro-* verisini JSON indir/geri yükle.
 5. **Fiyat Ajanı çok-sağlayıcıya taşındı** (`/api/fiyat-guncelle`): Anthropic kaldırıldı → router + generateObject. (Not: ücretsiz sağlayıcı web araması yapamaz → "AI tahmini" aralık.)
+
+## Profesyonel Muhasebe (15 Haziran — yeni)
+`lib/muhasebe.ts` (yeniden yazıldı, eski kayıtlarla geriye uyumlu) + `lib/finansHesap.ts` (yeni) + sekmeli sayfa:
+- **KDV + tevkifat motoru**: matrah/oran/tutar + KDV tevkifatı (yapı işleri 4/10 ön tanımlı), brüt/net otomatik.
+- **Cari hesaplar**: taraf bazında borç/alacak + kronolojik **ekstre** (yürüyen bakiye) + **vade yaşlandırma** (0-30/31-60/61-90/90+).
+- **Vade & ödeme durumu**: açık/kısmi/ödendi; tahsilat/ödeme modalı (`odemeKaydet`).
+- **Kasa & Banka**: çoklu hesap, hareketlere bağlı canlı bakiye (proje-üstü).
+- **Raporlar + PDF/Excel**: gelir tablosu (KDV hariç), KDV özeti (beyanname taslağı), nakit akış (aylık), cari ekstre. `disaAktar.ts` (pdfYazdir/excelYaz) kullanır.
+- Açık: çift taraflı muhasebe (TDHP), çek/senet portföyü, e-Fatura/e-Arşiv (GİB) — ileri seviye, sonraya.
 
 ## Bilinen sınırlar / sonraki adımlar
 - **Kimlik doğrulama + roller YOK.** Anasayfa "Ekip & Roller" vaat ediyor; giriş ekranı yok. → Supabase Auth gerek.

@@ -11,7 +11,12 @@ function proje(extra?: Partial<Project>): Project {
   };
 }
 function gider(tutar: number, tarih = "2026-06-01"): MuhasebeKayit {
-  return { id: crypto.randomUUID(), projectId: "p1", tip: "gider", kategori: "Malzeme", aciklama: "", taraf: "", tutar, tarih, createdAt: tarih };
+  return {
+    id: crypto.randomUUID(), projectId: "p1", tip: "gider", kategori: "Malzeme",
+    aciklama: "", taraf: "",
+    matrah: tutar, kdvOran: 0, kdvTutar: 0, tevkifatOran: 0, tevkifatTutar: 0,
+    tutar, net: tutar, tarih, durum: "odendi", odenenTutar: tutar, createdAt: tarih,
+  };
 }
 function is(ilerleme: number, bitis = "2027-01-01"): IsKalemi {
   return { id: crypto.randomUUID(), projectId: "p1", ad: "iş", grup: "Genel", sorumlu: "", baslangic: "2026-01-01", bitis, ilerleme };
