@@ -197,35 +197,35 @@ export default function Home() {
   return (
     <main className="flex-1">
       {/* ── NAVBAR ─────────────────────────────────────────── */}
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-ink-950/90 backdrop-blur">
+      <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/85 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
           <Link href="/" aria-label="insPRO ana sayfa">
-            <Logo light />
+            <Logo />
           </Link>
-          <nav className="hidden items-center gap-8 text-sm font-medium text-slate-300 md:flex">
-            <a href="#moduller" className="transition hover:text-white">
+          <nav className="hidden items-center gap-8 text-sm font-medium text-slate-600 md:flex">
+            <a href="#moduller" className="transition hover:text-ink-900">
               Özellikler
             </a>
-            <a href="#nasil" className="transition hover:text-white">
+            <a href="#nasil" className="transition hover:text-ink-900">
               Nasıl Çalışır?
             </a>
-            <a href="#surec" className="transition hover:text-white">
+            <a href="#surec" className="transition hover:text-ink-900">
               İnşaat Süreci
             </a>
-            <a href="#mevzuat" className="transition hover:text-white">
+            <a href="#mevzuat" className="transition hover:text-ink-900">
               Mevzuat
             </a>
-            <a href="#fiyat" className="transition hover:text-white">
+            <a href="#fiyat" className="transition hover:text-ink-900">
               Fiyatlandırma
             </a>
-            <a href="#sss" className="transition hover:text-white">
+            <a href="#sss" className="transition hover:text-ink-900">
               SSS
             </a>
           </nav>
           <div className="flex items-center gap-3">
             <Link
               href="/panel"
-              className="hidden rounded-lg border border-white/25 px-4 py-2 text-sm font-semibold text-white transition hover:border-white/50 hover:bg-white/5 sm:block"
+              className="hidden rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-ink-900 transition hover:border-slate-400 hover:bg-slate-100 sm:block"
             >
               Panele Git
             </Link>
@@ -240,14 +240,14 @@ export default function Home() {
       </header>
 
       {/* ── HERO ───────────────────────────────────────────── */}
-      <section className="relative overflow-hidden bg-ink-950 text-white">
+      <section className="relative overflow-hidden bg-gradient-to-b from-slate-200 via-slate-100 to-white text-ink-900">
         {/* arka plan dokusu */}
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 opacity-40"
+          className="pointer-events-none absolute inset-0 opacity-50"
           style={{
             backgroundImage:
-              "radial-gradient(60rem 30rem at 80% -10%, rgba(245,184,11,0.18), transparent), radial-gradient(50rem 25rem at 10% 110%, rgba(17,101,121,0.9), transparent)",
+              "radial-gradient(60rem 30rem at 80% -10%, rgba(37,99,235,0.10), transparent), radial-gradient(50rem 25rem at 10% 110%, rgba(148,163,184,0.30), transparent)",
           }}
         />
         <div className="relative mx-auto grid max-w-7xl gap-12 px-4 py-20 sm:px-6 lg:grid-cols-2 lg:items-center lg:py-28">
@@ -267,7 +267,7 @@ export default function Home() {
               <br />
               tek platformda.
             </h1>
-            <p className="mt-6 max-w-xl text-lg leading-relaxed text-slate-300">
+            <p className="mt-6 max-w-xl text-lg leading-relaxed text-slate-600">
               Proje dosyanızı yükleyin: keşif-metraj çıksın, güncel fiyatlarla
               maliyet hesaplansın, riskler önceden görünsün. Kazıdan teslime yol
               haritası, sahadan fotoğraflı takip ve tam muhasebe — web ve
@@ -282,12 +282,12 @@ export default function Home() {
               </a>
               <a
                 href="#nasil"
-                className="rounded-xl border border-white/20 px-7 py-3.5 text-base font-semibold text-white transition hover:border-white/40 hover:bg-white/5"
+                className="rounded-xl border border-slate-300 px-7 py-3.5 text-base font-semibold text-ink-900 transition hover:border-slate-400 hover:bg-slate-100"
               >
                 Nasıl çalışır?
               </a>
             </div>
-            <div className="mt-10 flex flex-wrap gap-x-8 gap-y-3 text-sm text-slate-400">
+            <div className="mt-10 flex flex-wrap gap-x-8 gap-y-3 text-sm text-slate-500">
               <span>✓ Web + iOS + Android</span>
               <span>✓ PDF & DXF proje analizi</span>
               <span>✓ Türkiye geneli fiyat ajanı</span>
@@ -296,16 +296,16 @@ export default function Home() {
 
           {/* sahte panel önizlemesi (saf CSS) */}
           <div className="relative" aria-hidden>
-            <div className="rounded-2xl border border-white/10 bg-ink-900/80 p-5 shadow-2xl backdrop-blur">
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl shadow-slate-300/40">
               <div className="mb-4 flex items-center justify-between">
-                <span className="text-sm font-semibold text-slate-200">
+                <span className="text-sm font-semibold text-slate-700">
                   Gökkuşağı Konutları — A Blok
                 </span>
-                <span className="rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-semibold text-emerald-400">
+                <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
                   Kaba yapı · %62
                 </span>
               </div>
-              <div className="mb-4 h-2 overflow-hidden rounded-full bg-white/10">
+              <div className="mb-4 h-2 overflow-hidden rounded-full bg-slate-100">
                 <div className="h-full w-[62%] rounded-full bg-gradient-to-r from-brand-500 to-sky-300" />
               </div>
               <div className="grid grid-cols-3 gap-3 text-center">
@@ -316,33 +316,33 @@ export default function Home() {
                 ].map(([k, v]) => (
                   <div
                     key={k}
-                    className="rounded-xl border border-white/10 bg-white/5 p-3"
+                    className="rounded-xl border border-slate-200 bg-slate-50 p-3"
                   >
-                    <div className="text-[11px] text-slate-400">{k}</div>
-                    <div className="mt-1 text-base font-bold text-white">
+                    <div className="text-[11px] text-slate-500">{k}</div>
+                    <div className="mt-1 text-base font-bold text-ink-900">
                       {v}
                     </div>
                   </div>
                 ))}
               </div>
-              <div className="mt-4 rounded-xl border border-brand-500/30 bg-brand-500/10 p-3 text-xs leading-relaxed text-slate-200">
-                <span className="font-bold text-brand-400">🧠 AI Uyarısı:</span>{" "}
+              <div className="mt-4 rounded-xl border border-brand-500/30 bg-brand-500/10 p-3 text-xs leading-relaxed text-slate-700">
+                <span className="font-bold text-brand-600">🧠 AI Uyarısı:</span>{" "}
                 Önümüzdeki hafta don bekleniyor — C30 döşeme betonunu perşembeye
                 çekmeniz ve kür süresini uzatmanız önerilir.
               </div>
-              <div className="mt-3 flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-500/20 text-base">
+              <div className="mt-3 flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-500/15 text-base">
                   📸
                 </div>
-                <div className="text-xs text-slate-300">
-                  <div className="font-semibold text-white">
+                <div className="text-xs text-slate-600">
+                  <div className="font-semibold text-ink-900">
                     3. kat kolon demiri — onay bekliyor
                   </div>
                   Saha: M. Yılmaz · 14:32
                 </div>
               </div>
             </div>
-            <div className="absolute -bottom-5 -left-5 -z-10 h-full w-full rounded-2xl border border-brand-500/20" />
+            <div className="absolute -bottom-5 -left-5 -z-10 h-full w-full rounded-2xl border border-brand-500/30" />
           </div>
         </div>
       </section>
@@ -429,15 +429,15 @@ export default function Home() {
       {/* ── SÜREÇ ŞERİDİ ───────────────────────────────────── */}
       <section
         id="surec"
-        className="scroll-mt-20 bg-ink-950 py-20 text-white sm:py-24"
+        className="scroll-mt-20 bg-slate-100 py-20 text-ink-900 sm:py-24"
       >
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
               Kazıdan teslime{" "}
-              <span className="text-brand-500">13 aşama</span>, hiçbiri atlanmaz
+              <span className="text-brand-600">13 aşama</span>, hiçbiri atlanmaz
             </h2>
-            <p className="mt-4 text-lg text-slate-400">
+            <p className="mt-4 text-lg text-slate-600">
               Her aşamanın sorumlusu, takvimi, fotoğraflı saha kaydı ve maliyeti
               tek zaman çizelgesinde.
             </p>
@@ -446,12 +446,12 @@ export default function Home() {
             {PHASES.map((p, i) => (
               <li
                 key={p}
-                className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 transition hover:border-brand-500/50 hover:bg-white/10"
+                className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 transition hover:border-brand-500/50 hover:bg-slate-50"
               >
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-500 text-sm font-extrabold text-white">
                   {i + 1}
                 </span>
-                <span className="text-sm font-semibold text-slate-200">
+                <span className="text-sm font-semibold text-slate-700">
                   {p}
                 </span>
               </li>
@@ -644,13 +644,13 @@ export default function Home() {
       </section>
 
       {/* ── KAPANIŞ CTA ────────────────────────────────────── */}
-      <section className="bg-ink-950 py-20 text-center text-white sm:py-24">
+      <section className="bg-slate-100 py-20 text-center text-ink-900 sm:py-24">
         <div className="mx-auto max-w-3xl px-4 sm:px-6">
           <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
             Bir sonraki projenizi{" "}
-            <span className="text-brand-500">insPRO</span> ile başlatın
+            <span className="text-brand-600">insPRO</span> ile başlatın
           </h2>
-          <p className="mt-4 text-lg text-slate-400">
+          <p className="mt-4 text-lg text-slate-600">
             Keşiften muhasebeye, ofisten şantiyeye. Ücretsiz planla bugün
             deneyin — kurulum gerektirmez.
           </p>
@@ -669,29 +669,29 @@ export default function Home() {
       </section>
 
       {/* ── FOOTER ─────────────────────────────────────────── */}
-      <footer className="border-t border-white/10 bg-ink-950 py-12 text-sm text-slate-400">
+      <footer className="border-t border-slate-200 bg-white py-12 text-sm text-slate-500">
         <div className="mx-auto flex max-w-7xl flex-col items-center gap-6 px-4 sm:px-6 md:flex-row md:justify-between">
           <div className="flex flex-col items-center gap-2 md:items-start">
-            <Logo light />
+            <Logo />
             <p className="max-w-xs text-center text-xs leading-relaxed text-slate-500 md:text-left">
               İnşaatın tüm süreçlerini tek platformda yöneten yapay zeka
               destekli web ve mobil uygulama.
             </p>
           </div>
           <nav className="flex flex-wrap justify-center gap-x-6 gap-y-2">
-            <a href="#moduller" className="transition hover:text-white">
+            <a href="#moduller" className="transition hover:text-ink-900">
               Özellikler
             </a>
-            <a href="#fiyat" className="transition hover:text-white">
+            <a href="#fiyat" className="transition hover:text-ink-900">
               Fiyatlandırma
             </a>
-            <a href="#sss" className="transition hover:text-white">
+            <a href="#sss" className="transition hover:text-ink-900">
               SSS
             </a>
-            <a href="#" className="transition hover:text-white">
+            <a href="#" className="transition hover:text-ink-900">
               Gizlilik
             </a>
-            <a href="#" className="transition hover:text-white">
+            <a href="#" className="transition hover:text-ink-900">
               İletişim
             </a>
           </nav>
