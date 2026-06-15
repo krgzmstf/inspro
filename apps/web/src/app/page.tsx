@@ -197,35 +197,63 @@ export default function Home() {
   return (
     <main className="flex-1">
       {/* ── NAVBAR ─────────────────────────────────────────── */}
-      <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/85 backdrop-blur">
+      <header className="sticky top-0 z-50 border-b border-white/10 bg-ink-950/95 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
-          <Link href="/" aria-label="insPRO ana sayfa">
-            <Logo />
+          <Link href="/" aria-label="İNŞPRO ana sayfa" className="leading-none">
+            <span className="block text-3xl font-black tracking-tight sm:text-4xl">
+              <span
+                style={{
+                  background: "linear-gradient(180deg,#eaf5ff 0%,#7cc0ff 38%,#2b8eff 64%,#15539c 100%)",
+                  WebkitBackgroundClip: "text",
+                  backgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  WebkitTextStroke: "0.6px #1d4ed8",
+                  filter: "drop-shadow(0 2px 1px rgba(0,0,0,.35)) drop-shadow(0 4px 6px rgba(0,0,0,.25))",
+                }}
+              >
+                İNŞ
+              </span>
+              <span
+                style={{
+                  background: "linear-gradient(180deg,#fff7d6 0%,#ffd24d 42%,#e0a300 70%,#9c6f00 100%)",
+                  WebkitBackgroundClip: "text",
+                  backgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  WebkitTextStroke: "0.6px #a87900",
+                  filter: "drop-shadow(0 2px 1px rgba(0,0,0,.35)) drop-shadow(0 4px 6px rgba(0,0,0,.25))",
+                }}
+              >
+                PRO
+              </span>
+            </span>
+            <span className="mt-1 block text-[9px] font-bold uppercase tracking-[0.2em] text-white/60 sm:text-[10px]">
+              İnşaat ve Proje Takip Programı
+            </span>
           </Link>
-          <nav className="hidden items-center gap-8 text-sm font-medium text-slate-600 md:flex">
-            <a href="#moduller" className="transition hover:text-ink-900">
+          <nav className="hidden items-center gap-8 text-sm font-medium text-slate-300 md:flex">
+            <a href="#moduller" className="transition hover:text-white">
               Özellikler
             </a>
-            <a href="#nasil" className="transition hover:text-ink-900">
+            <a href="#nasil" className="transition hover:text-white">
               Nasıl Çalışır?
             </a>
-            <a href="#surec" className="transition hover:text-ink-900">
+            <a href="#surec" className="transition hover:text-white">
               İnşaat Süreci
             </a>
-            <a href="#mevzuat" className="transition hover:text-ink-900">
+            <a href="#mevzuat" className="transition hover:text-white">
               Mevzuat
             </a>
-            <a href="#fiyat" className="transition hover:text-ink-900">
+            <a href="#fiyat" className="transition hover:text-white">
               Fiyatlandırma
             </a>
-            <a href="#sss" className="transition hover:text-ink-900">
+            <a href="#sss" className="transition hover:text-white">
               SSS
             </a>
           </nav>
           <div className="flex items-center gap-3">
             <Link
               href="/panel"
-              className="hidden rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-ink-900 transition hover:border-slate-400 hover:bg-slate-100 sm:block"
+              className="hidden rounded-lg border border-white/30 px-4 py-2 text-sm font-semibold text-white transition hover:border-white/60 hover:bg-white/10 sm:block"
             >
               Panele Git
             </Link>

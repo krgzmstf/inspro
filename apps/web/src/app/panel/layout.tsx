@@ -120,11 +120,9 @@ export default function PanelLayout({
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Üst bar (mobilde logo da burada) */}
         <header className="flex h-16 items-center justify-between border-b border-slate-200 bg-white px-4 sm:px-6">
-          <Link
-            href="/panel"
-            className="text-lg font-extrabold tracking-tight text-ink-900 lg:hidden"
-          >
-            ins<span className="text-brand-500">PRO</span>
+          <Link href="/panel" className="lg:hidden">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/inspro-logo.png" alt="insPRO" className="h-9 w-auto object-contain" />
           </Link>
           <div className="hidden text-sm text-slate-500 lg:block">
             Hoş geldiniz 👋 — bugün{" "}
