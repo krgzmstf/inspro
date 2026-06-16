@@ -389,8 +389,7 @@ export function gelirTablosu(kayitlar: MuhasebeKayit[]): GelirTablosu {
     else { toplamGider += k.matrah; eMap.set(k.kategori, (eMap.get(k.kategori) ?? 0) + k.matrah); }    
   }
   const arr = (m: Map<string, number>) =>
-    [...m.entries()].map(([kategori, tutar]) => ({ kategori, tutar: +tutar.toFixed(2) })).sort((a, b) =
-> b.tutar - a.tutar);
+    [...m.entries()].map(([kategori, tutar]) => ({ kategori, tutar: +tutar.toFixed(2) })).sort((a, b) => b.tutar - a.tutar);
   return {
     gelir: arr(gMap), gider: arr(eMap),
     toplamGelir: +toplamGelir.toFixed(2), toplamGider: +toplamGider.toFixed(2),
@@ -420,7 +419,6 @@ export function nakitAkis(kayitlar: MuhasebeKayit[]): NakitAy[] {
     map.set(ay, m);
   }
   return [...map.entries()]
-    .map(([ay, m]) => ({ ay, tahsilat: +m.tahsilat.toFixed(2), odeme: +m.odeme.toFixed(2), net: +(m.tah
-silat - m.odeme).toFixed(2) }))
+    .map(([ay, m]) => ({ ay, tahsilat: +m.tahsilat.toFixed(2), odeme: +m.odeme.toFixed(2), net: +(m.tahsilat - m.odeme).toFixed(2) }))
     .sort((a, b) => a.ay.localeCompare(b.ay));
 }

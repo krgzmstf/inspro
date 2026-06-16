@@ -11,10 +11,11 @@ import {
   projectProgress,
   formatTL,
 } from "@/lib/projects";
-import { loadMuhasebe, muhasebeOzeti } from "@/lib/muhasebe";
+import { loadMuhasebe, muhasebeOzeti, loadAllMuhasebe, saveMuhasebe } from "@/lib/muhasebe";
 import { loadSaha } from "@/lib/saha";
 import { loadIsSurecleri, isOzeti } from "@/lib/isSurecleri";
 import { projeleriSenkronla } from "@/lib/projeSenkron";
+import { muhasebeSenkronla } from "@/lib/muhasebeSenkron";
 import YedekKart from "./YedekKart";
 
 interface ProjeStat {
@@ -49,13 +50,24 @@ export default function PanelPage() {
     setProjects(list);
     setLoaded(true);
     hesaplaStatlar(list);
-    // Bulut senkronu (Supabase oturumu varsa) — kalıcı projeler
+    
+    // Bulut senkronu (Supabase oturumu varsa)
     projeleriSenkronla(list).then((bulut) => {
+      let guncelProjeler = list;
       if (bulut) {
         saveProjects(bulut);
         setProjects(bulut);
-        hesaplaStatlar(bulut);
+        guncelProjeler = bulut;
       }
+      
+      // Muhasebe senkronu
+      const yerelMuhasebe = loadAllMuhasebe();
+      muhasebeSenkronla(yerelMuhasebe).then((bulutMu) => {
+        if (bulutMu) {
+          saveMuhasebe(bulutMu);
+        }
+        hesaplaStatlar(guncelProjeler);
+      });
     });
   }, []);
 
@@ -90,7 +102,7 @@ export default function PanelPage() {
       {/* Başlık + Yeni Proje */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-900">Projeler</h1>
+          <h1 className="text-2xl font-extrabold text-slate-900">Projeler</h1>        
           <p className="mt-1 text-sm text-slate-500">
             Tüm şantiyelerinizi tek ekrandan yönetin.
           </p>
@@ -108,15 +120,11 @@ export default function PanelPage() {
         {[
           ["Aktif Proje", String(projects.length), "🏗️"],
           ["Toplam Alan", `${totalArea.toLocaleString("tr-TR")} m²`, "📐"],
-          ["Ort. İlerleme", `%${avgProgress}`, "📊"],
-          ["Toplam Gelir", formatTL(genel.gelir), "💰"],
-          ["Toplam Gider", formatTL(genel.gider), "📉"],
-          ["Net Bakiye", formatTL(genel.gelir - genel.gider), "⚖️"],
         ].map(([label, value, icon]) => (
           <div key={label} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
             <div className="text-lg">{icon}</div>
             <div className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500">{label}</div>
-            <div className="text-base font-extrabold text-slate-900">{value}</div>
+            <div className="text-base font-extrabold text-slate-900">{value}</div>    
           </div>
         ))}
       </div>
@@ -131,9 +139,9 @@ export default function PanelPage() {
               const asim = p.budget != null && st.gider > p.budget;
               return (
                 <Link key={p.id} href={`/panel/proje/${p.id}`}
-                  className="flex items-center justify-between gap-3 rounded-xl border border-amber-200 bg-white px-3 py-2 text-sm transition hover:border-amber-400">
+                  className="flex items-center justify-between gap-3 rounded-xl border border-amber-200 bg-white px-3 py-2 text-sm transition hover:border-amber-400">      
                   <span className="min-w-0 truncate font-semibold text-slate-800">{p.name}</span>
-                  <span className="flex shrink-0 gap-1.5 text-[11px] font-bold">
+                  <span className="flex shrink-0 gap-1.5 text-[11px] font-bold">      
                     {st.gecikenIs > 0 && <span className="rounded-full bg-red-100 px-2 py-0.5 text-red-600">{st.gecikenIs} geciken iş</span>}
                     {st.acikKusur > 0 && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-amber-700">{st.acikKusur} kusur</span>}
                     {asim && <span className="rounded-full bg-red-100 px-2 py-0.5 text-red-600">bütçe aşımı</span>}
@@ -194,15 +202,15 @@ export default function PanelPage() {
                     %{progress}
                   </span>
                 </div>
-                <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100">
+                <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100">  
                   <div
                     className="h-full rounded-full bg-gradient-to-r from-brand-500 to-sky-300 transition-all"
                     style={{ width: `${progress}%` }}
                   />
                 </div>
-                <div className="mt-3 flex items-center justify-between text-xs">
+                <div className="mt-3 flex items-center justify-between text-xs">      
                   <span className="text-slate-500">
-                    Sıradaki: <b className="text-slate-700">{activePhase}</b>
+                    Sıradaki: <b className="text-slate-700">{activePhase}</b>        
                   </span>
                   {p.budget != null && (
                     <span className="font-semibold text-slate-600">
@@ -211,13 +219,13 @@ export default function PanelPage() {
                   )}
                 </div>
                 {statlar[p.id] && (statlar[p.id].gider > 0 || statlar[p.id].gecikenIs > 0 || statlar[p.id].acikKusur > 0) && (
-                  <div className="mt-2 flex flex-wrap gap-1.5 text-[10px] font-bold">
+                  <div className="mt-2 flex flex-wrap gap-1.5 text-[10px] font-bold"> 
                     {statlar[p.id].gider > 0 && (
                       <span className={`rounded-full px-2 py-0.5 ${p.budget && statlar[p.id].gider > p.budget ? "bg-red-100 text-red-600" : "bg-slate-100 text-slate-600"}`}>
                         Gider: {formatTL(statlar[p.id].gider)}
                       </span>
                     )}
-                    {statlar[p.id].gecikenIs > 0 && <span className="rounded-full bg-red-100 px-2 py-0.5 text-red-600">⏰ {statlar[p.id].gecikenIs}</span>}
+                    {statlar[p.id].gecikenIs > 0 && <span className="rounded-full bg-red-100 px-2 py-0.5 text-red-600">⌚ {statlar[p.id].gecikenIs}</span>}
                     {statlar[p.id].acikKusur > 0 && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-amber-700">⚠️ {statlar[p.id].acikKusur}</span>}
                   </div>
                 )}
@@ -230,10 +238,10 @@ export default function PanelPage() {
                   </Link>
                   <button
                     onClick={() => handleDelete(p.id, p.name)}
-                    className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-400 transition hover:border-red-300 hover:text-red-500"
+                    className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-400 transition hover:border-red-300 hover:text-red-500"        
                     title="Projeyi sil"
                   >
-                    🗑
+                    🗑️
                   </button>
                 </div>
               </div>
