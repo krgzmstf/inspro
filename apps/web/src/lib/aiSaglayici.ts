@@ -23,7 +23,7 @@ import { createDeepSeek } from "@ai-sdk/deepseek";
 import { generateObject, generateText, stepCountIs, type LanguageModel, type ToolSet } from "ai";
 import type { ZodType } from "zod";
 
-export type SaglayiciId = "groq" | "gemini" | "deepseek" | "github";
+export type SaglayiciId = "openai" | "gemini" | "groq" | "deepseek" | "github";
 
 interface SaglayiciTanim {
   id: SaglayiciId;
@@ -47,6 +47,14 @@ function env(...adlar: string[]): string | undefined {
 /* Sağlayıcı kayıt defteri. Sıra = fallback önceliği (ücretsiz tier
    cömertliği + kalite dengesine göre): Gemini → DeepSeek → GitHub. */
 const TANIMLAR: SaglayiciTanim[] = [
+  {
+    id: "openai",
+    etiket: "ChatGPT (OpenAI)",
+    envKeys: ["OPENAI_API_KEY"],
+    ucretsizKaynak: "https://platform.openai.com/api-keys",
+    model: () =>
+      createOpenAI({ apiKey: env("OPENAI_API_KEY") }).chat(process.env.OPENAI_MODEL || "gpt-4o-mini"),
+  },
   {
     id: "groq",
     etiket: "Groq",

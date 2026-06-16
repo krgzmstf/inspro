@@ -23,7 +23,7 @@ interface Kaynak { id: string; baslik: string; kaynak: string }
 interface Mesaj { role: "user" | "assistant"; content: string; kaynaklar?: Kaynak[]; demo?: boolean }
 
 const SAGLAYICI_ETIKET: Record<string, string> = {
-  groq: "Groq", gemini: "Gemini", deepseek: "DeepSeek", github: "GitHub Models",
+  openai: "ChatGPT", groq: "Groq", gemini: "Gemini", deepseek: "DeepSeek", github: "GitHub Models",
 };
 
 const HIZLI_SORULAR = [
