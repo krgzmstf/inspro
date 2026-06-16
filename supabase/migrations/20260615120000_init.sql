@@ -50,3 +50,8 @@ drop policy if exists "proje sahibi" on public.projects;
 create policy "proje sahibi" on public.projects
   for all using (auth.uid() = owner_id) with check (auth.uid() = owner_id);
 create index if not exists projects_owner_idx on public.projects(owner_id);
+
+-- ── Rol yetkileri (RLS satır erişimini; GRANT tablo erişimini kontrol eder) ──
+grant usage on schema public to anon, authenticated;
+grant select, insert, update, delete on public.profiles to authenticated;
+grant select, insert, update, delete on public.projects to authenticated;
