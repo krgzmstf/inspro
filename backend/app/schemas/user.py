@@ -23,6 +23,19 @@ class RolGuncelle(BaseModel):
     yetkiler: Optional[list[str]] = None
 
 
+class KullaniciOlustur(BaseModel):
+    email: str
+    ad_soyad: str = ""
+    firma: str = ""
+    rol: str = "sefi"
+
+
+class KullaniciGuncelle(BaseModel):
+    ad_soyad: Optional[str] = None
+    firma: Optional[str] = None
+    aktif: Optional[bool] = None
+
+
 def user_dto(u: User) -> dict:
     return {
         "id": u.id,

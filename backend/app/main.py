@@ -22,7 +22,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from .api.routes import auth, dosya, health, moduller, muhasebe, projeler, yonetim
+from .api.routes import auth, ayar, dosya, health, moduller, muhasebe, projeler, yonetim
 from .core.config import settings
 from .core.errors import hata_yoneticileri_ekle
 from .core.logging import setup_logging
@@ -71,7 +71,7 @@ def create_app() -> FastAPI:
     app.mount("/dosyalar", StaticFiles(directory=settings.upload_dir), name="dosyalar")
 
     # Route'lar
-    for modul in (health, auth, projeler, muhasebe, moduller, yonetim, dosya):
+    for modul in (health, auth, projeler, muhasebe, moduller, yonetim, ayar, dosya):
         app.include_router(modul.router)
 
     return app

@@ -40,6 +40,20 @@ services:
     volumes:
       - inspro_uploads:/data/yuklemeler
 
+  # Veritabanı paneli (Supabase Studio benzeri) — tabloları gözle yönet
+  adminer:
+    image: adminer:4
+    container_name: inspro_adminer
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ADMINER_DEFAULT_SERVER: db
+      ADMINER_DESIGN: dracula
+    ports:
+      - "4433:8080"
+
 volumes:
   inspro_pgdata:
   inspro_uploads:

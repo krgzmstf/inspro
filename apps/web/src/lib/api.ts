@@ -87,6 +87,7 @@ async function istek<T = unknown>(method: string, yol: string, govde?: unknown):
 export const apiGet = <T = unknown>(yol: string) => istek<T>("GET", yol);
 export const apiPost = <T = unknown>(yol: string, govde?: unknown) => istek<T>("POST", yol, govde);
 export const apiPut = <T = unknown>(yol: string, govde?: unknown) => istek<T>("PUT", yol, govde);
+export const apiPatch = <T = unknown>(yol: string, govde?: unknown) => istek<T>("PATCH", yol, govde);
 export const apiDelete = <T = unknown>(yol: string) => istek<T>("DELETE", yol);
 
 /** Oturum açık mı (token var mı)? */

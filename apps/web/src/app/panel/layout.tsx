@@ -6,29 +6,9 @@ import { usePathname, useRouter } from "next/navigation";
 import { type Kullanici, supabaseVar, aktifKullanici, cikisYap, oturumDinle } from "@/lib/supabase/auth";
 import { yerelKullanici, yerelCikis } from "@/lib/yerelOturum";
 import { type Rol, ROL_ETIKET, yetkiGetir, menuyeYetkili } from "@/lib/rol";
+import { ayarGetir, menuyuUygula, MENU_KATALOG, type MenuAyar } from "@/lib/ayar";
 
-type NavItem = { href: string; label: string; icon: string; active: boolean; img?: string };
-
-const NAV: NavItem[] = [
-  { href: "/panel", label: "Projeler", icon: "🏗️", active: true },
-  { href: "/panel/is-surecleri", label: "İş Süreçleri", icon: "📋", active: true },
-  { href: "/panel/metraj", label: "Keşif & Metraj", icon: "📏", active: true },
-  { href: "/panel/maliyet", label: "Maliyet", icon: "💰", active: true },
-  { href: "/panel/teklif", label: "Teklif", icon: "📄", active: true },
-  { href: "/panel/hakedis", label: "Hakediş", icon: "🧾", active: true },
-  { href: "/panel/pozlar?lib=kut1", label: "POZ-KÜT-1", icon: "📙", active: true },
-  { href: "/panel/pozlar?lib=kut2", label: "Genel Poz Küt-2", icon: "📚", active: true },
-  { href: "/panel/pozlar?lib=kut3", label: "Küt-3 (Özelim)", icon: "📗", active: true },
-  { href: "/panel/personel", label: "Personel & Puantaj", icon: "👷", active: true },
-  { href: "/panel/muhasebe", label: "Muhasebe", icon: "📒", active: true },
-  { href: "/panel/genel-muhasebe", label: "Genel Muhasebe", icon: "📊", active: true },
-  { href: "/panel/saha", label: "Saha Takibi", icon: "📸", active: true },
-  { href: "/panel/3d", label: "3B Görselleştirme", icon: "🏢", active: true },
-  { href: "/panel/plan3d", label: "Plan → 3B Stüdyo", icon: "🧊", active: true },
-  { href: "/panel/mk-ai", label: "mk_ai (Risk)", icon: "🤖", img: "/mk-ai-logo.jpg", active: true },
-  { href: "/panel/bilgi", label: "Bilgi Tabanı", icon: "📚", active: true },
-  { href: "/panel/yonetim", label: "Yönetim", icon: "👤", active: true },
-];
+const NAV = MENU_KATALOG;
 
 export default function PanelLayout({
   children,
@@ -43,8 +23,13 @@ export default function PanelLayout({
   const [menuAcik, setMenuAcik] = useState(false);
   const [rol, setRol] = useState<Rol>("yonetici");
   const [yetkiler, setYetkiler] = useState<string[] | null>(null);
+  const [menuAyar, setMenuAyar] = useState<MenuAyar | null>(null);
 
   useEffect(() => { yetkiGetir().then((y) => { setRol(y.rol); setYetkiler(y.yetkiler); }); }, [kullanici]);
+  useEffect(() => { ayarGetir<MenuAyar | null>("menu", null).then(setMenuAyar); }, [kullanici]);
+
+  // Yönetici menü ayarını (gizle/yeniden adlandır/sırala) uygula
+  const navListesi = menuyuUygula(NAV, menuAyar);
 
   useEffect(() => {
     let iptal = false;
@@ -100,7 +85,7 @@ export default function PanelLayout({
           <span className="text-xs font-medium uppercase tracking-widest text-white/50">Panel</span>
         </div>
         <nav className="flex-1 space-y-1 p-4">
-          {NAV.filter((item) => menuyeYetkili(rol, item.href, yetkiler) && (item.href !== "/panel/yonetim" || rol === "yonetici")).map((item) => (
+          {navListesi.filter((item) => menuyeYetkili(rol, item.href, yetkiler) && (item.href !== "/panel/yonetim" || rol === "yonetici")).map((item) => (
             <Link
               key={item.label}
               href={item.href}
