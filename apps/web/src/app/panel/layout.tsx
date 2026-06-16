@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import { supabaseVar, aktifKullanici, cikisYap, oturumDinle } from "@/lib/supabase/auth";
 import { yerelKullanici, yerelCikis } from "@/lib/yerelOturum";
+import { type Rol, ROL_ETIKET, rolGetir, menuyeYetkili } from "@/lib/rol";
 
 type NavItem = { href: string; label: string; icon: string; active: boolean; img?: string };
 
@@ -40,6 +41,9 @@ export default function PanelLayout({
   const [yerelAd, setYerelAd] = useState<string | null>(null);
   const [kontrol, setKontrol] = useState(false);
   const [menuAcik, setMenuAcik] = useState(false);
+  const [rol, setRol] = useState<Rol>("sahip");
+
+  useEffect(() => { rolGetir().then(setRol); }, [kullanici]);
 
   useEffect(() => {
     let iptal = false;
@@ -95,7 +99,7 @@ export default function PanelLayout({
           <span className="text-xs font-medium uppercase tracking-widest text-white/50">Panel</span>
         </div>
         <nav className="flex-1 space-y-1 p-4">
-          {NAV.map((item) => (
+          {NAV.filter((item) => menuyeYetkili(rol, item.href)).map((item) => (
             <Link
               key={item.label}
               href={item.href}
@@ -162,6 +166,7 @@ export default function PanelLayout({
                   {!kullanici && yerelAd && (
                     <span className="hidden rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-bold text-amber-700 sm:block">kayıtsız</span>
                   )}
+                  <span className="hidden rounded-full bg-brand-500/15 px-2.5 py-1 text-[10px] font-bold text-brand-600 sm:block">{ROL_ETIKET[rol]}</span>
                   <span className="hidden text-xs font-semibold text-slate-600 sm:block">{ad}</span>
                   <button onClick={cikis} className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-bold text-slate-600 transition hover:border-red-300 hover:bg-red-50 hover:text-red-600">
                     Çıkış

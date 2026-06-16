@@ -19,6 +19,7 @@ import {
   deleteSaha,
   fotoKucult,
 } from "@/lib/saha";
+import { fotoYukle } from "@/lib/depo";
 
 const DURUM_DONGU: SahaDurum[] = ["acik", "devam", "tamam"];
 
@@ -72,7 +73,9 @@ export default function SahaPage() {
     if (!files.length) return;
     setFotoBusy(true);
     try {
-      const yeni = await Promise.all(files.map((f) => fotoKucult(f)));
+      const kucuk = await Promise.all(files.map((f) => fotoKucult(f)));
+      // Oturum varsa Storage'a yükle (link sakla); yoksa base64 kalsın
+      const yeni = await Promise.all(kucuk.map(async (d) => (await fotoYukle(d)) ?? d));
       setFotograflar((g) => [...g, ...yeni].slice(0, 6));
     } catch {
       setError("Fotoğraf işlenemedi.");

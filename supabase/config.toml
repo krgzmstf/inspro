@@ -233,20 +233,26 @@ otp_length = 6
 # Number of seconds before the email OTP expires (defaults to 1 hour).
 otp_expiry = 3600
 
-# Use a production-ready SMTP server
+# Kod (OTP) e-posta şablonu — giriş/kayıt kodu gösterir
+[auth.email.template.magic_link]
+subject = "İNŞPRO doğrulama kodunuz"
+content_path = "./supabase/templates/otp.html"
+
+[auth.email.template.confirmation]
+subject = "İNŞPRO kayıt doğrulama kodunuz"
+content_path = "./supabase/templates/otp.html"
+
+# Gmail SMTP — gerçek e-posta göndermek için (aksi halde mailler Mailpit'te: http://127.0.0.1:4324)
+# Açmak için: alttaki # işaretlerini sil, supabase/.env içine SMTP_PASSWORD=<gmail uygulama şifresi> yaz,
+# sonra: npx supabase stop && npx supabase start
 # [auth.email.smtp]
 # enabled = true
-# host = "smtp.sendgrid.net"
+# host = "smtp.gmail.com"
 # port = 587
-# user = "apikey"
-# pass = "env(SENDGRID_API_KEY)"
-# admin_email = "admin@email.com"
-# sender_name = "Admin"
-
-# Uncomment to customize email template
-# [auth.email.template.invite]
-# subject = "You have been invited"
-# content_path = "./supabase/templates/invite.html"
+# user = "yazeproje@gmail.com"
+# pass = "env(SMTP_PASSWORD)"
+# admin_email = "yazeproje@gmail.com"
+# sender_name = "İNŞPRO"
 
 # Uncomment to customize notification email template
 # [auth.email.notification.password_changed]

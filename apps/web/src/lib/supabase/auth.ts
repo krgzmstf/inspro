@@ -29,6 +29,32 @@ export async function kayitOl(
   return { ok: true, mesaj: "Hesap oluşturuldu." };
 }
 
+/** E-postaya 6 haneli doğrulama kodu gönderir (kayıt veya giriş). */
+export async function kodGonder(
+  email: string, kayit: boolean, adSoyad = "", firma = "",
+): Promise<AuthSonuc> {
+  const sb = supabase();
+  if (!sb) return { ok: false, mesaj: "Supabase yapılandırılmamış." };
+  const { error } = await sb.auth.signInWithOtp({
+    email: email.trim(),
+    options: {
+      shouldCreateUser: kayit,
+      data: kayit ? { ad_soyad: adSoyad.trim(), firma: firma.trim() } : undefined,
+    },
+  });
+  if (error) return { ok: false, mesaj: cevir(error.message) };
+  return { ok: true, mesaj: "Doğrulama kodu e-postana gönderildi." };
+}
+
+/** E-postaya gelen kodu doğrular → oturum açılır. */
+export async function kodDogrula(email: string, kod: string): Promise<AuthSonuc> {
+  const sb = supabase();
+  if (!sb) return { ok: false, mesaj: "Supabase yapılandırılmamış." };
+  const { error } = await sb.auth.verifyOtp({ email: email.trim(), token: kod.trim(), type: "email" });
+  if (error) return { ok: false, mesaj: cevir(error.message) };
+  return { ok: true, mesaj: "Doğrulandı." };
+}
+
 export async function girisYap(email: string, sifre: string): Promise<AuthSonuc> {
   const sb = supabase();
   if (!sb) return { ok: false, mesaj: "Supabase yapılandırılmamış." };
@@ -64,5 +90,9 @@ function cevir(msg: string): string {
   if (m.includes("password should be at least")) return "Şifre en az 6 karakter olmalı.";
   if (m.includes("email not confirmed")) return "E-posta henüz doğrulanmamış; gelen kutunu kontrol et.";
   if (m.includes("unable to validate email")) return "Geçerli bir e-posta gir.";
+  if (m.includes("token has expired") || m.includes("invalid") && m.includes("otp")) return "Kod hatalı veya süresi doldu. Tekrar kod iste.";
+  if (m.includes("expired") || m.includes("token")) return "Kod hatalı veya süresi doldu. Tekrar kod iste.";
+  if (m.includes("signups not allowed") || m.includes("otp_disabled")) return "Bu e-posta kayıtlı değil; önce kayıt olun.";
+  if (m.includes("rate limit") || m.includes("too many")) return "Çok fazla deneme. Biraz bekleyip tekrar dene.";
   return msg;
 }
