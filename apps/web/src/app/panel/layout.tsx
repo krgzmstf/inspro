@@ -28,6 +28,7 @@ const NAV: NavItem[] = [
   { href: "/panel/plan3d", label: "Plan → 3B Stüdyo", icon: "🧊", active: true },
   { href: "/panel/mk-ai", label: "mk_ai (Risk)", icon: "🤖", img: "/mk-ai-logo.jpg", active: true },
   { href: "/panel/bilgi", label: "Bilgi Tabanı", icon: "📚", active: true },
+  { href: "/panel/yonetim", label: "Yönetim", icon: "👤", active: true },
 ];
 
 export default function PanelLayout({
@@ -99,7 +100,7 @@ export default function PanelLayout({
           <span className="text-xs font-medium uppercase tracking-widest text-white/50">Panel</span>
         </div>
         <nav className="flex-1 space-y-1 p-4">
-          {NAV.filter((item) => menuyeYetkili(rol, item.href)).map((item) => (
+          {NAV.filter((item) => menuyeYetkili(rol, item.href) && (item.href !== "/panel/yonetim" || rol === "sahip")).map((item) => (
             <Link
               key={item.label}
               href={item.href}
