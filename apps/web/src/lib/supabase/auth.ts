@@ -46,6 +46,17 @@ export async function kodDogrula(email: string, kod: string): Promise<AuthSonuc>
   }
 }
 
+/** Ortak yerel şifreyle hızlı giriş (kod/e-posta beklemeden). */
+export async function ortakGiris(sifre: string): Promise<AuthSonuc> {
+  try {
+    const r = await apiPost<{ access_token: string; refresh_token?: string; user: Kullanici }>("/auth/yerel-giris", { sifre });
+    tokenSet(r.access_token, r.refresh_token);
+    return { ok: true, mesaj: "Giriş yapıldı." };
+  } catch (e) {
+    return { ok: false, mesaj: (e as Error).message };
+  }
+}
+
 export async function cikisYap(): Promise<void> {
   tokenSil();
 }

@@ -29,6 +29,7 @@ services:
       APP_ENV: ${APP_ENV:-development}
       JWT_SECRET: ${JWT_SECRET:-degistir-bu-gizli-anahtari}
       CORS_ORIGINS: ${CORS_ORIGINS:-*}
+      YEREL_GIRIS_SIFRE: ${YEREL_GIRIS_SIFRE:-}
       UPLOAD_DIR: /data/yuklemeler
       SMTP_HOST: ${SMTP_HOST:-}
       SMTP_PORT: ${SMTP_PORT:-587}

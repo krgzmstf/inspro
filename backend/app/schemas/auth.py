@@ -20,6 +20,10 @@ class TokenYenile(BaseModel):
     refresh_token: str
 
 
+class YerelGiris(BaseModel):
+    sifre: str
+
+
 class TokenYanit(BaseModel):
     access_token: str
     refresh_token: str

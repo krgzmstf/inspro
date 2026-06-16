@@ -1,15 +1,18 @@
 """Kimlik doğrulama uçları — OTP kayıt/giriş + token yenileme."""
 from __future__ import annotations
 
+import secrets
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ...core.config import settings
 from ...core.database import get_db
 from ...core.security import access_token, get_current_user, refresh_token, token_coz
 from ...models.base import simdi
 from ...models.user import User
-from ...schemas.auth import KodDogrula, KodIstek, TokenYenile
+from ...schemas.auth import KodDogrula, KodIstek, TokenYenile, YerelGiris
 from ...schemas.user import user_dto
 from ...services import otp as otp_servis
 from ...services.email import kod_maili_gonder
@@ -45,6 +48,31 @@ async def kod_dogrula(g: KodDogrula, db: AsyncSession = Depends(get_db)):
         db.add(u)
     u.son_giris = simdi()
     await db.delete(rec)
+    await db.commit()
+    await db.refresh(u)
+    return {
+        "access_token": access_token(u.id),
+        "refresh_token": refresh_token(u.id),
+        "user": user_dto(u),
+    }
+
+
+@router.post("/yerel-giris")
+async def yerel_giris(g: YerelGiris, db: AsyncSession = Depends(get_db)):
+    """Tek ortak şifreyle hızlı yerel giriş (kod/e-posta beklemeden).
+
+    Yalnız .env'de YEREL_GIRIS_SIFRE tanımlıysa açıktır; üretimde kapalı tutulmalı.
+    """
+    if not settings.yerel_giris_sifre:
+        raise HTTPException(404, "Yerel giriş kapalı.")
+    if not secrets.compare_digest(g.sifre, settings.yerel_giris_sifre):
+        raise HTTPException(401, "Şifre hatalı.")
+    email = settings.yerel_giris_email.lower().strip()
+    u = (await db.execute(select(User).where(User.email == email))).scalar_one_or_none()
+    if not u:
+        u = User(email=email, ad_soyad="Yerel Yönetici", firma="insPRO", rol="yonetici")
+        db.add(u)
+    u.son_giris = simdi()
     await db.commit()
     await db.refresh(u)
     return {

@@ -36,6 +36,11 @@ class Settings(BaseSettings):
     smtp_password: str = ""
     smtp_from: str = "İNŞPRO <yazeinspro@gmail.com>"
 
+    # ── Yerel ortak giriş (kod/e-posta beklemeden tek şifreyle) ──
+    # Boş bırakılırsa kapalıdır. Üretimde KAPALI tutun.
+    yerel_giris_sifre: str = ""
+    yerel_giris_email: str = "yerel@inspro.app"
+
     # ── CORS ──
     cors_origins: str = "*"             # virgülle ayrılmış liste veya *
 

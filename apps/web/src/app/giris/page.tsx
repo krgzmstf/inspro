@@ -3,8 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { kodGonder, kodDogrula } from "@/lib/supabase/auth";
-import { yerelGiris } from "@/lib/yerelOturum";
+import { kodGonder, kodDogrula, ortakGiris } from "@/lib/supabase/auth";
 
 export default function GirisPage() {
   const router = useRouter();
@@ -15,7 +14,7 @@ export default function GirisPage() {
   const [bilgi, setBilgi] = useState("");
   const [yukleniyor, setYukleniyor] = useState(false);
   const [yerelAcik, setYerelAcik] = useState(false);
-  const [ad, setAd] = useState("");
+  const [sifre, setSifre] = useState("");
 
   async function kodIste(e: React.FormEvent) {
     e.preventDefault();
@@ -36,10 +35,13 @@ export default function GirisPage() {
     router.push("/panel");
   }
 
-  function adIleGir(e: React.FormEvent) {
+  async function sifreIleGir(e: React.FormEvent) {
     e.preventDefault();
-    if (!ad.trim()) return;
-    yerelGiris(ad);
+    if (!sifre.trim()) return;
+    setHata(""); setYukleniyor(true);
+    const s = await ortakGiris(sifre);
+    setYukleniyor(false);
+    if (!s.ok) { setHata(s.mesaj); return; }
     router.push("/panel");
   }
 
@@ -88,18 +90,18 @@ export default function GirisPage() {
           Hesabın yok mu? <Link href="/kayit" className="font-bold text-brand-600 hover:underline">Kayıt ol</Link>
         </p>
 
-        {/* Kayıtsız (yerel) giriş — yedek */}
+        {/* Ortak şifreyle hızlı giriş (yerel) */}
         <div className="mt-5 border-t border-slate-100 pt-4">
           <button onClick={() => setYerelAcik((v) => !v)}
             className="flex w-full items-center justify-between text-xs font-semibold text-slate-400 hover:text-ink-800">
-            <span>Kayıtsız hızlı giriş (yerel, test)</span>
+            <span>🔑 Ortak şifreyle hızlı giriş (yerel)</span>
             <span>{yerelAcik ? "▴" : "▾"}</span>
           </button>
           {yerelAcik && (
-            <form onSubmit={adIleGir} className="mt-2 flex gap-2">
-              <input value={ad} onChange={(e) => setAd(e.target.value)} placeholder="Kullanıcı adı"
+            <form onSubmit={sifreIleGir} className="mt-2 flex gap-2">
+              <input type="password" value={sifre} onChange={(e) => setSifre(e.target.value)} placeholder="Ortak şifre"
                 className="flex-1 rounded-xl border-2 border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500" />
-              <button type="submit" className="rounded-xl border-2 border-ink-900 px-4 py-2 text-sm font-bold text-ink-900 hover:bg-ink-900 hover:text-white">Gir</button>
+              <button type="submit" disabled={yukleniyor} className="rounded-xl border-2 border-ink-900 px-4 py-2 text-sm font-bold text-ink-900 hover:bg-ink-900 hover:text-white disabled:opacity-50">Gir</button>
             </form>
           )}
         </div>
