@@ -103,6 +103,7 @@ function normalize(x: unknown): SahaKaydi {
 
 function saveAll(kayitlar: SahaKaydi[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(kayitlar));
+  void import("./genelSenkron").then((m) => m.modulYaz("saha"));
 }
 
 export function loadSaha(projectId: string): SahaKaydi[] {

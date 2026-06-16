@@ -43,7 +43,7 @@ function loadAll(): Teklif[] {
   if (typeof window === "undefined") return [];
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); } catch { return []; }
 }
-function saveAll(list: Teklif[]) { localStorage.setItem(STORAGE_KEY, JSON.stringify(list)); }
+function saveAll(list: Teklif[]) { localStorage.setItem(STORAGE_KEY, JSON.stringify(list)); void import("./genelSenkron").then((m) => m.modulYaz("teklif")); }
 
 export function loadTeklifler(projectId: string): Teklif[] {
   return loadAll().filter((t) => t.projectId === projectId).sort((a, b) => b.createdAt.localeCompare(a.createdAt));

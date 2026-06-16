@@ -49,7 +49,7 @@ function pLoad(): Personel[] {
   if (typeof window === "undefined") return [];
   try { return JSON.parse(localStorage.getItem(PERSONEL_KEY) || "[]"); } catch { return []; }
 }
-function pSave(list: Personel[]) { localStorage.setItem(PERSONEL_KEY, JSON.stringify(list)); }
+function pSave(list: Personel[]) { localStorage.setItem(PERSONEL_KEY, JSON.stringify(list)); void import("./genelSenkron").then((m) => m.modulYaz("personel")); }
 
 /** Personel GLOBAL'dir — tüm dosyalarda (projelerde) ortak kullanılır.
    (projectId parametresi geriye uyumluluk için tutuldu; filtre uygulanmaz.) */
@@ -87,7 +87,7 @@ function loadPuantajAll(): PuantajKaydi[] {
   if (typeof window === "undefined") return [];
   try { return JSON.parse(localStorage.getItem(PUANTAJ_KEY) || "[]"); } catch { return []; }
 }
-function savePuantajAll(list: PuantajKaydi[]) { localStorage.setItem(PUANTAJ_KEY, JSON.stringify(list)); }
+function savePuantajAll(list: PuantajKaydi[]) { localStorage.setItem(PUANTAJ_KEY, JSON.stringify(list)); void import("./genelSenkron").then((m) => m.modulYaz("puantaj")); }
 
 /** Bir ayın puantaj kayıtlarını döndürür: harita "personelId_tarih" → deger. */
 export function loadPuantajAy(projectId: string, ay: string): Map<string, PuantajDeger> {

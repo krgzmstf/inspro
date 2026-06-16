@@ -7,6 +7,7 @@ import {
   loadProjects,
   getProject,
   formatTL,
+  saveProjects,
 } from "@/lib/projects";
 import {
   type MuhasebeKayit,
@@ -29,6 +30,8 @@ import {
   kdvOzeti,
   gelirTablosu,
   nakitAkis,
+  loadAllMuhasebe,
+  saveMuhasebe,
 } from "@/lib/muhasebe";
 import {
   type FinansHesap,
@@ -46,6 +49,8 @@ import {
   senkronAsamaMuhasebe, bekleyenMuhasebelestirme,
 } from "@/lib/entegrasyon";
 import { type IsimOneri, isimOnerileri, firmaYakala } from "@/lib/firma";
+import { projeleriSenkronla } from "@/lib/projeSenkron";
+import { muhasebeSenkronla } from "@/lib/muhasebeSenkron";
 
 type Sekme = "hareketler" | "cari" | "kasa" | "raporlar";
 
@@ -111,13 +116,32 @@ export default function MuhasebePage() {
     setHesaplar(loadHesaplar());
     setOneriler(isimOnerileri());
     const id = new URLSearchParams(window.location.search).get("proje");
-    const initial = id && list.some((p) => p.id === id) ? id : (list[0]?.id ?? "");
+    const initial = id && list.some((p) => p.id === id) ? id : (list[0]?.id ?? "");   
     if (initial) {
       setProjectId(initial);
-      senkronAsamaMuhasebe(initial); // İş Takibi kalemlerini muhasebeye yansıt (açık)
+      senkronAsamaMuhasebe(initial);
       setKayitlar(loadMuhasebe(initial));
       setBekleyenler(bekleyenMuhasebelestirme(initial));
     }
+
+    // Bulut senkronu
+    projeleriSenkronla(list).then((bulut) => {
+      if (bulut) {
+        saveProjects(bulut);
+        setProjects(bulut);
+        const current = initial || (bulut[0]?.id ?? "");
+        if (current) setKayitlar(loadMuhasebe(current));
+      }
+      
+      const yerelMuhasebe = loadAllMuhasebe();
+      muhasebeSenkronla(yerelMuhasebe).then((bulutMu) => {
+        if (bulutMu) {
+          saveMuhasebe(bulutMu);
+          const current = projectId || initial || (list[0]?.id ?? "");
+          if (current) setKayitlar(loadMuhasebe(current));
+        }
+      });
+    });
   }, []);
 
   const projeObj = useMemo(() => (projectId ? getProject(projectId) : undefined), [projectId, kayitlar]);
@@ -145,7 +169,7 @@ export default function MuhasebePage() {
     [kayitlar, seciliCari],
   );
 
-  const kategoriler = tip === "gider" ? GIDER_KATEGORILERI : GELIR_KATEGORILERI;
+  const kategoriler = tip === "gider" ? GIDER_KATEGORILERI : GELIR_KATEGORILERI;      
 
   // canlı tutar önizleme
   const onizleme = useMemo(() => {
@@ -199,7 +223,7 @@ export default function MuhasebePage() {
 
   function handleTipDegis(t: KayitTipi) {
     setTip(t);
-    setKategori((t === "gider" ? GIDER_KATEGORILERI : GELIR_KATEGORILERI)[0]);
+    setKategori((t === "gider" ? GIDER_KATEGORILERI : GELIR_KATEGORILERI)[0]);        
   }
 
   function handleEkle(e: React.FormEvent) {
@@ -241,7 +265,7 @@ export default function MuhasebePage() {
     setOdemeKayit(null);
   }
 
-  /* ── Raporlar: PDF / Excel ── */
+  /* —— Raporlar: PDF / Excel —— */
   function raporGelirTablosu(fmt: "pdf" | "excel") {
     const satirlar: (string | number)[][] = [
       ["GELİRLER (KDV hariç)", ""],
@@ -255,7 +279,7 @@ export default function MuhasebePage() {
       ["BRÜT KÂR / ZARAR", gt.brutKar],
     ];
     const ad = `gelir-tablosu-${projeObj?.name ?? ""}`.replaceAll(" ", "-");
-    if (fmt === "pdf") pdfYazdir(`Gelir Tablosu — ${projeObj?.name ?? ""}`, ["Kalem", "Tutar (₺)"], satirlar, "KDV hariç matrah tutarlarıdır. insPRO DEMO.");
+    if (fmt === "pdf") pdfYazdir(`Gelir Tablosu — ${projeObj?.name ?? ""}`, ["Kalem", "Tutar (₺)"], satirlar, "KDV hariç matrah tutarlarıdır. insPRO DEMO.");        
     else excelYaz(ad, "Gelir Tablosu", ["Kalem", "Tutar (TL)"], satirlar);
   }
 
@@ -292,7 +316,7 @@ export default function MuhasebePage() {
     excelYaz(`muhasebe-${projeObj.name}`.replaceAll(" ", "-"), "Hareketler", head, satirlar);
   }
 
-  /* ── Kasa/Banka ── */
+  /* —— Kasa/Banka —— */
   function handleHesapEkle(ad: string, tip: HesapTipi, iban: string, acilis: number) {
     addHesap({ ad, tip, iban: iban || undefined, acilisBakiye: acilis });
     setHesaplar(loadHesaplar());
@@ -305,7 +329,7 @@ export default function MuhasebePage() {
   if (projects.length === 0) {
     return (
       <div className="mx-auto max-w-6xl">
-        <h1 className="text-2xl font-extrabold text-slate-900">📒 Muhasebe</h1>
+        <h1 className="text-2xl font-extrabold text-slate-900">📑 Muhasebe</h1>     
         <div className="mt-8 rounded-2xl border-2 border-dashed border-slate-300 bg-white p-12 text-center">
           <div className="text-4xl">🏗️</div>
           <h3 className="mt-3 text-lg font-bold text-slate-900">Önce bir proje gerekli</h3>
@@ -321,21 +345,21 @@ export default function MuhasebePage() {
     <div className="mx-auto max-w-6xl">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-900">📒 Muhasebe</h1>
+          <h1 className="text-2xl font-extrabold text-slate-900">📑 Muhasebe</h1>   
           <p className="mt-1 text-sm text-slate-500">KDV/tevkifat, cari hesaplar, vade takibi, kasa/banka ve raporlar.</p>
         </div>
-        <select value={projectId} onChange={(e) => switchProject(e.target.value)}
+        <select value={projectId} onChange={(e) => switchProject(e.target.value)}     
           className="rounded-xl border-2 border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold outline-none focus:border-brand-500">
-          {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+          {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}    
         </select>
       </div>
 
       {/* Cari/firma rehberi — autocomplete */}
       <datalist id="cari-rehber">
-        {oneriler.map((o) => <option key={o.ad} value={o.ad}>{o.etiket}</option>)}
+        {oneriler.map((o) => <option key={o.ad} value={o.ad}>{o.etiket}</option>)}    
       </datalist>
 
-      {/* Muhasebeleştirme bekleyenler — turuncu, yanıp sönen kutucuklar */}
+      {/* Muhasebeleştirme bekleyenler — turuncu, yanıp sönen kutucuklar */}     
       {bekleyenler.length > 0 && (
         <div className="mt-5 rounded-2xl border-2 border-orange-300 bg-orange-50 p-4 shadow-sm">
           <div className="flex flex-wrap items-center gap-2">
@@ -359,7 +383,7 @@ export default function MuhasebePage() {
                 </div>
                 <div className="shrink-0 text-right">
                   <div className="text-sm font-extrabold text-orange-900">{formatTL(b.matrah)}</div>
-                  <div className="text-[10px] font-bold text-orange-600">Muhasebeleştir →</div>
+                  <div className="text-[10px] font-bold text-orange-600">Muhasebeleştir  →</div>
                 </div>
               </button>
             ))}
@@ -392,16 +416,17 @@ export default function MuhasebePage() {
         ))}
       </div>
 
-      {/* ════════ HAREKETLER ════════ */}
+      {/* HAREKETLER SEKMESİ */}
       {sekme === "hareketler" && (
         <>
-          {(kesifPiyasa > 0 || projeObj?.budget) && (
-            <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <h2 className="text-sm font-extrabold text-slate-700">📊 Bütçe vs Gerçekleşen</h2>
-              <div className="mt-3 grid gap-3 sm:grid-cols-3">
-                {projeObj?.budget != null && <Karsilastir etiket="Planlanan Bütçe" deger={projeObj.budget} gider={ozet.toplamGider} />}
-                {kesifCsb > 0 && <Karsilastir etiket="Keşif (ÇŞB)" deger={kesifCsb} gider={ozet.toplamGider} />}
-                {kesifPiyasa > 0 && <Karsilastir etiket="Keşif (Piyasa)" deger={kesifPiyasa} gider={ozet.toplamGider} />}
+          {/* Keşif maliyet vs Muhasebe gider özeti */}
+          {projeObj && (
+            <div className="mt-5 rounded-2xl bg-slate-900 p-5 text-white shadow-xl">
+              <h2 className="text-sm font-bold text-brand-400">📊 Proje Finansal Sağlık (Canlı)</h2>
+              <div className="mt-4 grid gap-4 sm:grid-cols-3">
+                <MiniKart baslik="Hedef Bütçe" deger={projeObj.budget} />
+                <MiniKart baslik="Keşif (CSB)" deger={kesifCsb} />
+                <MiniKart baslik="Keşif (Piyasa)" deger={kesifPiyasa} gider={ozet.toplamGider} />
               </div>
             </div>
           )}
@@ -409,7 +434,7 @@ export default function MuhasebePage() {
           <div className="mt-5 grid gap-6 lg:grid-cols-[380px_1fr]">
             {/* Kayıt ekleme */}
             <form onSubmit={handleEkle} className="h-fit rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <h2 className="text-sm font-extrabold text-slate-700">Yeni Hareket</h2>
+              <h2 className="text-sm font-extrabold text-slate-700">Yeni Hareket</h2> 
               <div className="mt-3 grid grid-cols-2 gap-2">
                 <button type="button" onClick={() => handleTipDegis("gider")}
                   className={`rounded-xl border-2 py-2 text-sm font-bold transition ${tip === "gider" ? "border-red-400 bg-red-50 text-red-600" : "border-slate-200 text-slate-500"}`}>− Gider</button>
@@ -494,7 +519,7 @@ export default function MuhasebePage() {
                 </label>
               )}
 
-              {error && <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-600">{error}</p>}
+              {error && <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm font-bold text-red-600">{error}</p>}
               <button type="submit"
                 className={`mt-4 w-full rounded-xl py-2.5 text-sm font-bold text-white transition ${tip === "gider" ? "bg-red-500 hover:bg-red-600" : "bg-emerald-500 hover:bg-emerald-600"}`}>
                 {tip === "gider" ? "Gider Ekle" : "Gelir Ekle"}
@@ -505,7 +530,7 @@ export default function MuhasebePage() {
             <div>
               <div className="flex items-center justify-between">
                 <h2 className="text-sm font-extrabold text-slate-700">Hareketler ({kayitlar.length})</h2>
-                <button onClick={hareketDisaAktar} disabled={kayitlar.length === 0}
+                <button onClick={hareketDisaAktar} disabled={kayitlar.length === 0}   
                   className="rounded-xl bg-ink-900 px-4 py-2 text-xs font-bold text-white transition hover:bg-ink-800 disabled:opacity-40">⬇ Excel</button>
               </div>
               {kayitlar.length === 0 ? (
@@ -539,7 +564,7 @@ export default function MuhasebePage() {
                               {k.aciklama && <div className="text-[11px] text-slate-400">{k.aciklama}</div>}
                             </td>
                             <td className={`px-3 py-2 text-right font-bold ${k.tip === "gider" ? "text-red-600" : "text-emerald-600"}`}>
-                              {k.tip === "gider" ? "−" : "+"}{formatTL(k.net)}
+                              {k.tip === "gider" ? "−" : "+"}{formatTL(k.net)}      
                               {acik > 0.005 && <div className="text-[10px] font-semibold text-amber-600">açık: {formatTL(acik)}</div>}
                             </td>
                             <td className="px-3 py-2 text-center">
@@ -548,9 +573,9 @@ export default function MuhasebePage() {
                             <td className="px-2 py-2 text-center whitespace-nowrap">
                               {acik > 0.005 && (
                                 <button onClick={() => odemeAc(k)} title={k.tip === "gider" ? "Ödeme kaydet" : "Tahsilat kaydet"}
-                                  className="rounded-lg px-2 py-1 text-xs font-bold text-brand-600 transition hover:bg-brand-50">💵</button>
+                                  className="rounded-lg px-2 py-1 text-xs font-bold text-brand-600 transition hover:bg-brand-50">💸</button>
                               )}
-                              <button onClick={() => handleSil(k.id)} className="rounded-lg px-2 py-1 text-slate-300 transition hover:bg-red-50 hover:text-red-500">🗑</button>
+                              <button onClick={() => handleSil(k.id)} className="rounded-lg px-2 py-1 text-slate-300 transition hover:bg-red-50 hover:text-red-500">🗑️</button>
                             </td>
                           </tr>
                         );
@@ -564,41 +589,42 @@ export default function MuhasebePage() {
         </>
       )}
 
-      {/* ════════ CARİ HESAPLAR ════════ */}
+      {/* CARİ HESAPLAR SEKMESİ */}
       {sekme === "cari" && (
-        <div className="mt-5 grid gap-6 lg:grid-cols-[1fr_1fr]">
+        <div className="mt-5 grid gap-6 lg:grid-cols-2">
+          {/* Cari Liste */}
           <div>
-            <h2 className="text-sm font-extrabold text-slate-700">Cari Hesaplar ({cariler.length})</h2>
-            {cariler.length === 0 ? (
-              <p className="mt-3 rounded-2xl border-2 border-dashed border-slate-300 bg-white/60 p-8 text-center text-sm text-slate-500">Henüz cari yok.</p>
-            ) : (
-              <div className="mt-3 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-bold uppercase text-slate-500">
-                      <th className="px-3 py-2.5">Cari</th>
-                      <th className="px-3 py-2.5 text-right">Alacak</th>
-                      <th className="px-3 py-2.5 text-right">Borç</th>
-                      <th className="px-3 py-2.5 text-right">Bakiye</th>
+            <h2 className="text-sm font-extrabold text-slate-700">Taraf Bazlı Bakiyeler ({cariler.length})</h2>
+            <div className="mt-3 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-bold uppercase text-slate-500">
+                    <th className="px-3 py-2.5">Cari / Firma</th>
+                    <th className="px-3 py-2.5 text-right">Bakiye</th>
+                    <th className="px-2 py-2.5" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {cariler.map((c) => (
+                    <tr key={c.taraf} className={`border-b border-slate-100 transition ${seciliCari === c.taraf ? "bg-brand-50" : "hover:bg-slate-50"}`}>
+                      <td className="px-3 py-2">
+                        <div className="font-bold text-slate-800">{c.taraf}</div>
+                        <div className="text-[10px] text-slate-500">{c.hareketSayisi} hareket</div>
+                      </td>
+                      <td className={`px-3 py-2 text-right font-extrabold ${c.bakiye >= 0 ? "text-emerald-700" : "text-red-700"}`}>
+                        {formatTL(c.bakiye)}
+                      </td>
+                      <td className="px-2 py-2 text-right">
+                        <button onClick={() => setSeciliCari(c.taraf)}
+                          className="rounded-lg bg-white px-2 py-1 text-xs font-bold shadow-sm ring-1 ring-slate-200 transition hover:bg-brand-500 hover:text-white hover:ring-brand-500">Seç</button>
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {cariler.map((c) => (
-                      <tr key={c.taraf} onClick={() => setSeciliCari(c.taraf)}
-                        className={`cursor-pointer border-b border-slate-100 transition hover:bg-brand-50/40 ${seciliCari === c.taraf ? "bg-brand-50" : ""}`}>
-                        <td className="px-3 py-2 font-semibold text-slate-700">{c.taraf}<div className="text-[10px] font-normal text-slate-400">{c.hareketSayisi} hareket</div></td>
-                        <td className="px-3 py-2 text-right text-emerald-600">{c.alacak ? formatTL(c.alacak) : "—"}</td>
-                        <td className="px-3 py-2 text-right text-red-600">{c.borc ? formatTL(c.borc) : "—"}</td>
-                        <td className={`px-3 py-2 text-right font-bold ${c.bakiye >= 0 ? "text-emerald-700" : "text-red-700"}`}>{formatTL(c.bakiye)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
-            {/* Yaşlandırma */}
-            <h3 className="mt-6 text-sm font-extrabold text-slate-700">⏳ Vade Yaşlandırma</h3>
+            <h3 className="mt-8 text-sm font-extrabold text-slate-700">⌛ Vade Yaşlandırma</h3>
             <div className="mt-3 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
               <table className="w-full text-sm">
                 <thead>
@@ -627,13 +653,13 @@ export default function MuhasebePage() {
               <h2 className="text-sm font-extrabold text-slate-700">{seciliCari ? `Ekstre — ${seciliCari}` : "Cari Ekstresi"}</h2>
               {seciliCari && (
                 <div className="flex gap-1">
-                  <button onClick={() => raporCariEkstre("pdf")} className="rounded-lg bg-ink-900 px-3 py-1.5 text-xs font-bold text-white hover:bg-ink-800">PDF</button>
+                  <button onClick={() => raporCariEkstre("pdf")} className="rounded-lg bg-ink-900 px-3 py-1.5 text-xs font-bold text-white hover:bg-ink-800">PDF</button>   
                   <button onClick={() => raporCariEkstre("excel")} className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-700">Excel</button>
                 </div>
               )}
             </div>
             {!seciliCari ? (
-              <p className="mt-3 rounded-2xl border-2 border-dashed border-slate-300 bg-white/60 p-8 text-center text-sm text-slate-500">Soldan bir cari seçin.</p>
+              <p className="mt-3 rounded-2xl border-2 border-dashed border-slate-300 bg-white/60 p-8 text-center text-sm text-slate-500">Soldan bir cari seçin.</p>        
             ) : (
               <div className="mt-3 overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
                 <table className="w-full min-w-[480px] text-sm">
@@ -650,10 +676,10 @@ export default function MuhasebePage() {
                     {ekstre.map((e, i) => (
                       <tr key={i} className="border-b border-slate-100">
                         <td className="px-3 py-2 text-xs text-slate-500">{e.tarih}</td>
-                        <td className="px-3 py-2 text-xs text-slate-600">{e.aciklama}{e.belgeNo ? <span className="text-slate-400"> · {e.belgeNo}</span> : null}</td>
+                        <td className="px-3 py-2 text-xs text-slate-600">{e.aciklama}{e.belgeNo ? <span className="text-slate-400"> · {e.belgeNo}</span> : null}</td>      
                         <td className="px-3 py-2 text-right text-red-600">{e.borc ? formatTL(e.borc) : ""}</td>
                         <td className="px-3 py-2 text-right text-emerald-600">{e.alacak ? formatTL(e.alacak) : ""}</td>
-                        <td className={`px-3 py-2 text-right font-bold ${e.yuruyenBakiye >= 0 ? "text-emerald-700" : "text-red-700"}`}>{formatTL(e.yuruyenBakiye)}</td>
+                        <td className={`px-3 py-2 text-right font-bold ${e.yuruyenBakiye >= 0 ? "text-emerald-700" : "text-red-700"}`}>{formatTL(e.yuruyenBakiye)}</td>     
                       </tr>
                     ))}
                   </tbody>
@@ -664,311 +690,280 @@ export default function MuhasebePage() {
         </div>
       )}
 
-      {/* ════════ KASA & BANKA ════════ */}
+      {/* KASA & BANKA SEKMESİ */}
       {sekme === "kasa" && (
-        <KasaBanka hesaplar={hesaplar} onEkle={handleHesapEkle} onSil={handleHesapSil} />
+        <KasaSekme hesaplar={hesaplar} onEkle={handleHesapEkle} onSil={handleHesapSil} />
       )}
 
-      {/* ════════ RAPORLAR ════════ */}
+      {/* RAPORLAR SEKMESİ */}
       {sekme === "raporlar" && (
-        <div className="mt-5 space-y-6">
-          {/* Gelir tablosu */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="mt-5 grid gap-6 md:grid-cols-2">
+          {/* Gelir Tablosu */}
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-extrabold text-slate-700">📈 Gelir Tablosu <span className="font-normal text-slate-400">(KDV hariç)</span></h2>
+              <h2 className="text-base font-bold text-slate-900">Gelir Tablosu (KDV Hariç)</h2>
               <div className="flex gap-1">
-                <button onClick={() => raporGelirTablosu("pdf")} className="rounded-lg bg-ink-900 px-3 py-1.5 text-xs font-bold text-white hover:bg-ink-800">PDF</button>
-                <button onClick={() => raporGelirTablosu("excel")} className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-700">Excel</button>
+                <button onClick={() => raporGelirTablosu("pdf")} className="rounded-lg bg-slate-100 p-1.5 text-xs font-bold text-slate-600 hover:bg-slate-200">PDF</button>
+                <button onClick={() => raporGelirTablosu("excel")} className="rounded-lg bg-slate-100 p-1.5 text-xs font-bold text-slate-600 hover:bg-slate-200">Excel</button>
               </div>
             </div>
-            <div className="mt-3 grid gap-4 sm:grid-cols-2">
-              <RaporListe baslik="Gelirler" satirlar={gt.gelir} toplam={gt.toplamGelir} renk="emerald" />
-              <RaporListe baslik="Giderler" satirlar={gt.gider} toplam={gt.toplamGider} renk="red" />
+            <div className="mt-5 space-y-3">
+              <div className="flex justify-between text-sm font-bold border-b border-slate-100 pb-2">
+                <span className="text-emerald-600">Toplam Gelir</span>
+                <span>{formatTL(gt.toplamGelir)}</span>
+              </div>
+              <div className="flex justify-between text-sm font-bold border-b border-slate-100 pb-2">
+                <span className="text-red-600">Toplam Gider</span>
+                <span>{formatTL(gt.toplamGider)}</span>
+              </div>
+              <div className="flex justify-between text-lg font-extrabold pt-2">
+                <span className="text-slate-900">Brüt Kar / Zarar</span>
+                <span className={gt.brutKar >= 0 ? "text-emerald-600" : "text-red-600"}>{formatTL(gt.brutKar)}</span>
+              </div>
             </div>
-            <div className={`mt-3 rounded-xl p-4 text-center ${gt.brutKar >= 0 ? "bg-emerald-50" : "bg-red-50"}`}>
-              <span className="text-xs font-semibold uppercase text-slate-500">Brüt Kâr / Zarar</span>
-              <div className={`text-2xl font-extrabold ${gt.brutKar >= 0 ? "text-emerald-700" : "text-red-700"}`}>{formatTL(gt.brutKar)}</div>
+            <div className="mt-6">
+              <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Gider Dağılımı</h3>
+              <div className="mt-3 space-y-2">
+                {gt.gider.slice(0, 5).map((g) => {
+                  const yuzde = gt.toplamGider ? Math.round((g.tutar / gt.toplamGider) * 100) : 0;
+                  return (
+                    <div key={g.kategori}>
+                      <div className="flex justify-between text-xs font-semibold text-slate-600 mb-1">
+                        <span>{g.kategori}</span>
+                        <span>%{yuzde}</span>
+                      </div>
+                      <div className="h-1.5 w-full rounded-full bg-slate-100">
+                        <div className="h-full rounded-full bg-slate-400" style={{ width: `${yuzde}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
-          {/* KDV özeti */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-extrabold text-slate-700">🧮 KDV Özeti</h2>
-              <div className="flex gap-1">
-                <button onClick={() => raporKdv("pdf")} className="rounded-lg bg-ink-900 px-3 py-1.5 text-xs font-bold text-white hover:bg-ink-800">PDF</button>
-                <button onClick={() => raporKdv("excel")} className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-700">Excel</button>
+          {/* Nakit Akış & KDV */}
+          <div className="space-y-6">
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="flex items-center justify-between">
+                <h2 className="text-base font-bold text-slate-900">KDV Özeti</h2>
+                <div className="flex gap-1">
+                  <button onClick={() => raporKdv("pdf")} className="rounded-lg bg-slate-100 p-1.5 text-xs font-bold text-slate-600 hover:bg-slate-200">PDF</button>
+                  <button onClick={() => raporKdv("excel")} className="rounded-lg bg-slate-100 p-1.5 text-xs font-bold text-slate-600 hover:bg-slate-200">Excel</button>
+                </div>
+              </div>
+              <div className="mt-4 grid grid-cols-2 gap-4">
+                <div className="rounded-xl bg-slate-50 p-3">
+                  <div className="text-[10px] font-bold text-slate-400 uppercase">Hesaplanan</div>
+                  <div className="text-sm font-bold text-emerald-600">{formatTL(kdv.hesaplananKdv)}</div>
+                </div>
+                <div className="rounded-xl bg-slate-50 p-3">
+                  <div className="text-[10px] font-bold text-slate-400 uppercase">İndirilecek</div>
+                  <div className="text-sm font-bold text-red-600">{formatTL(kdv.indirilecekKdv)}</div>
+                </div>
+              </div>
+              <div className="mt-3 flex items-center justify-between rounded-xl bg-brand-50 p-3">
+                <span className="text-xs font-bold text-brand-900">Ödenecek / Devreden KDV</span>
+                <span className={`text-sm font-extrabold ${kdv.odenecekKdv >= 0 ? "text-brand-600" : "text-emerald-600"}`}>
+                  {formatTL(kdv.odenecekKdv)}
+                </span>
               </div>
             </div>
-            <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <MiniKart baslik="Hesaplanan KDV" deger={kdv.hesaplananKdv} />
-              <MiniKart baslik="İndirilecek KDV" deger={kdv.indirilecekKdv} />
-              <MiniKart baslik="Tevkif Edilen" deger={kdv.tevkifEdilenKdv} />
-              <MiniKart baslik={kdv.odenecekKdv >= 0 ? "Ödenecek KDV" : "Devreden KDV"} deger={Math.abs(kdv.odenecekKdv)} vurgu />
-            </div>
-            <p className="mt-2 text-[11px] text-slate-400">Beyanname öncesi taslak. Resmî beyan için mali müşavirinize danışın.</p>
-          </div>
 
-          {/* Nakit akış */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="text-sm font-extrabold text-slate-700">💧 Nakit Akış <span className="font-normal text-slate-400">(gerçekleşen, aylık)</span></h2>
-            {nakit.length === 0 ? (
-              <p className="mt-3 text-sm text-slate-500">Henüz tahsilat/ödeme yok.</p>
-            ) : (
-              <div className="mt-3 overflow-x-auto">
-                <table className="w-full min-w-[420px] text-sm">
-                  <thead>
-                    <tr className="border-b border-slate-200 text-left text-xs font-bold uppercase text-slate-500">
-                      <th className="px-3 py-2">Ay</th>
-                      <th className="px-3 py-2 text-right">Tahsilat</th>
-                      <th className="px-3 py-2 text-right">Ödeme</th>
-                      <th className="px-3 py-2 text-right">Net</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {nakit.map((n) => (
-                      <tr key={n.ay} className="border-b border-slate-100">
-                        <td className="px-3 py-2 font-semibold text-slate-600">{n.ay}</td>
-                        <td className="px-3 py-2 text-right text-emerald-600">{formatTL(n.tahsilat)}</td>
-                        <td className="px-3 py-2 text-right text-red-600">{formatTL(n.odeme)}</td>
-                        <td className={`px-3 py-2 text-right font-bold ${n.net >= 0 ? "text-emerald-700" : "text-red-700"}`}>{formatTL(n.net)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <h2 className="text-base font-bold text-slate-900">Aylık Nakit Akış</h2>
+              <div className="mt-4 space-y-3">
+                {nakit.slice(-4).map((n) => (
+                  <div key={n.ay} className="flex items-center justify-between gap-4 border-b border-slate-50 pb-2 text-xs">
+                    <span className="font-bold text-slate-500">{n.ay}</span>
+                    <div className="flex flex-1 justify-end gap-3">
+                      <span className="text-emerald-600">+{formatTL(n.tahsilat)}</span>
+                      <span className="text-red-600">−{formatTL(n.odeme)}</span>
+                    </div>
+                    <span className={`w-20 text-right font-extrabold ${n.net >= 0 ? "text-slate-900" : "text-red-700"}`}>{formatTL(n.net)}</span>
+                  </div>
+                ))}
               </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Tahsilat / Ödeme modalı */}
-      {odemeKayit && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setOdemeKayit(null)}>
-          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-extrabold text-slate-900">{odemeKayit.tip === "gider" ? "Ödeme Kaydet" : "Tahsilat Kaydet"}</h3>
-            <p className="mt-1 text-sm text-slate-500">{odemeKayit.taraf || "—"} · Açık: {formatTL(odemeKayit.net - odemeKayit.odenenTutar)}</p>
-            <label className="mt-4 block text-sm font-semibold text-slate-700">Tutar (₺)
-              <input type="number" min="0" step="0.01" value={odemeMiktar} onChange={(e) => setOdemeMiktar(e.target.value)} autoFocus
-                className="mt-1 w-full rounded-xl border-2 border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500" />
-            </label>
-            {hesaplar.length > 0 && (
-              <label className="mt-3 block text-sm font-semibold text-slate-700">Hesap
-                <select value={odemeHesap} onChange={(e) => setOdemeHesap(e.target.value)}
-                  className="mt-1 w-full rounded-xl border-2 border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand-500">
-                  <option value="">— Belirtilmedi —</option>
-                  {hesaplar.map((h) => <option key={h.id} value={h.id}>{h.ad}</option>)}
-                </select>
-              </label>
-            )}
-            <div className="mt-5 flex gap-2">
-              <button onClick={() => setOdemeKayit(null)} className="flex-1 rounded-xl border-2 border-slate-200 py-2.5 text-sm font-bold text-slate-500 hover:bg-slate-50">Vazgeç</button>
-              <button onClick={odemeOnayla} className="flex-1 rounded-xl bg-brand-500 py-2.5 text-sm font-bold text-white hover:bg-brand-600">Kaydet</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Muhasebeleştirme modalı (eksik alanları doldur → onayla) */}
+      {/* MODALLAR */}
       {muhMod && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 sm:p-8" onClick={() => setMuhMod(null)}>
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-start justify-between">
-              <div>
-                <div className="text-[11px] font-bold uppercase tracking-wide text-orange-600">Muhasebeleştir</div>
-                <h3 className="text-lg font-extrabold text-slate-900">{muhMod.ad}</h3>
-                <p className="text-xs text-slate-500">{muhMod.asama}{muhMod.kisi ? ` · ${muhMod.kisi}` : ""}</p>
-              </div>
-              <button onClick={() => setMuhMod(null)} className="rounded-lg px-2 py-1 text-xl text-slate-400 hover:bg-slate-100">✕</button>
-            </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+            <h2 className="text-lg font-extrabold text-slate-900">Muhasebeleştir</h2>
+            <p className="mt-1 text-sm text-slate-500">
+              {muhMod.asama} &gt; <b>{muhMod.ad}</b> kalemini kesinleştirin.
+            </p>
 
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              <label className="block text-sm font-semibold text-slate-700">Matrah (₺, KDV hariç)
-                <input type="number" min="0" step="0.01" value={mMatrah} onChange={(e) => setMMatrah(e.target.value)}
-                  className="mt-1 w-full rounded-xl border-2 border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500" />
-              </label>
-              <label className="block text-sm font-semibold text-slate-700">KDV Oranı
-                <select value={mKdv} onChange={(e) => setMKdv(Number(e.target.value))}
-                  className="mt-1 w-full rounded-xl border-2 border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand-500">
-                  {KDV_ORANLARI.map((o) => <option key={o} value={o}>%{o}</option>)}
+            <div className="mt-4 space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <label className="block text-xs font-bold text-slate-500">Matrah (₺)
+                  <input type="number" value={mMatrah} onChange={(e) => setMMatrah(e.target.value)}
+                    className="mt-1 w-full rounded-xl border-2 border-slate-100 bg-slate-50 px-3 py-2 text-sm font-bold outline-none focus:border-brand-500" />
+                </label>
+                <label className="block text-xs font-bold text-slate-500">KDV Oranı
+                  <select value={mKdv} onChange={(e) => setMKdv(Number(e.target.value))}
+                    className="mt-1 w-full rounded-xl border-2 border-slate-100 bg-slate-50 px-3 py-2 text-sm font-bold outline-none focus:border-brand-500">
+                    {KDV_ORANLARI.map((o) => <option key={o} value={o}>%{o}</option>)}
+                  </select>
+                </label>
+              </div>
+              <label className="block text-xs font-bold text-slate-500">KDV Tevkifatı
+                <select value={mTevkifat} onChange={(e) => setMTevkifat(Number(e.target.value))}
+                  className="mt-1 w-full rounded-xl border-2 border-slate-100 bg-slate-50 px-3 py-2 text-sm font-bold outline-none focus:border-brand-500">
+                  {TEVKIFAT_ORANLARI.map((t) => <option key={t.etiket} value={t.oran}>{t.etiket}</option>)}
                 </select>
               </label>
-            </div>
-            <label className="mt-3 block text-sm font-semibold text-slate-700">KDV Tevkifatı
-              <select value={mTevkifat} onChange={(e) => setMTevkifat(Number(e.target.value))}
-                className="mt-1 w-full rounded-xl border-2 border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand-500">
-                {TEVKIFAT_ORANLARI.map((t) => <option key={t.etiket} value={t.oran}>{t.etiket}</option>)}
-              </select>
-            </label>
 
-            <div className="mt-3 rounded-xl bg-slate-50 p-3 text-xs">
-              <Satir k="KDV" v={muhOnizleme.kdvTutar} />
-              {mTevkifat > 0 && <Satir k="Tevkifat (−)" v={-muhOnizleme.tevkifatTutar} />}
-              <Satir k="Brüt" v={muhOnizleme.tutar} kalin />
-              <Satir k="Ödenen (net)" v={muhOnizleme.net} kalin renk="brand" />
-            </div>
+              <div className="rounded-xl bg-brand-50 p-3 text-xs">
+                <div className="flex justify-between font-bold text-brand-900">
+                  <span>Ödenen Net Tutar</span>
+                  <span>{formatTL(muhOnizleme.net)}</span>
+                </div>
+              </div>
 
-            <label className="mt-3 block text-sm font-semibold text-slate-700">Kategori
-              <select value={mKategori} onChange={(e) => setMKategori(e.target.value)}
-                className="mt-1 w-full rounded-xl border-2 border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand-500">
-                {GIDER_KATEGORILERI.map((k) => <option key={k}>{k}</option>)}
-              </select>
-            </label>
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              <label className="block text-sm font-semibold text-slate-700">Taraf / Firma
-                <input list="cari-rehber" value={mTaraf} onChange={(e) => setMTaraf(e.target.value)} placeholder="rehberden seç / yaz"
-                  className="mt-1 w-full rounded-xl border-2 border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500" />
-              </label>
-              <label className="block text-sm font-semibold text-slate-700">Belge / Fatura No
-                <input value={mBelge} onChange={(e) => setMBelge(e.target.value)} placeholder="ör: A-001234"
-                  className="mt-1 w-full rounded-xl border-2 border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500" />
-              </label>
-            </div>
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              <label className="block text-sm font-semibold text-slate-700">Tarih
-                <input type="date" value={mTarih} onChange={(e) => setMTarih(e.target.value)}
-                  className="mt-1 w-full rounded-xl border-2 border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500" />
-              </label>
-              {hesaplar.length > 0 && (
-                <label className="block text-sm font-semibold text-slate-700">Ödendiği hesap
+              <div className="grid grid-cols-2 gap-3">
+                <label className="block text-xs font-bold text-slate-500">Kategori
+                  <select value={mKategori} onChange={(e) => setMKategori(e.target.value)}
+                    className="mt-1 w-full rounded-xl border-2 border-slate-100 bg-slate-50 px-3 py-2 text-sm font-bold outline-none focus:border-brand-500">
+                    {GIDER_KATEGORILERI.map((k) => <option key={k}>{k}</option>)}
+                  </select>
+                </label>
+                <label className="block text-xs font-bold text-slate-500">Taraf
+                  <input list="cari-rehber" value={mTaraf} onChange={(e) => setMTaraf(e.target.value)}
+                    className="mt-1 w-full rounded-xl border-2 border-slate-100 bg-slate-50 px-3 py-2 text-sm font-bold outline-none focus:border-brand-500" />
+                </label>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <label className="block text-xs font-bold text-slate-500">Tarih
+                  <input type="date" value={mTarih} onChange={(e) => setMTarih(e.target.value)}
+                    className="mt-1 w-full rounded-xl border-2 border-slate-100 bg-slate-50 px-3 py-2 text-sm font-bold outline-none focus:border-brand-500" />
+                </label>
+                <label className="block text-xs font-bold text-slate-500">Ödenen Hesap
                   <select value={mHesap} onChange={(e) => setMHesap(e.target.value)}
-                    className="mt-1 w-full rounded-xl border-2 border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand-500">
-                    <option value="">— Belirtilmedi —</option>
+                    className="mt-1 w-full rounded-xl border-2 border-slate-100 bg-slate-50 px-3 py-2 text-sm font-bold outline-none focus:border-brand-500">
                     {hesaplar.map((h) => <option key={h.id} value={h.id}>{h.ad}</option>)}
                   </select>
                 </label>
-              )}
+              </div>
             </div>
 
-            <div className="mt-5 flex gap-2">
-              <button onClick={() => setMuhMod(null)} className="flex-1 rounded-xl border-2 border-slate-200 py-2.5 text-sm font-bold text-slate-500 hover:bg-slate-50">Vazgeç</button>
-              <button onClick={muhOnayla} className="flex-1 rounded-xl bg-emerald-600 py-2.5 text-sm font-bold text-white hover:bg-emerald-700">✓ Onayla & Muhasebeleştir</button>
+            <div className="mt-6 flex gap-2">
+              <button onClick={() => setMuhMod(null)} className="flex-1 rounded-xl bg-slate-100 py-2.5 text-sm font-bold text-slate-600 transition hover:bg-slate-200">Vazgeç</button>
+              <button onClick={muhOnayla} className="flex-1 rounded-xl bg-brand-500 py-2.5 text-sm font-bold text-white transition hover:bg-brand-600">Onayla ve Kaydet</button>
             </div>
           </div>
         </div>
       )}
 
-      <div className="mt-8 text-sm">
-        <Link href="/panel" className="font-semibold text-slate-500 transition hover:text-ink-800">← Projelere dön</Link>
-      </div>
+      {odemeKayit && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl">
+            <h2 className="text-lg font-extrabold text-slate-900">{odemeKayit.tip === "gider" ? "Ödeme Kaydet" : "Tahsilat Kaydet"}</h2>
+            <p className="mt-1 text-sm text-slate-500">{odemeKayit.taraf} — {odemeKayit.aciklama}</p>
+
+            <div className="mt-4 space-y-4">
+              <label className="block text-xs font-bold text-slate-500">Tutar (₺)
+                <input type="number" step="0.01" value={odemeMiktar} onChange={(e) => setOdemeMiktar(e.target.value)}
+                  className="mt-1 w-full rounded-xl border-2 border-slate-100 bg-slate-50 px-4 py-3 text-lg font-extrabold text-slate-900 outline-none focus:border-brand-500" />
+              </label>
+
+              <label className="block text-xs font-bold text-slate-500">İşlemin Yapıldığı Hesap
+                <select value={odemeHesap} onChange={(e) => setOdemeHesap(e.target.value)}
+                  className="mt-1 w-full rounded-xl border-2 border-slate-100 bg-slate-50 px-3 py-2 text-sm font-bold outline-none focus:border-brand-500">
+                  {hesaplar.map((h) => <option key={h.id} value={h.id}>{h.ad}</option>)}
+                </select>
+              </label>
+            </div>
+
+            <div className="mt-6 flex gap-2">
+              <button onClick={() => setOdemeKayit(null)} className="flex-1 rounded-xl bg-slate-100 py-2.5 text-sm font-bold text-slate-600 transition hover:bg-slate-200">Vazgeç</button>
+              <button onClick={odemeOnayla} className="flex-1 rounded-xl bg-brand-500 py-2.5 text-sm font-bold text-white transition hover:bg-brand-600">Kaydet</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-/* ── Yardımcı bileşenler ─────────────────────────────────── */
-
-function Kart({ renk, baslik, deger, altKisim }: { renk: "emerald" | "red" | "amber" | "ink"; baslik: string; deger: number; altKisim: string }) {
-  const stil = {
+function Kart({ renk, baslik, deger, altKisim }: { renk: string, baslik: string, deger: number, altKisim: string }) {
+  const renkSinif: Record<string, string> = {
     emerald: "border-emerald-200 bg-emerald-50 text-emerald-700",
     red: "border-red-200 bg-red-50 text-red-700",
     amber: "border-amber-200 bg-amber-50 text-amber-700",
-    ink: "border-ink-900 bg-ink-950 text-brand-400",
-  }[renk];
-  const baslikRenk = {
-    emerald: "text-emerald-600",
-    red: "text-red-600",
-    amber: "text-amber-600",
-    ink: "text-white/60",
-  }[renk];
+    ink: "border-slate-200 bg-white text-slate-900 shadow-sm",
+  };
   return (
-    <div className={`rounded-2xl border p-5 shadow-sm ${stil}`}>
-      <div className={`text-xs font-semibold uppercase ${baslikRenk}`}>{baslik}</div>
-      <div className="mt-1 text-2xl font-extrabold">{formatTL(deger)}</div>
-      <div className={`mt-1 text-[11px] ${renk === "ink" ? "text-white/50" : "opacity-70"}`}>{altKisim}</div>
+    <div className={`rounded-2xl border p-4 ${renkSinif[renk] || renkSinif.ink}`}>
+      <div className="text-[10px] font-extrabold uppercase tracking-widest opacity-70">{baslik}</div>
+      <div className="mt-1 text-lg font-extrabold">{formatTL(deger)}</div>
+      <div className="mt-1 text-[10px] font-semibold opacity-60">{altKisim}</div>
     </div>
   );
 }
 
-function Satir({ k, v, kalin, renk }: { k: string; v: number; kalin?: boolean; renk?: "brand" }) {
+function MiniKart({ baslik, deger, gider }: { baslik: string, deger: number | null, gider?: number }) {
+  const asim = deger != null && gider != null && gider > deger;
   return (
-    <div className={`flex justify-between ${kalin ? "font-bold" : ""} ${renk === "brand" ? "text-brand-600" : "text-slate-600"}`}>
-      <span>{k}</span><span>{formatTL(v)}</span>
-    </div>
-  );
-}
-
-function MiniKart({ baslik, deger, vurgu }: { baslik: string; deger: number; vurgu?: boolean }) {
-  return (
-    <div className={`rounded-xl border p-3 ${vurgu ? "border-brand-300 bg-brand-50" : "border-slate-200 bg-slate-50"}`}>
-      <div className="text-[10px] font-semibold uppercase text-slate-500">{baslik}</div>
-      <div className={`mt-0.5 text-lg font-extrabold ${vurgu ? "text-brand-600" : "text-slate-800"}`}>{formatTL(deger)}</div>
-    </div>
-  );
-}
-
-function RaporListe({ baslik, satirlar, toplam, renk }: { baslik: string; satirlar: { kategori: string; tutar: number }[]; toplam: number; renk: "emerald" | "red" }) {
-  return (
-    <div>
-      <h3 className={`text-xs font-extrabold uppercase ${renk === "emerald" ? "text-emerald-600" : "text-red-600"}`}>{baslik}</h3>
-      <div className="mt-2 space-y-1">
-        {satirlar.length === 0 ? <p className="text-xs text-slate-400">Kayıt yok.</p> : satirlar.map((s) => (
-          <div key={s.kategori} className="flex justify-between text-xs">
-            <span className="text-slate-600">{s.kategori}</span>
-            <span className="font-semibold text-slate-800">{formatTL(s.tutar)}</span>
-          </div>
-        ))}
+    <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+      <div className="text-[10px] font-bold text-slate-400 uppercase">{baslik}</div>
+      <div className={`text-sm font-extrabold ${asim ? "text-red-400" : "text-white"}`}>
+        {deger != null ? formatTL(deger) : "—"}
       </div>
-      <div className="mt-2 flex justify-between border-t border-slate-200 pt-1 text-sm font-bold">
-        <span className="text-slate-700">Toplam</span>
-        <span className={renk === "emerald" ? "text-emerald-700" : "text-red-700"}>{formatTL(toplam)}</span>
-      </div>
+      {gider != null && (
+        <div className="mt-1 h-1 w-full rounded-full bg-white/10 overflow-hidden">
+          <div className={`h-full ${asim ? "bg-red-400" : "bg-brand-500"}`} style={{ width: `${deger ? Math.min(100, (gider/deger)*100) : 0}%` }} />
+        </div>
+      )}
     </div>
   );
 }
 
-/* Bütçe vs gerçekleşen kart */
-function Karsilastir({ etiket, deger, gider }: { etiket: string; deger: number; gider: number }) {
-  const fark = deger - gider;
-  const asim = fark < 0;
-  const pct = deger > 0 ? Math.min(100, Math.round((gider / deger) * 100)) : 0;
+function Satir({ k, v, kalin, renk }: { k: string, v: number, kalin?: boolean, renk?: string }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-      <div className="text-[10px] font-semibold uppercase text-slate-500">{etiket}</div>
-      <div className="mt-0.5 text-sm font-bold text-slate-900">{formatTL(deger)}</div>
-      <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-200">
-        <div className={`h-full rounded-full ${asim ? "bg-red-500" : "bg-emerald-500"}`} style={{ width: `${pct}%` }} />
-      </div>
-      <div className={`mt-1 text-[11px] font-bold ${asim ? "text-red-600" : "text-emerald-600"}`}>
-        Gerçekleşen %{pct} · {asim ? "Aşım" : "Kalan"} {formatTL(Math.abs(fark))}
-      </div>
+    <div className={`flex justify-between py-0.5 ${kalin ? "font-bold text-slate-800" : "text-slate-500"} ${renk === "brand" ? "text-brand-600" : ""}`}>
+      <span>{k}</span>
+      <span>{formatTL(v)}</span>
     </div>
   );
 }
 
-/* Kasa & Banka sekmesi */
-function KasaBanka({ hesaplar, onEkle, onSil }: {
-  hesaplar: FinansHesap[];
-  onEkle: (ad: string, tip: HesapTipi, iban: string, acilis: number) => void;
-  onSil: (id: string) => void;
-}) {
-  const [ad, setAd] = useState("");
+function KasaSekme({ hesaplar, onEkle, onSil }: { hesaplar: FinansHesap[], onEkle: any, onSil: any }) {
   const [tip, setTip] = useState<HesapTipi>("kasa");
+  const [ad, setAd] = useState("");
   const [iban, setIban] = useState("");
   const [acilis, setAcilis] = useState("");
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!ad) return;
+    onEkle(ad, tip, iban, parseFloat(acilis) || 0);
+    setAd(""); setIban(""); setAcilis("");
+  };
+
   const toplam = hesaplar.reduce((s, h) => s + hesapBakiyesi(h.id, h.acilisBakiye), 0);
 
-  function ekle(e: React.FormEvent) {
-    e.preventDefault();
-    if (!ad.trim()) return;
-    onEkle(ad.trim(), tip, iban.trim(), parseFloat(acilis) || 0);
-    setAd(""); setIban(""); setAcilis("");
-  }
-
   return (
-    <div className="mt-5 grid gap-6 lg:grid-cols-[320px_1fr]">
-      <form onSubmit={ekle} className="h-fit rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div className="mt-5 grid gap-6 lg:grid-cols-[340px_1fr]">
+      <form onSubmit={handleSubmit} className="h-fit rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <h2 className="text-sm font-extrabold text-slate-700">Yeni Hesap</h2>
         <div className="mt-3 grid grid-cols-2 gap-2">
-          <button type="button" onClick={() => setTip("kasa")} className={`rounded-xl border-2 py-2 text-sm font-bold transition ${tip === "kasa" ? "border-brand-400 bg-brand-50 text-brand-600" : "border-slate-200 text-slate-500"}`}>💵 Kasa</button>
-          <button type="button" onClick={() => setTip("banka")} className={`rounded-xl border-2 py-2 text-sm font-bold transition ${tip === "banka" ? "border-brand-400 bg-brand-50 text-brand-600" : "border-slate-200 text-slate-500"}`}>🏦 Banka</button>
+          <button type="button" onClick={() => setTip("kasa")}
+            className={`rounded-xl border-2 py-2 text-xs font-bold transition ${tip === "kasa" ? "border-brand-500 bg-brand-50 text-brand-600" : "border-slate-100 text-slate-400"}`}>💵 Kasa</button>
+          <button type="button" onClick={() => setTip("banka")}
+            className={`rounded-xl border-2 py-2 text-xs font-bold transition ${tip === "banka" ? "border-brand-500 bg-brand-50 text-brand-600" : "border-slate-100 text-slate-400"}`}>🏦 Banka</button>    
         </div>
-        <label className="mt-3 block text-sm font-semibold text-slate-700">Hesap Adı
+        <label className="mt-3 block text-sm font-semibold text-slate-700">Hesap Adı 
           <input value={ad} onChange={(e) => setAd(e.target.value)} placeholder={tip === "kasa" ? "Merkez Kasa" : "Ziraat TL"}
             className="mt-1 w-full rounded-xl border-2 border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500" />
         </label>
         {tip === "banka" && (
-          <label className="mt-3 block text-sm font-semibold text-slate-700">IBAN
+          <label className="mt-3 block text-sm font-semibold text-slate-700">IBAN     
             <input value={iban} onChange={(e) => setIban(e.target.value)} placeholder="TR.."
               className="mt-1 w-full rounded-xl border-2 border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500" />
           </label>
@@ -999,7 +994,7 @@ function KasaBanka({ hesaplar, onEkle, onSil }: {
                       <div className="font-bold text-slate-800">{h.ad}</div>
                       {h.iban && <div className="text-[11px] text-slate-400">{h.iban}</div>}
                     </div>
-                    <button onClick={() => onSil(h.id)} className="rounded-lg px-2 py-1 text-slate-300 transition hover:bg-red-50 hover:text-red-500">🗑</button>
+                    <button onClick={() => onSil(h.id)} className="rounded-lg px-2 py-1 text-slate-300 transition hover:bg-red-50 hover:text-red-500">🗑️</button>
                   </div>
                   <div className={`mt-3 text-xl font-extrabold ${bakiye >= 0 ? "text-slate-900" : "text-red-600"}`}>{formatTL(bakiye)}</div>
                   <div className="text-[11px] text-slate-400">açılış: {formatTL(h.acilisBakiye)}</div>

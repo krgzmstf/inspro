@@ -37,6 +37,7 @@ function loadAll(): IsKalemi[] {
 
 function saveAll(kalemler: IsKalemi[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(kalemler));
+  void import("./genelSenkron").then((m) => m.modulYaz("issurecleri"));
 }
 
 function gunEkle(tarih: Date, gun: number): string {

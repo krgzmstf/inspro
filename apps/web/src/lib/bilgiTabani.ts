@@ -26,6 +26,7 @@ export function loadBilgiler(): YonetmelikKayit[] {
 
 function saveAll(list: YonetmelikKayit[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+  void import("./genelSenkron").then((m) => m.modulYaz("bilgi-tabani"));
 }
 
 export function bosBilgi(): YonetmelikKayit {

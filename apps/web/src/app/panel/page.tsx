@@ -16,6 +16,7 @@ import { loadSaha } from "@/lib/saha";
 import { loadIsSurecleri, isOzeti } from "@/lib/isSurecleri";
 import { projeleriSenkronla } from "@/lib/projeSenkron";
 import { muhasebeSenkronla } from "@/lib/muhasebeSenkron";
+import { tumModulleriSenkronla } from "@/lib/genelSenkron";
 import YedekKart from "./YedekKart";
 
 interface ProjeStat {
@@ -66,7 +67,8 @@ export default function PanelPage() {
         if (bulutMu) {
           saveMuhasebe(bulutMu);
         }
-        hesaplaStatlar(guncelProjeler);
+        // Diğer tüm modülleri buluttan çek (metraj, saha, personel, teklif, hakediş, firma…)
+        void tumModulleriSenkronla().then(() => hesaplaStatlar(guncelProjeler));
       });
     });
   }, []);

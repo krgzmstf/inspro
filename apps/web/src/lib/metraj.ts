@@ -26,6 +26,7 @@ function loadAll(): MetrajItem[] {
 
 function saveAll(items: MetrajItem[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+  void import("./genelSenkron").then((m) => m.modulYaz("metraj"));
 }
 
 export function loadMetraj(projectId: string): MetrajItem[] {

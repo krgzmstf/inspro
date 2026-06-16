@@ -40,7 +40,7 @@ function loadAll(): Hakedis[] {
   if (typeof window === "undefined") return [];
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); } catch { return []; }
 }
-function saveAll(list: Hakedis[]) { localStorage.setItem(STORAGE_KEY, JSON.stringify(list)); }
+function saveAll(list: Hakedis[]) { localStorage.setItem(STORAGE_KEY, JSON.stringify(list)); void import("./genelSenkron").then((m) => m.modulYaz("hakedis")); }
 
 export function loadHakedisler(projectId: string): Hakedis[] {
   return loadAll().filter((h) => h.projectId === projectId).sort((a, b) => a.no - b.no);

@@ -167,6 +167,7 @@ function loadAll(): AsamaKalem[] {
 
 function saveAll(kalemler: AsamaKalem[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(kalemler));
+  void import("./genelSenkron").then((m) => m.modulYaz("asama-kalem"));
 }
 
 /** Bir aşamanın kalemlerini sıraya göre döndürür. */

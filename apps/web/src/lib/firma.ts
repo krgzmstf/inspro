@@ -55,6 +55,7 @@ export function loadFirmalar(): Firma[] {
 
 function saveAll(list: Firma[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+  void import("./genelSenkron").then((m) => m.modulYaz("firma"));
 }
 
 export function bosFirma(): Firma {

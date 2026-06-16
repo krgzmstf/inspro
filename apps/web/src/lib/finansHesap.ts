@@ -35,6 +35,7 @@ export function loadHesaplar(): FinansHesap[] {
 
 function saveAll(hesaplar: FinansHesap[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(hesaplar));
+  void import("./genelSenkron").then((m) => m.modulYaz("finans-hesap"));
 }
 
 export function addHesap(data: Omit<FinansHesap, "id" | "createdAt">): FinansHesap {
