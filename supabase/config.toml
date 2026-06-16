@@ -242,17 +242,15 @@ content_path = "./supabase/templates/otp.html"
 subject = "İNŞPRO kayıt doğrulama kodunuz"
 content_path = "./supabase/templates/otp.html"
 
-# Gmail SMTP — gerçek e-posta göndermek için (aksi halde mailler Mailpit'te: http://127.0.0.1:4324)
-# Açmak için: alttaki # işaretlerini sil, supabase/.env içine SMTP_PASSWORD=<gmail uygulama şifresi> yaz,
-# sonra: npx supabase stop && npx supabase start
-# [auth.email.smtp]
-# enabled = true
-# host = "smtp.gmail.com"
-# port = 587
-# user = "yazeproje@gmail.com"
-# pass = "env(SMTP_PASSWORD)"
-# admin_email = "yazeproje@gmail.com"
-# sender_name = "İNŞPRO"
+# Gmail SMTP — gerçek e-posta gönderimi (yazeinspro@gmail.com)
+[auth.email.smtp]
+enabled = true
+host = "smtp.gmail.com"
+port = 587
+user = "yazeinspro@gmail.com"
+pass = "env(SMTP_PASSWORD)"
+admin_email = "yazeinspro@gmail.com"
+sender_name = "İNŞPRO"
 
 # Uncomment to customize notification email template
 # [auth.email.notification.password_changed]
