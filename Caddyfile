@@ -1,0 +1,27 @@
+# insPRO — Caddy reverse proxy + otomatik HTTPS (Let's Encrypt).
+# Alan adları docker-compose'tan ortam değişkeniyle gelir.
+
+# Frontend (Next.js)
+{$FRONTEND_DOMAIN} {
+	encode gzip
+	reverse_proxy web:3000
+	header {
+		Strict-Transport-Security "max-age=63072000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+}
+
+# Backend API (FastAPI)
+{$API_DOMAIN} {
+	encode gzip
+	reverse_proxy api:4400
+	header {
+		Strict-Transport-Security "max-age=63072000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "no-referrer"
+		-Server
+	}
+}
