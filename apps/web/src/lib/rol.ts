@@ -12,7 +12,7 @@
    göre; boşsa rolün varsayılan menüsü geçerli.
    ────────────────────────────────────────────────────────── */
 
-import { supabase } from "./supabase/client";
+import { apiGet, oturumVar } from "./api";
 
 export type Rol = "yonetici" | "sefi" | "taseron" | "muhasebeci";
 
@@ -70,20 +70,16 @@ export function yerelYetki(): Yetki {
   return { rol, yetkiler };
 }
 
-/** Aktif kullanıcının rol + özel izinlerini getirir (Supabase profilinden). */
+/** Aktif kullanıcının rol + özel izinlerini getirir (backend'den). */
 export async function yetkiGetir(): Promise<Yetki> {
   try {
-    const sb = supabase();
-    if (sb) {
-      const { data: { session } } = await sb.auth.getSession();
-      if (session) {
-        const { data } = await sb.from("profiles").select("rol, yetkiler").eq("id", session.user.id).maybeSingle();
-        const rol = rolNormalize(data?.rol);
-        const yetkiler = Array.isArray(data?.yetkiler) ? (data!.yetkiler as string[]) : null;
-        localStorage.setItem(KEY, rol);
-        localStorage.setItem(KEY_Y, JSON.stringify(yetkiler));
-        return { rol, yetkiler };
-      }
+    if (oturumVar()) {
+      const u = await apiGet<{ rol?: string; yetkiler?: string[] | null }>("/auth/ben");
+      const rol = rolNormalize(u.rol);
+      const yetkiler = Array.isArray(u.yetkiler) ? u.yetkiler : null;
+      localStorage.setItem(KEY, rol);
+      localStorage.setItem(KEY_Y, JSON.stringify(yetkiler));
+      return { rol, yetkiler };
     }
   } catch { /* sessiz */ }
   return yerelYetki();

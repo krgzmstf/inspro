@@ -3,8 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import type { User } from "@supabase/supabase-js";
-import { supabaseVar, aktifKullanici, cikisYap, oturumDinle } from "@/lib/supabase/auth";
+import { type Kullanici, supabaseVar, aktifKullanici, cikisYap, oturumDinle } from "@/lib/supabase/auth";
 import { yerelKullanici, yerelCikis } from "@/lib/yerelOturum";
 import { type Rol, ROL_ETIKET, yetkiGetir, menuyeYetkili } from "@/lib/rol";
 
@@ -38,7 +37,7 @@ export default function PanelLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [kullanici, setKullanici] = useState<User | null>(null);
+  const [kullanici, setKullanici] = useState<Kullanici | null>(null);
   const [yerelAd, setYerelAd] = useState<string | null>(null);
   const [kontrol, setKontrol] = useState(false);
   const [menuAcik, setMenuAcik] = useState(false);

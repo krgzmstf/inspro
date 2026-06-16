@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { type Rol, ROL_ETIKET, ROL_MENU, MENU_SECENEKLERI, rolGetir } from "@/lib/rol";
 import { supabaseVar } from "@/lib/supabase/auth";
+import { apiGet, apiPost } from "@/lib/api";
 
 interface Kullanici {
   id: string; email: string; ad_soyad: string; firma: string;
@@ -36,9 +37,7 @@ export default function YonetimPage() {
   async function yukle() {
     setYukleniyor(true); setHata("");
     try {
-      const res = await fetch("/api/yonetim/kullanicilar");
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Liste alınamadı.");
+      const data = await apiGet<{ users: Kullanici[] }>("/yonetim/kullanicilar");
       setKullanicilar(data.users ?? []);
     } catch (e) { setHata((e as Error).message); }
     finally { setYukleniyor(false); }
@@ -48,12 +47,7 @@ export default function YonetimPage() {
     setMesaj(""); setHata("");
     setKullanicilar((list) => list.map((k) => (k.id === id ? { ...k, rol, ...(yetkiler !== undefined ? { yetkiler } : {}) } : k)));
     try {
-      const res = await fetch("/api/yonetim/kullanicilar", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, rol, ...(yetkiler !== undefined ? { yetkiler } : {}) }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Güncellenemedi.");
+      await apiPost("/yonetim/kullanicilar", { id, rol, ...(yetkiler !== undefined ? { yetkiler } : {}) });
       setMesaj("✓ Kaydedildi. (Kullanıcı yeniden giriş yapınca menüsü güncellenir.)");
     } catch (e) { setHata((e as Error).message); yukle(); }
   }
@@ -173,7 +167,7 @@ export default function YonetimPage() {
       )}
 
       <p className="mt-4 text-[11px] text-slate-400">
-        💡 Not: Proje (dosya) yalnız Yönetici oluşturur. İleri ayarlar: Supabase Studio <a href="http://127.0.0.1:4323" target="_blank" rel="noopener noreferrer" className="font-semibold text-brand-600 hover:underline">127.0.0.1:4323</a>
+        💡 Not: Proje (dosya) yalnız Yönetici oluşturur. Kullanıcılar /kayit&apos;tan e-posta + kod ile kaydolur; buradan rol ve modül izinleri verilir.
       </p>
       <div className="mt-6 text-sm">
         <Link href="/panel" className="font-semibold text-slate-500 transition hover:text-ink-800">← Projelere dön</Link>

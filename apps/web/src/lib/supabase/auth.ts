@@ -1,98 +1,68 @@
 /* ──────────────────────────────────────────────────────────
-   insPRO — Supabase Auth yardımcıları (istemci tarafı)
+   insPRO — Auth (kendi FastAPI backend'imiz üzerinden)
 
-   Oturum supabase-js tarafından localStorage'da tutulur; sayfa
-   yenilense de korunur. Anahtar yoksa (DEMO) fonksiyonlar nazikçe
-   hata döndürür.
+   E-posta kodlu (OTP) kayıt/giriş + JWT. Token localStorage'da.
+   (Eski Supabase auth'un yerini aldı; fonksiyon adları korundu.)
    ────────────────────────────────────────────────────────── */
 
-import { supabase, supabaseVar } from "./client";
-import type { User } from "@supabase/supabase-js";
+import { apiGet, apiPost, apiVar, tokenSet, tokenSil, oturumVar } from "@/lib/api";
 
-export { supabaseVar };
+export interface Kullanici {
+  id: string;
+  email: string;
+  ad_soyad?: string;
+  firma?: string;
+  rol?: string;
+  yetkiler?: string[] | null;
+}
 
 export interface AuthSonuc { ok: boolean; mesaj: string; dogrulamaGerek?: boolean }
 
-export async function kayitOl(
-  email: string, sifre: string, adSoyad: string, firma: string,
-): Promise<AuthSonuc> {
-  const sb = supabase();
-  if (!sb) return { ok: false, mesaj: "Supabase yapılandırılmamış." };
-  const { data, error } = await sb.auth.signUp({
-    email: email.trim(),
-    password: sifre,
-    options: { data: { ad_soyad: adSoyad.trim(), firma: firma.trim() } },
-  });
-  if (error) return { ok: false, mesaj: cevir(error.message) };
-  // E-posta doğrulama açıksa oturum hemen gelmez
-  if (!data.session) return { ok: true, mesaj: "Kayıt alındı. E-postana gelen doğrulama bağlantısına tıkla.", dogrulamaGerek: true };
-  return { ok: true, mesaj: "Hesap oluşturuldu." };
+/** Backend yapılandırılmış mı (API adresi var mı). */
+export function supabaseVar(): boolean {
+  return apiVar();
 }
 
-/** E-postaya 6 haneli doğrulama kodu gönderir (kayıt veya giriş). */
+/** E-postaya 6 haneli kod gönderir (kayıt veya giriş). */
 export async function kodGonder(
   email: string, kayit: boolean, adSoyad = "", firma = "",
 ): Promise<AuthSonuc> {
-  const sb = supabase();
-  if (!sb) return { ok: false, mesaj: "Supabase yapılandırılmamış." };
-  const { error } = await sb.auth.signInWithOtp({
-    email: email.trim(),
-    options: {
-      shouldCreateUser: kayit,
-      data: kayit ? { ad_soyad: adSoyad.trim(), firma: firma.trim() } : undefined,
-    },
-  });
-  if (error) return { ok: false, mesaj: cevir(error.message) };
-  return { ok: true, mesaj: "Doğrulama kodu e-postana gönderildi." };
+  try {
+    await apiPost("/auth/kod-gonder", { email: email.trim(), kayit, ad_soyad: adSoyad.trim(), firma: firma.trim() });
+    return { ok: true, mesaj: "Doğrulama kodu e-postana gönderildi." };
+  } catch (e) {
+    return { ok: false, mesaj: (e as Error).message };
+  }
 }
 
-/** E-postaya gelen kodu doğrular → oturum açılır. */
+/** Kodu doğrular → token saklanır, oturum açılır. */
 export async function kodDogrula(email: string, kod: string): Promise<AuthSonuc> {
-  const sb = supabase();
-  if (!sb) return { ok: false, mesaj: "Supabase yapılandırılmamış." };
-  const { error } = await sb.auth.verifyOtp({ email: email.trim(), token: kod.trim(), type: "email" });
-  if (error) return { ok: false, mesaj: cevir(error.message) };
-  return { ok: true, mesaj: "Doğrulandı." };
-}
-
-export async function girisYap(email: string, sifre: string): Promise<AuthSonuc> {
-  const sb = supabase();
-  if (!sb) return { ok: false, mesaj: "Supabase yapılandırılmamış." };
-  const { error } = await sb.auth.signInWithPassword({ email: email.trim(), password: sifre });
-  if (error) return { ok: false, mesaj: cevir(error.message) };
-  return { ok: true, mesaj: "Giriş yapıldı." };
+  try {
+    const r = await apiPost<{ access_token: string; user: Kullanici }>("/auth/kod-dogrula", { email: email.trim(), kod: kod.trim() });
+    tokenSet(r.access_token);
+    return { ok: true, mesaj: "Doğrulandı." };
+  } catch (e) {
+    return { ok: false, mesaj: (e as Error).message };
+  }
 }
 
 export async function cikisYap(): Promise<void> {
-  await supabase()?.auth.signOut();
+  tokenSil();
 }
 
-export async function aktifKullanici(): Promise<User | null> {
-  const sb = supabase();
-  if (!sb) return null;
-  const { data } = await sb.auth.getUser();
-  return data.user ?? null;
+/** Aktif kullanıcı (token geçerliyse). */
+export async function aktifKullanici(): Promise<Kullanici | null> {
+  if (!oturumVar()) return null;
+  try {
+    return await apiGet<Kullanici>("/auth/ben");
+  } catch {
+    tokenSil();
+    return null;
+  }
 }
 
-/** Oturum değişimini dinler (giriş/çıkış). Aboneliği iptal eden fonksiyon döner. */
-export function oturumDinle(cb: (user: User | null) => void): () => void {
-  const sb = supabase();
-  if (!sb) { cb(null); return () => {}; }
-  const { data } = sb.auth.onAuthStateChange((_e, session) => cb(session?.user ?? null));
-  return () => data.subscription.unsubscribe();
-}
-
-/** Sık Supabase hatalarını Türkçeleştirir. */
-function cevir(msg: string): string {
-  const m = msg.toLowerCase();
-  if (m.includes("invalid login")) return "E-posta veya şifre hatalı.";
-  if (m.includes("already registered") || m.includes("already been registered")) return "Bu e-posta zaten kayıtlı.";
-  if (m.includes("password should be at least")) return "Şifre en az 6 karakter olmalı.";
-  if (m.includes("email not confirmed")) return "E-posta henüz doğrulanmamış; gelen kutunu kontrol et.";
-  if (m.includes("unable to validate email")) return "Geçerli bir e-posta gir.";
-  if (m.includes("token has expired") || m.includes("invalid") && m.includes("otp")) return "Kod hatalı veya süresi doldu. Tekrar kod iste.";
-  if (m.includes("expired") || m.includes("token")) return "Kod hatalı veya süresi doldu. Tekrar kod iste.";
-  if (m.includes("signups not allowed") || m.includes("otp_disabled")) return "Bu e-posta kayıtlı değil; önce kayıt olun.";
-  if (m.includes("rate limit") || m.includes("too many")) return "Çok fazla deneme. Biraz bekleyip tekrar dene.";
-  return msg;
+/** Oturum durumunu bir kez bildirir (realtime yok). İptal fonksiyonu döner. */
+export function oturumDinle(cb: (user: Kullanici | null) => void): () => void {
+  aktifKullanici().then(cb);
+  return () => {};
 }

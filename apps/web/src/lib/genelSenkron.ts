@@ -12,8 +12,7 @@
    Supabase oturumu yoksa no-op → uygulama localStorage ile çalışır.
    ────────────────────────────────────────────────────────── */
 
-import { supabase } from "./supabase/client";
-import { bulutAktif } from "./projeSenkron";
+import { apiGet, apiPut, oturumVar } from "./api";
 
 /** modul adı → localStorage anahtarı */
 const MODULLER: Record<string, string> = {
@@ -40,41 +39,27 @@ function oku(key: string): unknown[] {
   }
 }
 
-/** Bir modülün güncel verisini buluta yaz (upsert). Oturum yoksa sessiz geçer. */
+/** Bir modülün güncel verisini buluta yaz. Oturum yoksa sessiz geçer. */
 export async function modulYaz(modul: string): Promise<void> {
   try {
-    const sb = supabase();
-    if (!sb || !(await bulutAktif())) return;
+    if (!oturumVar()) return;
     const key = MODULLER[modul];
     if (!key) return;
-    const { data: { session } } = await sb.auth.getSession();
-    if (!session) return;
-    await sb.from("modul_veri").upsert(
-      { owner_id: session.user.id, modul, veri: oku(key), updated_at: new Date().toISOString() },
-      { onConflict: "owner_id,modul" },
-    );
+    await apiPut("/modul/" + modul, { veri: oku(key) });
   } catch { /* sessiz */ }
 }
 
 /** Açılış senkronu: bulut otorite; bulutta olmayan/boş olanlarda yereli yukarı taşır.
    localStorage'ı günceller → true döner (senkron yapıldıysa). */
 export async function tumModulleriSenkronla(): Promise<boolean> {
-  const sb = supabase();
-  if (!sb || !(await bulutAktif())) return false;
+  if (!oturumVar()) return false;
   try {
-    const { data, error } = await sb.from("modul_veri").select("modul, veri");
-    if (error) return false;
-    const bulutMap = new Map<string, unknown[]>(
-      (data ?? []).map((r: { modul: string; veri: unknown[] }) => [r.modul, Array.isArray(r.veri) ? r.veri : []]),
-    );
     for (const [modul, key] of Object.entries(MODULLER)) {
-      const bulut = bulutMap.get(modul);
+      const r = await apiGet<{ veri: unknown[] }>("/modul/" + modul);
+      const bulut = Array.isArray(r.veri) ? r.veri : [];
       const yerel = oku(key);
-      if (bulut === undefined) {
-        // Bulutta hiç yok → yerelde varsa yukarı taşı
-        if (yerel.length > 0) await modulYaz(modul);
-      } else if (bulut.length === 0 && yerel.length > 0) {
-        // Bulut boş ama yerel dolu → yereli yukarı taşı (üzerine yazma)
+      if (bulut.length === 0 && yerel.length > 0) {
+        // Bulut boş ama yerel dolu → yereli yukarı taşı
         await modulYaz(modul);
       } else {
         // Bulut otorite
