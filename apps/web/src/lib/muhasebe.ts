@@ -1,5 +1,5 @@
-/* ──────────────────────────────────────────────────────────
-   insPRO — Muhasebe (profesyonel) veri katmanı
+/* ——————————————————————————————————————————————————
+   insPRO — Muhasebe (profesyonel) veri katmanlı
 
    Her hareket bir projeye bağlı. Profesyonel sürüm:
    • KDV (matrah / oran / tutar) + KDV tevkifatı (yapı işleri)
@@ -12,7 +12,9 @@
    yükleme sırasında makul varsayılanlarla doldurulur.
 
    Geçici: localStorage. Supabase'e geçişte tek bu katman döner.
-   ────────────────────────────────────────────────────────── */
+   —————————————————————————————————————————————————— */
+
+import { muhasebeBulutaYaz, muhasebeBuluttanSil } from "./muhasebeSenkron";
 
 export type KayitTipi = "gelir" | "gider";
 export type OdemeDurumu = "acik" | "kismi" | "odendi";
@@ -52,7 +54,7 @@ export interface MuhasebeKayit {
   aciklama: string;
   taraf: string;          // cari (tedarikçi / müşteri / usta) adı
   belgeNo?: string;       // fatura / fiş no
-  // ── tutar & vergi ──
+  // —— tutar & vergi ——
   matrah: number;         // KDV hariç tutar (₺)
   kdvOran: number;        // %
   kdvTutar: number;       // matrah × oran
@@ -60,7 +62,7 @@ export interface MuhasebeKayit {
   tevkifatTutar: number;  // kdvTutar × tevkifatOran
   tutar: number;          // brüt fatura = matrah + kdvTutar
   net: number;            // cariye yansıyan / ödenecek = brüt − tevkifat
-  // ── vade & ödeme ──
+  // —— vade & ödeme ——
   tarih: string;          // işlem / fatura tarihi (ISO gün)
   vadeTarihi?: string;    // ISO gün
   durum: OdemeDurumu;
@@ -124,6 +126,10 @@ function loadAll(): MuhasebeKayit[] {
   }
 }
 
+export function saveMuhasebe(kayitlar: MuhasebeKayit[]) {
+  saveAll(kayitlar);
+}
+
 function saveAll(kayitlar: MuhasebeKayit[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(kayitlar));
 }
@@ -140,7 +146,7 @@ export function loadMuhasebe(projectId: string): MuhasebeKayit[] {
 }
 
 export function addMuhasebe(
-  data: Omit<MuhasebeKayit, "id" | "createdAt" | "kdvTutar" | "tevkifatTutar" | "tutar" | "net">,
+  data: Omit<MuhasebeKayit, "id" | "createdAt" | "kdvTutar" | "tevkifatTutar" | "tutar" | "net">,      
 ): MuhasebeKayit {
   const h = hesaplaTutarlar(data.matrah, data.kdvOran, data.tevkifatOran);
   const kayit: MuhasebeKayit = {
@@ -151,16 +157,18 @@ export function addMuhasebe(
     createdAt: new Date().toISOString(),
   };
   saveAll([...loadAll(), kayit]);
+  void muhasebeBulutaYaz(kayit);
   return kayit;
 }
 
 export function deleteMuhasebe(id: string) {
   saveAll(loadAll().filter((k) => k.id !== id));
+  void muhasebeBuluttanSil(id);
 }
 
 /** Bir kaydı günceller; matrah/oran değişirse türetilenleri yeniden hesaplar.
    patch.durum verilmezse ödenen tutara göre durum yeniden türetilir. */
-export function updateMuhasebe(id: string, patch: Partial<MuhasebeKayit>): MuhasebeKayit | undefined {
+export function updateMuhasebe(id: string, patch: Partial<MuhasebeKayit>): MuhasebeKayit | undefined { 
   const hepsi = loadAll();
   const i = hepsi.findIndex((k) => k.id === id);
   if (i < 0) return undefined;
@@ -175,6 +183,7 @@ export function updateMuhasebe(id: string, patch: Partial<MuhasebeKayit>): Muhas
   }
   hepsi[i] = k;
   saveAll(hepsi);
+  void muhasebeBulutaYaz(k);
   return k;
 }
 
@@ -185,13 +194,16 @@ export function odemeKaydet(id: string, ekTutar: number, hesapId?: string): Muha
   if (idx < 0) return undefined;
   const k = hepsi[idx];
   const yeniOdenen = Math.min(k.net, +(k.odenenTutar + ekTutar).toFixed(2));
-  const durum: OdemeDurumu = yeniOdenen <= 0 ? "acik" : yeniOdenen >= k.net ? "odendi" : "kismi";
-  hepsi[idx] = { ...k, odenenTutar: yeniOdenen, durum, hesapId: hesapId ?? k.hesapId };
+  const durum: OdemeDurumu = yeniOdenen <= 0 ? "acik" : yeniOdenen >= k.net ? "odendi" : "kismi";      
+  const guncel = { ...k, odenenTutar: yeniOdenen, durum, hesapId: hesapId ?? k.hesapId };
+  hepsi[idx] = guncel;
   saveAll(hepsi);
-  return hepsi[idx];
+  void muhasebeBulutaYaz(guncel);
+  return guncel;
 }
 
-/* ── Özet ────────────────────────────────────────────────── */
+/* —— Özet ——————————————————————————————
+————————————————————— */
 
 export interface MuhasebeOzet {
   toplamGelir: number;    // brüt
@@ -208,7 +220,7 @@ export interface MuhasebeOzet {
 export function muhasebeOzeti(kayitlar: MuhasebeKayit[]): MuhasebeOzet {
   const giderMap = new Map<string, number>();
   const gelirMap = new Map<string, number>();
-  let toplamGelir = 0, toplamGider = 0, tahsilEdilen = 0, odenen = 0, acikAlacak = 0, acikBorc = 0;
+  let toplamGelir = 0, toplamGider = 0, tahsilEdilen = 0, odenen = 0, acikAlacak = 0, acikBorc = 0;    
 
   for (const k of kayitlar) {
     if (k.tip === "gelir") {
@@ -225,7 +237,8 @@ export function muhasebeOzeti(kayitlar: MuhasebeKayit[]): MuhasebeOzet {
   }
 
   const sirala = (m: Map<string, number>) =>
-    [...m.entries()].map(([kategori, tutar]) => ({ kategori, tutar })).sort((a, b) => b.tutar - a.tutar);
+    [...m.entries()].map(([kategori, tutar]) => ({ kategori, tutar })).sort((a, b) => b.tutar - a.tutar
+);
 
   return {
     toplamGelir, toplamGider, bakiye: toplamGelir - toplamGider,
@@ -236,7 +249,8 @@ export function muhasebeOzeti(kayitlar: MuhasebeKayit[]): MuhasebeOzet {
   };
 }
 
-/* ── Cari hesaplar ───────────────────────────────────────── */
+/* —— Cari hesaplar ——————————————————————————————————
+——————————————— */
 
 export interface CariHesap {
   taraf: string;
@@ -259,7 +273,8 @@ export function cariHesaplar(kayitlar: MuhasebeKayit[]): CariHesap[] {
     map.set(ad, c);
   }
   return [...map.values()]
-    .map((c) => ({ ...c, alacak: +c.alacak.toFixed(2), borc: +c.borc.toFixed(2), bakiye: +(c.alacak - c.borc).toFixed(2) }))
+    .map((c) => ({ ...c, alacak: +c.alacak.toFixed(2), borc: +c.borc.toFixed(2), bakiye: +(c.alacak - c
+.borc).toFixed(2) }))
     .sort((a, b) => Math.abs(b.bakiye) - Math.abs(a.bakiye));
 }
 
@@ -292,7 +307,8 @@ export function cariEkstre(kayitlar: MuhasebeKayit[], taraf: string): EkstreSati
   });
 }
 
-/* ── Yaşlandırma (vade analizi) ──────────────────────────── */
+/* —— Yaşlandırma (vade analizi) ——————————————————————
+——————— */
 
 export interface YaslandirmaKova {
   etiket: string;
@@ -301,7 +317,7 @@ export interface YaslandirmaKova {
 }
 
 /** Açık hareketleri vade gecikmesine göre kovalara böler. */
-export function yaslandirma(kayitlar: MuhasebeKayit[], bugun = new Date()): YaslandirmaKova[] {
+export function yaslandirma(kayitlar: MuhasebeKayit[], bugun = new Date()): YaslandirmaKova[] {        
   const kovalar: YaslandirmaKova[] = [
     { etiket: "Vadesi gelmemiş", alacak: 0, borc: 0 },
     { etiket: "0–30 gün", alacak: 0, borc: 0 },
@@ -324,10 +340,11 @@ export function yaslandirma(kayitlar: MuhasebeKayit[], bugun = new Date()): Yasl
     if (k.tip === "gelir") kovalar[i].alacak += acik;
     else kovalar[i].borc += acik;
   }
-  return kovalar.map((k) => ({ ...k, alacak: +k.alacak.toFixed(2), borc: +k.borc.toFixed(2) }));
+  return kovalar.map((k) => ({ ...k, alacak: +k.alacak.toFixed(2), borc: +k.borc.toFixed(2) }));       
 }
 
-/* ── KDV özeti (beyanname mantığı) ───────────────────────── */
+/* —— KDV özeti (beyanname mantığı) ————————————————————
+——————————— */
 
 export interface KdvOzet {
   hesaplananKdv: number;    // satışların (gelir) KDV'si
@@ -353,7 +370,7 @@ export function kdvOzeti(kayitlar: MuhasebeKayit[]): KdvOzet {
   };
 }
 
-/* ── Gelir tablosu (KDV hariç / matrah bazlı) ────────────── */
+/* —— Gelir tablosu (KDV hariç / matrah bazlı) —————————————— */     
 
 export interface GelirTablosu {
   gelir: { kategori: string; tutar: number }[];
@@ -367,11 +384,13 @@ export function gelirTablosu(kayitlar: MuhasebeKayit[]): GelirTablosu {
   const gMap = new Map<string, number>(), eMap = new Map<string, number>();
   let toplamGelir = 0, toplamGider = 0;
   for (const k of kayitlar) {
-    if (k.tip === "gelir") { toplamGelir += k.matrah; gMap.set(k.kategori, (gMap.get(k.kategori) ?? 0) + k.matrah); }
-    else { toplamGider += k.matrah; eMap.set(k.kategori, (eMap.get(k.kategori) ?? 0) + k.matrah); }
+    if (k.tip === "gelir") { toplamGelir += k.matrah; gMap.set(k.kategori, (gMap.get(k.kategori) ?? 0) 
++ k.matrah); }
+    else { toplamGider += k.matrah; eMap.set(k.kategori, (eMap.get(k.kategori) ?? 0) + k.matrah); }    
   }
   const arr = (m: Map<string, number>) =>
-    [...m.entries()].map(([kategori, tutar]) => ({ kategori, tutar: +tutar.toFixed(2) })).sort((a, b) => b.tutar - a.tutar);
+    [...m.entries()].map(([kategori, tutar]) => ({ kategori, tutar: +tutar.toFixed(2) })).sort((a, b) =
+> b.tutar - a.tutar);
   return {
     gelir: arr(gMap), gider: arr(eMap),
     toplamGelir: +toplamGelir.toFixed(2), toplamGider: +toplamGider.toFixed(2),
@@ -379,7 +398,8 @@ export function gelirTablosu(kayitlar: MuhasebeKayit[]): GelirTablosu {
   };
 }
 
-/* ── Nakit akış (gerçekleşen, aylık) ─────────────────────── */
+/* —— Nakit akış (gerçekleşen, aylık) —————————————————————
+————— */
 
 export interface NakitAy {
   ay: string;        // "2026-06"
@@ -400,6 +420,7 @@ export function nakitAkis(kayitlar: MuhasebeKayit[]): NakitAy[] {
     map.set(ay, m);
   }
   return [...map.entries()]
-    .map(([ay, m]) => ({ ay, tahsilat: +m.tahsilat.toFixed(2), odeme: +m.odeme.toFixed(2), net: +(m.tahsilat - m.odeme).toFixed(2) }))
+    .map(([ay, m]) => ({ ay, tahsilat: +m.tahsilat.toFixed(2), odeme: +m.odeme.toFixed(2), net: +(m.tah
+silat - m.odeme).toFixed(2) }))
     .sort((a, b) => a.ay.localeCompare(b.ay));
 }

@@ -21,6 +21,7 @@ const NAV: NavItem[] = [
   { href: "/panel/pozlar?lib=kut3", label: "Küt-3 (Özelim)", icon: "📗", active: true },
   { href: "/panel/personel", label: "Personel & Puantaj", icon: "👷", active: true },
   { href: "/panel/muhasebe", label: "Muhasebe", icon: "📒", active: true },
+  { href: "/panel/genel-muhasebe", label: "Genel Muhasebe", icon: "📊", active: true },
   { href: "/panel/saha", label: "Saha Takibi", icon: "📸", active: true },
   { href: "/panel/3d", label: "3B Görselleştirme", icon: "🏢", active: true },
   { href: "/panel/plan3d", label: "Plan → 3B Stüdyo", icon: "🧊", active: true },

@@ -51,9 +51,10 @@ function pLoad(): Personel[] {
 }
 function pSave(list: Personel[]) { localStorage.setItem(PERSONEL_KEY, JSON.stringify(list)); }
 
-export function loadPersonel(projectId: string): Personel[] {
+/** Personel GLOBAL'dir — tüm dosyalarda (projelerde) ortak kullanılır.
+   (projectId parametresi geriye uyumluluk için tutuldu; filtre uygulanmaz.) */
+export function loadPersonel(_projectId?: string): Personel[] {
   return pLoad()
-    .filter((p) => p.projectId === projectId)
     .sort((a, b) => `${a.ad} ${a.soyad}`.localeCompare(`${b.ad} ${b.soyad}`, "tr"));
 }
 
