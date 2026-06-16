@@ -1,11 +1,20 @@
-"""Dosya yükleme ucu — saha fotoğrafları (base64) → kalıcı dosya + URL."""
+"""Dosya yükleme + korumalı sunum.
+
+Yükleme: base64 data URL → diske yazılır, imzalı (signed) bir URL döner.
+Sunum: /dosya/{ad}?t=<imza> — imza geçerli değilse erişim yok. Böylece
+yüklenen dosyalar herkese açık değildir (tahmin/erişim engellenir).
+"""
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
+from pathlib import Path
+
+from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ...core.config import settings
 from ...core.database import get_db
-from ...core.security import get_current_user
+from ...core.security import dosya_token, dosya_token_dogrula, get_current_user
 from ...models.dosya import Dosya
 from ...models.user import User
 from ...schemas.common import DosyaIstek
@@ -20,5 +29,17 @@ async def yukle(g: DosyaIstek, u: User = Depends(get_current_user), db: AsyncSes
     kayit = Dosya(owner_id=u.id, ad=ad, mime=mime, boyut=boyut)
     db.add(kayit)
     await db.commit()
-    # /dosyalar statik kök altından sunulur (StaticFiles mount)
-    return {"url": f"/dosyalar/{ad}", "id": kayit.id, "boyut": boyut}
+    # İmzalı URL: dosyaya erişim ancak bu jeton ile mümkün
+    return {"url": f"/dosya/{ad}?t={dosya_token(ad)}", "id": kayit.id, "boyut": boyut}
+
+
+@router.get("/dosya/{ad}")
+async def dosya_getir(ad: str, t: str = Query(default="")):
+    if "/" in ad or "\\" in ad or ".." in ad:
+        raise HTTPException(400, "Geçersiz dosya adı.")
+    if not dosya_token_dogrula(t, ad):
+        raise HTTPException(403, "Bu dosyaya erişim izniniz yok.")
+    yol = Path(settings.upload_dir) / ad
+    if not yol.is_file():
+        raise HTTPException(404, "Dosya bulunamadı.")
+    return FileResponse(str(yol))

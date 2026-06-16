@@ -26,6 +26,19 @@ def refresh_token(uid: str) -> str:
     return _token(uid, "refresh", dt.timedelta(days=settings.refresh_token_gun))
 
 
+def dosya_token(ad: str) -> str:
+    """Bir dosya için imzalı (taklit edilemez) uzun ömürlü erişim jetonu."""
+    return _token(ad, "dosya", dt.timedelta(days=365))
+
+
+def dosya_token_dogrula(token: str, ad: str) -> bool:
+    """token bu dosya adına ait ve geçerli mi?"""
+    try:
+        return token_coz(token, "dosya") == ad
+    except HTTPException:
+        return False
+
+
 def token_coz(token: str, tip: str = "access") -> str:
     try:
         p = jwt.decode(token, settings.jwt_secret, algorithms=[settings.jwt_alg])

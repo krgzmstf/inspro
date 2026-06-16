@@ -1,0 +1,15 @@
+# Caddy — otomatik HTTPS/TLS (Let's Encrypt) + reverse proxy.
+# API_DOMAIN ortam değişkeninden gelir (docker-compose.prod.yml).
+{$API_DOMAIN} {
+	encode gzip
+	reverse_proxy api:4400
+
+	# Ek güvenlik başlıkları
+	header {
+		Strict-Transport-Security "max-age=63072000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "no-referrer"
+		-Server
+	}
+}

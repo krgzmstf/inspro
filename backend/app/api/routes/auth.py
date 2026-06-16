@@ -3,12 +3,13 @@ from __future__ import annotations
 
 import secrets
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ...core.config import settings
 from ...core.database import get_db
+from ...core.ratelimit import istemci_ip, limit_uygula
 from ...core.security import access_token, get_current_user, refresh_token, token_coz
 from ...models.base import simdi
 from ...models.user import User
@@ -21,7 +22,8 @@ router = APIRouter(prefix="/auth", tags=["kimlik"])
 
 
 @router.post("/kod-gonder")
-async def kod_gonder(g: KodIstek, db: AsyncSession = Depends(get_db)):
+async def kod_gonder(g: KodIstek, request: Request, db: AsyncSession = Depends(get_db)):
+    limit_uygula(f"kod-gonder:{istemci_ip(request)}", limit=8, pencere_sn=600)
     email = g.email.lower().strip()
     var = (await db.execute(select(User).where(User.email == email))).scalar_one_or_none()
     if not g.kayit and not var:
@@ -39,7 +41,8 @@ async def kod_gonder(g: KodIstek, db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/kod-dogrula")
-async def kod_dogrula(g: KodDogrula, db: AsyncSession = Depends(get_db)):
+async def kod_dogrula(g: KodDogrula, request: Request, db: AsyncSession = Depends(get_db)):
+    limit_uygula(f"kod-dogrula:{istemci_ip(request)}", limit=12, pencere_sn=600)
     email = g.email.lower().strip()
     rec = await otp_servis.kod_dogrula(db, email, g.kod)
     u = (await db.execute(select(User).where(User.email == email))).scalar_one_or_none()
@@ -58,11 +61,12 @@ async def kod_dogrula(g: KodDogrula, db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/yerel-giris")
-async def yerel_giris(g: YerelGiris, db: AsyncSession = Depends(get_db)):
+async def yerel_giris(g: YerelGiris, request: Request, db: AsyncSession = Depends(get_db)):
     """Tek ortak şifreyle hızlı yerel giriş (kod/e-posta beklemeden).
 
     Yalnız .env'de YEREL_GIRIS_SIFRE tanımlıysa açıktır; üretimde kapalı tutulmalı.
     """
+    limit_uygula(f"yerel-giris:{istemci_ip(request)}", limit=8, pencere_sn=600)
     if not settings.yerel_giris_sifre:
         raise HTTPException(404, "Yerel giriş kapalı.")
     if not secrets.compare_digest(g.sifre, settings.yerel_giris_sifre):
