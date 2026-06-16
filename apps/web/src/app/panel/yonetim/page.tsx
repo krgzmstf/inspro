@@ -2,23 +2,31 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { type Rol, ROL_ETIKET, rolGetir } from "@/lib/rol";
+import { type Rol, ROL_ETIKET, ROL_MENU, MENU_SECENEKLERI, rolGetir } from "@/lib/rol";
 import { supabaseVar } from "@/lib/supabase/auth";
 
 interface Kullanici {
   id: string; email: string; ad_soyad: string; firma: string;
-  rol: Rol; created_at: string; son_giris: string | null;
+  rol: Rol; yetkiler: string[] | null; created_at: string; son_giris: string | null;
 }
 
-const ROLLER: Rol[] = ["sahip", "ofis", "sefi", "usta"];
+const ROLLER: Rol[] = ["yonetici", "sefi", "taseron", "muhasebeci"];
+
+const ROL_ACIKLAMA: Record<Rol, string> = {
+  yonetici: "Her şey + SADECE yönetici proje (dosya) oluşturur",
+  sefi: "Şantiye şefi — iş süreçleri, saha, metraj (yöneticinin verdiği)",
+  taseron: "Taşeron — iş süreçleri ve saha (yöneticinin verdiği)",
+  muhasebeci: "Personel, muhasebe, genel muhasebe, teklif, hakediş — tutarları düzenler",
+};
 
 export default function YonetimPage() {
-  const [rolum, setRolum] = useState<Rol>("sahip");
+  const [rolum, setRolum] = useState<Rol>("yonetici");
   const [hazir, setHazir] = useState(false);
   const [kullanicilar, setKullanicilar] = useState<Kullanici[]>([]);
   const [yukleniyor, setYukleniyor] = useState(false);
   const [hata, setHata] = useState("");
   const [mesaj, setMesaj] = useState("");
+  const [acikIzin, setAcikIzin] = useState<string | null>(null);
 
   useEffect(() => {
     rolGetir().then((r) => { setRolum(r); setHazir(true); });
@@ -32,29 +40,34 @@ export default function YonetimPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Liste alınamadı.");
       setKullanicilar(data.users ?? []);
-    } catch (e) {
-      setHata((e as Error).message);
-    } finally {
-      setYukleniyor(false);
-    }
+    } catch (e) { setHata((e as Error).message); }
+    finally { setYukleniyor(false); }
   }
 
-  async function rolDegistir(id: string, rol: Rol) {
+  async function kaydet(id: string, rol: Rol, yetkiler: string[] | null | undefined) {
     setMesaj(""); setHata("");
-    setKullanicilar((list) => list.map((k) => (k.id === id ? { ...k, rol } : k)));
+    setKullanicilar((list) => list.map((k) => (k.id === id ? { ...k, rol, ...(yetkiler !== undefined ? { yetkiler } : {}) } : k)));
     try {
       const res = await fetch("/api/yonetim/kullanicilar", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, rol }),
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, rol, ...(yetkiler !== undefined ? { yetkiler } : {}) }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Güncellenemedi.");
-      setMesaj("✓ Rol güncellendi. (Kullanıcı yeniden giriş yapınca menüsü güncellenir.)");
-    } catch (e) {
-      setHata((e as Error).message);
-      yukle();
-    }
+      setMesaj("✓ Kaydedildi. (Kullanıcı yeniden giriş yapınca menüsü güncellenir.)");
+    } catch (e) { setHata((e as Error).message); yukle(); }
+  }
+
+  function etkinIzinler(k: Kullanici): string[] {
+    if (k.yetkiler && k.yetkiler.length > 0) return k.yetkiler;
+    const v = ROL_MENU[k.rol];
+    return v === "*" ? MENU_SECENEKLERI.map((m) => m.href) : v;
+  }
+
+  function izinToggle(k: Kullanici, href: string) {
+    const mevcut = etkinIzinler(k);
+    const yeni = mevcut.includes(href) ? mevcut.filter((h) => h !== href) : [...mevcut, href];
+    kaydet(k.id, k.rol, yeni);
   }
 
   if (!supabaseVar()) {
@@ -62,18 +75,17 @@ export default function YonetimPage() {
       <div className="mx-auto max-w-3xl">
         <h1 className="text-2xl font-extrabold text-slate-900">👤 Yönetim</h1>
         <p className="mt-4 rounded-xl bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-700">
-          Backend (Supabase) bağlı değil. Kullanıcı yönetimi için e-posta ile giriş yapılan kurulum gerekir.
+          Backend bağlı değil. Kullanıcı yönetimi için e-posta ile giriş gerekir.
         </p>
       </div>
     );
   }
-
-  if (hazir && rolum !== "sahip") {
+  if (hazir && rolum !== "yonetici") {
     return (
       <div className="mx-auto max-w-3xl">
         <h1 className="text-2xl font-extrabold text-slate-900">👤 Yönetim</h1>
         <p className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
-          Bu sayfaya yalnızca <b>Sahip/Yönetici</b> erişebilir.
+          Bu sayfaya yalnızca <b>Yönetici</b> erişebilir.
         </p>
         <Link href="/panel" className="mt-4 inline-block text-sm font-semibold text-slate-500 hover:text-ink-800">← Panele dön</Link>
       </div>
@@ -85,7 +97,7 @@ export default function YonetimPage() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-extrabold text-slate-900">👤 Kullanıcı & Rol Yönetimi</h1>
-          <p className="mt-1 text-sm text-slate-500">Kayıtlı kullanıcıları gör, rollerini buradan değiştir. Kod gerekmez.</p>
+          <p className="mt-1 text-sm text-slate-500">Rol ata, istersen kişiye özel modül izni ver. Kod gerekmez.</p>
         </div>
         <button onClick={yukle} className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-bold text-slate-600 transition hover:bg-slate-50">↻ Yenile</button>
       </div>
@@ -93,17 +105,12 @@ export default function YonetimPage() {
       {mesaj && <p className="mt-4 rounded-lg bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700">{mesaj}</p>}
       {hata && <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-600">{hata}</p>}
 
-      {/* Rol açıklaması */}
-      <div className="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-        {[
-          ["Sahip / Yönetici", "Her şeyi görür (finans, ilerleme, yönetim)"],
-          ["Ofis", "Tüm modüller (web)"],
-          ["Şantiye Şefi", "Saha, iş süreçleri, metraj, personel"],
-          ["Taşeron / Usta", "Sadece iş süreçleri ve saha"],
-        ].map(([ad, aciklama]) => (
-          <div key={ad} className="rounded-xl border border-slate-200 bg-white p-3">
-            <div className="text-xs font-bold text-ink-900">{ad}</div>
-            <div className="mt-0.5 text-[11px] text-slate-500">{aciklama}</div>
+      {/* Roller açıklaması */}
+      <div className="mt-5 grid gap-2 sm:grid-cols-2">
+        {ROLLER.map((r) => (
+          <div key={r} className="rounded-xl border border-slate-200 bg-white p-3">
+            <div className="text-xs font-bold text-ink-900">{ROL_ETIKET[r]}</div>
+            <div className="mt-0.5 text-[11px] text-slate-500">{ROL_ACIKLAMA[r]}</div>
           </div>
         ))}
       </div>
@@ -115,42 +122,58 @@ export default function YonetimPage() {
           Henüz kayıtlı kullanıcı yok. Kullanıcılar /kayit'tan e-posta + kod ile kaydolur.
         </p>
       ) : (
-        <div className="mt-6 overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <table className="w-full min-w-[720px] text-sm">
-            <thead>
-              <tr className="border-b border-slate-200 bg-slate-50 text-left text-[11px] font-bold uppercase text-slate-500">
-                <th className="px-4 py-3">Kullanıcı</th>
-                <th className="px-4 py-3">Firma</th>
-                <th className="px-4 py-3">Rol</th>
-                <th className="px-4 py-3">Kayıt</th>
-                <th className="px-4 py-3">Son Giriş</th>
-              </tr>
-            </thead>
-            <tbody>
-              {kullanicilar.map((k) => (
-                <tr key={k.id} className="border-b border-slate-100 hover:bg-slate-50/60">
-                  <td className="px-4 py-2.5">
-                    <div className="font-semibold text-slate-800">{k.ad_soyad || "—"}</div>
-                    <div className="text-[11px] text-slate-400">{k.email}</div>
-                  </td>
-                  <td className="px-4 py-2.5 text-slate-600">{k.firma || "—"}</td>
-                  <td className="px-4 py-2.5">
-                    <select value={k.rol} onChange={(e) => rolDegistir(k.id, e.target.value as Rol)}
-                      className="rounded-lg border-2 border-slate-200 bg-white px-2 py-1 text-sm font-semibold outline-none focus:border-brand-500">
-                      {ROLLER.map((r) => <option key={r} value={r}>{ROL_ETIKET[r]}</option>)}
-                    </select>
-                  </td>
-                  <td className="px-4 py-2.5 text-xs text-slate-500">{k.created_at?.slice(0, 10)}</td>
-                  <td className="px-4 py-2.5 text-xs text-slate-500">{k.son_giris?.slice(0, 10) ?? "—"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="mt-6 space-y-3">
+          {kullanicilar.map((k) => (
+            <div key={k.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="font-semibold text-slate-800">{k.ad_soyad || "—"} <span className="text-[11px] font-normal text-slate-400">{k.email}</span></div>
+                  <div className="text-[11px] text-slate-400">{k.firma || ""}{k.firma ? " · " : ""}kayıt {k.created_at?.slice(0, 10)}</div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <select value={k.rol} onChange={(e) => kaydet(k.id, e.target.value as Rol, undefined)}
+                    className="rounded-lg border-2 border-slate-200 bg-white px-2 py-1 text-sm font-semibold outline-none focus:border-brand-500">
+                    {ROLLER.map((r) => <option key={r} value={r}>{ROL_ETIKET[r]}</option>)}
+                  </select>
+                  {k.rol !== "yonetici" && (
+                    <button onClick={() => setAcikIzin(acikIzin === k.id ? null : k.id)}
+                      className="rounded-lg border border-slate-200 px-3 py-1 text-xs font-bold text-slate-600 hover:bg-slate-50">
+                      {acikIzin === k.id ? "İzinleri gizle" : "Özel izinler"}
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Kişiye özel modül izinleri */}
+              {acikIzin === k.id && k.rol !== "yonetici" && (
+                <div className="mt-3 rounded-xl border border-slate-100 bg-slate-50 p-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-600">Bu kişinin görebileceği modüller</span>
+                    {k.yetkiler && k.yetkiler.length > 0 && (
+                      <button onClick={() => kaydet(k.id, k.rol, null)} className="text-[11px] font-semibold text-brand-600 hover:underline">Rol varsayılanına dön</button>
+                    )}
+                  </div>
+                  <div className="mt-2 grid grid-cols-2 gap-1.5 sm:grid-cols-3">
+                    {MENU_SECENEKLERI.map((m) => {
+                      const secili = etkinIzinler(k).includes(m.href);
+                      return (
+                        <label key={m.href} className="flex items-center gap-1.5 rounded-lg px-1.5 py-1 text-xs text-slate-700 hover:bg-white">
+                          <input type="checkbox" checked={secili} onChange={() => izinToggle(k, m.href)} className="h-3.5 w-3.5 accent-[var(--color-brand-500)]" />
+                          {m.label}
+                        </label>
+                      );
+                    })}
+                  </div>
+                  <p className="mt-1.5 text-[10px] text-slate-400">İşaretlediklerin bu kişiye özel olur (rol varsayılanını ezer). &quot;Projeler&quot; herkese açıktır.</p>
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       )}
 
       <p className="mt-4 text-[11px] text-slate-400">
-        💡 Daha ileri ayarlar için Supabase Studio: <a href="http://127.0.0.1:4323" target="_blank" rel="noopener noreferrer" className="font-semibold text-brand-600 hover:underline">127.0.0.1:4323</a>
+        💡 Not: Proje (dosya) yalnız Yönetici oluşturur. İleri ayarlar: Supabase Studio <a href="http://127.0.0.1:4323" target="_blank" rel="noopener noreferrer" className="font-semibold text-brand-600 hover:underline">127.0.0.1:4323</a>
       </p>
       <div className="mt-6 text-sm">
         <Link href="/panel" className="font-semibold text-slate-500 transition hover:text-ink-800">← Projelere dön</Link>

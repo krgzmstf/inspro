@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import { supabaseVar, aktifKullanici, cikisYap, oturumDinle } from "@/lib/supabase/auth";
 import { yerelKullanici, yerelCikis } from "@/lib/yerelOturum";
-import { type Rol, ROL_ETIKET, rolGetir, menuyeYetkili } from "@/lib/rol";
+import { type Rol, ROL_ETIKET, yetkiGetir, menuyeYetkili } from "@/lib/rol";
 
 type NavItem = { href: string; label: string; icon: string; active: boolean; img?: string };
 
@@ -42,9 +42,10 @@ export default function PanelLayout({
   const [yerelAd, setYerelAd] = useState<string | null>(null);
   const [kontrol, setKontrol] = useState(false);
   const [menuAcik, setMenuAcik] = useState(false);
-  const [rol, setRol] = useState<Rol>("sahip");
+  const [rol, setRol] = useState<Rol>("yonetici");
+  const [yetkiler, setYetkiler] = useState<string[] | null>(null);
 
-  useEffect(() => { rolGetir().then(setRol); }, [kullanici]);
+  useEffect(() => { yetkiGetir().then((y) => { setRol(y.rol); setYetkiler(y.yetkiler); }); }, [kullanici]);
 
   useEffect(() => {
     let iptal = false;
@@ -100,7 +101,7 @@ export default function PanelLayout({
           <span className="text-xs font-medium uppercase tracking-widest text-white/50">Panel</span>
         </div>
         <nav className="flex-1 space-y-1 p-4">
-          {NAV.filter((item) => menuyeYetkili(rol, item.href) && (item.href !== "/panel/yonetim" || rol === "sahip")).map((item) => (
+          {NAV.filter((item) => menuyeYetkili(rol, item.href, yetkiler) && (item.href !== "/panel/yonetim" || rol === "yonetici")).map((item) => (
             <Link
               key={item.label}
               href={item.href}

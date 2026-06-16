@@ -17,6 +17,7 @@ import { loadIsSurecleri, isOzeti } from "@/lib/isSurecleri";
 import { projeleriSenkronla } from "@/lib/projeSenkron";
 import { muhasebeSenkronla } from "@/lib/muhasebeSenkron";
 import { tumModulleriSenkronla } from "@/lib/genelSenkron";
+import { yetkiGetir } from "@/lib/rol";
 import YedekKart from "./YedekKart";
 
 interface ProjeStat {
@@ -28,6 +29,9 @@ export default function PanelPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [statlar, setStatlar] = useState<Record<string, ProjeStat>>({});
+  const [yonetici, setYonetici] = useState(true);
+
+  useEffect(() => { yetkiGetir().then((y) => setYonetici(y.rol === "yonetici")); }, []);
 
   function hesaplaStatlar(list: Project[]) {
     const s: Record<string, ProjeStat> = {};
@@ -109,12 +113,14 @@ export default function PanelPage() {
             Tüm şantiyelerinizi tek ekrandan yönetin.
           </p>
         </div>
-        <Link
-          href="/panel/yeni"
-          className="rounded-xl bg-brand-500 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-brand-500/25 transition hover:bg-brand-600"
-        >
-          + Yeni Proje
-        </Link>
+        {yonetici && (
+          <Link
+            href="/panel/yeni"
+            className="rounded-xl bg-brand-500 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-brand-500/25 transition hover:bg-brand-600"
+          >
+            + Yeni Proje
+          </Link>
+        )}
       </div>
 
       {/* Özet kartları — komuta merkezi */}
@@ -164,14 +170,18 @@ export default function PanelPage() {
               Henüz proje yok
             </h3>
             <p className="mt-1 text-sm text-slate-500">
-              İlk projenizi oluşturun; kat planı yükleyin, 13 aşamalı yol haritası otomatik kurulsun.
+              {yonetici
+                ? "İlk projenizi oluşturun; kat planı yükleyin, 13 aşamalı yol haritası otomatik kurulsun."
+                : "Henüz size atanmış bir proje yok. Yönetici proje oluşturup yetki verince burada görünür."}
             </p>
-            <Link
-              href="/panel/yeni"
-              className="mt-5 inline-block rounded-xl bg-brand-500 px-6 py-3 text-sm font-bold text-white transition hover:bg-brand-600"
-            >
-              + İlk Projeyi Oluştur
-            </Link>
+            {yonetici && (
+              <Link
+                href="/panel/yeni"
+                className="mt-5 inline-block rounded-xl bg-brand-500 px-6 py-3 text-sm font-bold text-white transition hover:bg-brand-600"
+              >
+                + İlk Projeyi Oluştur
+              </Link>
+            )}
           </div>
         )}
 

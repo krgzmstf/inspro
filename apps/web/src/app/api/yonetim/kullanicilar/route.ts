@@ -26,17 +26,18 @@ export async function GET() {
     const sb = admin();
     const { data, error } = await sb.auth.admin.listUsers({ perPage: 1000 });
     if (error) return Response.json({ error: error.message }, { status: 500 });
-    const { data: profiller } = await sb.from("profiles").select("id, rol, ad_soyad, firma");
+    const { data: profiller } = await sb.from("profiles").select("id, rol, ad_soyad, firma, yetkiler");
     const pmap = new Map((profiller ?? []).map((p) => [p.id, p]));
     const users = data.users.map((u) => {
-      const p = pmap.get(u.id) as { rol?: string; ad_soyad?: string; firma?: string } | undefined;
+      const p = pmap.get(u.id) as { rol?: string; ad_soyad?: string; firma?: string; yetkiler?: string[] } | undefined;
       const meta = (u.user_metadata ?? {}) as { ad_soyad?: string; firma?: string };
       return {
         id: u.id,
         email: u.email ?? "",
         ad_soyad: p?.ad_soyad ?? meta.ad_soyad ?? "",
         firma: p?.firma ?? meta.firma ?? "",
-        rol: p?.rol ?? "sahip",
+        rol: p?.rol ?? "yonetici",
+        yetkiler: Array.isArray(p?.yetkiler) ? p!.yetkiler : null,
         created_at: u.created_at,
         son_giris: u.last_sign_in_at ?? null,
       };
@@ -49,14 +50,16 @@ export async function GET() {
 
 export async function POST(req: Request) {
   if (!url || !svc) return Response.json({ error: "Supabase yapılandırılmamış." }, { status: 500 });
-  let body: { id?: string; rol?: string };
+  let body: { id?: string; rol?: string; yetkiler?: string[] | null };
   try { body = await req.json(); } catch { return Response.json({ error: "Geçersiz istek." }, { status: 400 }); }
-  const { id, rol } = body;
+  const { id, rol, yetkiler } = body;
   if (!id || !rol) return Response.json({ error: "id ve rol gerekli." }, { status: 400 });
-  if (!["sahip", "ofis", "sefi", "usta"].includes(rol)) return Response.json({ error: "Geçersiz rol." }, { status: 400 });
+  if (!["yonetici", "sefi", "taseron", "muhasebeci"].includes(rol)) return Response.json({ error: "Geçersiz rol." }, { status: 400 });
   try {
     const sb = admin();
-    const { error } = await sb.from("profiles").upsert({ id, rol }, { onConflict: "id" });
+    const kayit: { id: string; rol: string; yetkiler?: string[] | null } = { id, rol };
+    if (yetkiler !== undefined) kayit.yetkiler = yetkiler;
+    const { error } = await sb.from("profiles").upsert(kayit, { onConflict: "id" });
     if (error) return Response.json({ error: error.message }, { status: 500 });
     return Response.json({ ok: true });
   } catch (e) {
