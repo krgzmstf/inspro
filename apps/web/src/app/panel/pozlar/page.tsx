@@ -19,7 +19,6 @@ import {
   pozKutuphaneAdi,
   POZ_KUTUPHANELER,
   DEFAULT_LIB,
-  POZ_DATA_DATE,
 } from "@/lib/pozlar";
 import { parsePozRows } from "@/lib/pozImport";
 import { excelOku, excelYaz, pdfYazdir } from "@/lib/disaAktar";
@@ -136,10 +135,21 @@ export default function PozlarPage() {
   }
 
   async function handleReset() {
-    if (!confirm("Tüm pozlar resmî ÇŞB başlangıç setine sıfırlansın mı? İçe aktardığınız ve piyasa fiyatları silinir.")) return;
+    if (!confirm("Bu kütüphanedeki TÜM pozlar silinsin mi? Bu işlem geri alınamaz.")) return;
     setYukleniyor(true);
     setPozlar(await resetPozlar(libId));
     setYukleniyor(false);
+  }
+
+  /** Toplu aktarma için örnek Excel şablonu indir. */
+  function sablonIndir() {
+    const basliklar = ["Poz No", "Tanım", "Birim", "Birim Fiyat"];
+    const ornek = [
+      ["15.150.1001", "Hazır beton C30 (pompalı)", "m³", 4950],
+      ["23.014", "Nervürlü inşaat demiri", "kg", 39],
+      ["OZ.001", "Örnek özel poz", "m²", 250],
+    ];
+    excelYaz("poz-sablonu", "Pozlar", basliklar, ornek);
   }
 
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -233,9 +243,7 @@ export default function PozlarPage() {
           </h1>
           <p className="mt-1 text-sm text-slate-500">
             {yukleniyor ? "Yükleniyor…" : `${pozlar.length.toLocaleString("tr-TR")} poz`} ·{" "}
-            {libId === "kut3"
-              ? "Kendi pozlarınızı ekleyin veya diğer kütüphanelerden kopyalayın."
-              : `ÇŞB resmî birim fiyatları (${POZ_DATA_DATE}) + AI piyasa fiyatları.`}{" "}
+            Pozları <b>Excel/CSV ile toplu aktarın</b> veya elle ekleyin.{" "}
             Maliyet <b>en düşük fiyatla</b> hesaplanır; bu kütüphane yalnızca bunu seçen projelerde kullanılır.
           </p>
         </div>
@@ -272,7 +280,9 @@ export default function PozlarPage() {
                 className="mt-1 block w-24 rounded-lg border-2 border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-brand-500" />
             </label>
             <button onClick={() => fileRef.current?.click()}
-              className="rounded-lg bg-ink-900 px-4 py-2 text-sm font-bold text-white transition hover:bg-ink-800">Dosya Seç</button>
+              className="rounded-lg bg-ink-900 px-4 py-2 text-sm font-bold text-white transition hover:bg-ink-800">📂 Dosya Seç & Aktar</button>
+            <button onClick={sablonIndir} type="button"
+              className="rounded-lg border-2 border-slate-200 px-4 py-2 text-sm font-bold text-slate-600 transition hover:border-brand-500 hover:text-brand-600">⬇ Örnek Şablon</button>
             <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv" onChange={handleFile} className="hidden" />
           </div>
           {importMsg && <p className="mt-3 text-xs font-semibold text-slate-600">{importMsg}</p>}

@@ -18,10 +18,10 @@ export const CSB_JSON_URL = "/data/csb-pozlar-2026.json";
 export type LibId = "kut1" | "kut2" | "kut3";
 export const DEFAULT_LIB: LibId = "kut2";
 
-/** csb=true: boşsa ÇŞB setinden tohumlanır. csb=false: kullanıcı kütüphanesi (boş başlar). */
+/** Tüm kütüphaneler BOŞ başlar; pozlar Excel/CSV ile içe aktarılır veya elle eklenir. */
 export const POZ_KUTUPHANELER: { id: LibId; ad: string; csb: boolean }[] = [
-  { id: "kut1", ad: "POZ-KÜT-1", csb: true },
-  { id: "kut2", ad: "Genel Poz Küt-2", csb: true },
+  { id: "kut1", ad: "POZ-KÜT-1", csb: false },
+  { id: "kut2", ad: "Genel Poz Küt-2", csb: false },
   { id: "kut3", ad: "Küt-3 (Özelim)", csb: false },
 ];
 
@@ -32,10 +32,11 @@ function isCsbLib(libId: LibId): boolean {
   return POZ_KUTUPHANELER.find((k) => k.id === libId)?.csb ?? true;
 }
 
+// v2: kütüphaneler boşaltıldı — eski (ÇŞB tohumlu) anahtarlar terk edildi.
 const STORAGE_KEYS: Record<LibId, string> = {
-  kut1: "inspro-pozlar-kut1",
-  kut2: "inspro-pozlar-v3",
-  kut3: "inspro-pozlar-kut3",
+  kut1: "inspro-pozlar-kut1-v2",
+  kut2: "inspro-pozlar-kut2-v2",
+  kut3: "inspro-pozlar-kut3-v2",
 };
 function storageKey(libId: LibId): string {
   return STORAGE_KEYS[libId] ?? STORAGE_KEYS[DEFAULT_LIB];
