@@ -6,3 +6,9 @@ pydantic[email]==2.10.4
 pydantic-settings==2.7.1
 python-jose[cryptography]==3.3.0
 aiosmtplib==3.0.2
+alembic==1.14.0
+python-multipart==0.0.20
+# test
+pytest==8.3.4
+pytest-asyncio==0.25.0
+httpx==0.28.1

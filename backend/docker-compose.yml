@@ -26,7 +26,10 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: postgresql+asyncpg://inspro:${DB_PASSWORD:-inspro_local}@db:5432/inspro
+      APP_ENV: ${APP_ENV:-development}
       JWT_SECRET: ${JWT_SECRET:-degistir-bu-gizli-anahtari}
+      CORS_ORIGINS: ${CORS_ORIGINS:-*}
+      UPLOAD_DIR: /data/yuklemeler
       SMTP_HOST: ${SMTP_HOST:-}
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_USER: ${SMTP_USER:-}
@@ -34,6 +37,9 @@ services:
       SMTP_FROM: ${SMTP_FROM:-İNŞPRO <yazeinspro@gmail.com>}
     ports:
       - "4400:4400"
+    volumes:
+      - inspro_uploads:/data/yuklemeler
 
 volumes:
   inspro_pgdata:
+  inspro_uploads:
