@@ -16,7 +16,14 @@ def _kod_uret() -> str:
     return f"{secrets.randbelow(1_000_000):06d}"
 
 
-async def kod_olustur(db: AsyncSession, email: str, ad_soyad: str, firma: str) -> str:
+async def kod_olustur(
+    db: AsyncSession,
+    email: str,
+    ad_soyad: str = "",
+    firma: str = "",
+    sifre_hash: str | None = None,
+    amac: str = "giris",
+) -> str:
     """Yeni kod üretir; çok sık istenirse 429 atar. db.commit çağrı yerinde yapılır."""
     now = simdi()
     rec = await db.get(OtpKod, email)
@@ -28,10 +35,10 @@ async def kod_olustur(db: AsyncSession, email: str, ad_soyad: str, firma: str) -
     son = now + dt.timedelta(minutes=settings.otp_gecerlilik_dk)
     if rec:
         rec.kod, rec.son, rec.olusturma, rec.deneme = kod, son, now, 0
-        rec.ad_soyad, rec.firma = ad_soyad, firma
+        rec.ad_soyad, rec.firma, rec.sifre_hash, rec.amac = ad_soyad, firma, sifre_hash, amac
     else:
         db.add(OtpKod(email=email, kod=kod, son=son, olusturma=now, deneme=0,
-                      ad_soyad=ad_soyad, firma=firma))
+                      ad_soyad=ad_soyad, firma=firma, sifre_hash=sifre_hash, amac=amac))
     return kod
 
 

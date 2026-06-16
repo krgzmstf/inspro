@@ -28,6 +28,7 @@ export const MENU_KATALOG: MenuOge[] = [
   { href: "/panel/plan3d", label: "Plan → 3B Stüdyo", icon: "🧊" },
   { href: "/panel/mk-ai", label: "mk_ai (Risk)", icon: "🤖", img: "/mk-ai-logo.jpg" },
   { href: "/panel/bilgi", label: "Bilgi Tabanı", icon: "📚" },
+  { href: "/panel/profil", label: "Profilim & Güvenlik", icon: "🪪" },
   { href: "/panel/yonetim", label: "Yönetim", icon: "👤" },
 ];
 

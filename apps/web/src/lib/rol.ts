@@ -95,8 +95,8 @@ export function menuyeYetkili(rol: Rol, href: string, yetkiler?: string[] | null
   const path = href.split("?")[0];
   const liste = yetkiler && yetkiler.length > 0 ? yetkiler : ROL_MENU[rol];
   if (liste === "*") return true;
-  // Projeler (/panel) herkese açık (giriş ekranı)
-  if (path === "/panel") return true;
+  // Projeler (/panel) ve Profilim herkese açık
+  if (path === "/panel" || path === "/panel/profil") return true;
   return (liste as string[]).some((h) => path === h || path.startsWith(h + "/"));
 }
 

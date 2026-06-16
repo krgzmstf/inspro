@@ -3,43 +3,46 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { kodGonder, kodDogrula, ortakGiris } from "@/lib/supabase/auth";
+import { girisBasla, girisDogrula, ortakGiris } from "@/lib/supabase/auth";
 
 export default function GirisPage() {
   const router = useRouter();
-  const [asama, setAsama] = useState<"email" | "kod">("email");
+  const [asama, setAsama] = useState<"giris" | "dogrula">("giris");
+  const [yontem, setYontem] = useState<"email" | "totp">("email");
   const [email, setEmail] = useState("");
+  const [sifre, setSifre] = useState("");
   const [kod, setKod] = useState("");
   const [hata, setHata] = useState("");
   const [bilgi, setBilgi] = useState("");
   const [yukleniyor, setYukleniyor] = useState(false);
   const [yerelAcik, setYerelAcik] = useState(false);
-  const [sifre, setSifre] = useState("");
+  const [ortakSifre, setOrtakSifre] = useState("");
 
-  async function kodIste(e: React.FormEvent) {
-    e.preventDefault();
-    setHata(""); setBilgi(""); setYukleniyor(true);
-    const s = await kodGonder(email, false);
+  async function girisYap(e: React.FormEvent) {
+    e.preventDefault(); setHata(""); setBilgi(""); setYukleniyor(true);
+    const s = await girisBasla(email, sifre);
     setYukleniyor(false);
     if (!s.ok) { setHata(s.mesaj); return; }
-    setBilgi(`${email} adresine kod gönderildi.`);
-    setAsama("kod");
+    setYontem(s.asama ?? "email");
+    setBilgi(s.asama === "totp"
+      ? "Google Authenticator uygulamasındaki 6 haneli kodu girin."
+      : `${email} adresine doğrulama kodu gönderildi.`);
+    setAsama("dogrula");
   }
 
   async function dogrula(e: React.FormEvent) {
-    e.preventDefault();
-    setHata(""); setYukleniyor(true);
-    const s = await kodDogrula(email, kod);
+    e.preventDefault(); setHata(""); setYukleniyor(true);
+    const s = await girisDogrula(email, kod);
     setYukleniyor(false);
     if (!s.ok) { setHata(s.mesaj); return; }
     router.push("/panel");
   }
 
-  async function sifreIleGir(e: React.FormEvent) {
+  async function ortakGir(e: React.FormEvent) {
     e.preventDefault();
-    if (!sifre.trim()) return;
+    if (!ortakSifre.trim()) return;
     setHata(""); setYukleniyor(true);
-    const s = await ortakGiris(sifre);
+    const s = await ortakGiris(ortakSifre);
     setYukleniyor(false);
     if (!s.ok) { setHata(s.mesaj); return; }
     router.push("/panel");
@@ -53,36 +56,40 @@ export default function GirisPage() {
           <img src="/inspro-logo.png" alt="insPRO" className="mx-auto h-16 w-auto object-contain" />
         </Link>
         <h1 className="mt-4 text-center text-xl font-extrabold text-ink-900">Panele Giriş</h1>
-        <p className="mt-1 text-center text-xs text-slate-500">E-postana kod gönderelim (2 adımlı doğrulama)</p>
+        <p className="mt-1 text-center text-xs text-slate-500">E-posta + şifre, ardından 2. adım doğrulama</p>
 
-        {/* E-posta kodlu giriş — birincil */}
-        {asama === "email" ? (
-          <form onSubmit={kodIste} className="mt-6 space-y-3">
+        {hata && <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-600">{hata}</p>}
+
+        {asama === "giris" ? (
+          <form onSubmit={girisYap} className="mt-6 space-y-3">
             <label className="block text-sm font-semibold text-slate-700">E-posta
               <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoFocus
                 className="mt-1 w-full rounded-xl border-2 border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500" />
             </label>
-            {hata && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-600">{hata}</p>}
+            <label className="block text-sm font-semibold text-slate-700">Şifre
+              <input type="password" required value={sifre} onChange={(e) => setSifre(e.target.value)}
+                className="mt-1 w-full rounded-xl border-2 border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500" />
+            </label>
             <button type="submit" disabled={yukleniyor}
               className="w-full rounded-xl bg-brand-500 py-2.5 text-sm font-bold text-white transition hover:bg-brand-600 disabled:opacity-50">
-              {yukleniyor ? "Gönderiliyor…" : "Kod Gönder →"}
+              {yukleniyor ? "Kontrol ediliyor…" : "Devam →"}
             </button>
           </form>
         ) : (
           <form onSubmit={dogrula} className="mt-6 space-y-3">
             {bilgi && <p className="rounded-lg bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700">{bilgi}</p>}
-            <label className="block text-sm font-semibold text-slate-700">Doğrulama Kodu
+            <label className="block text-sm font-semibold text-slate-700">
+              {yontem === "totp" ? "🔐 Authenticator Kodu" : "📧 E-posta Kodu"}
               <input required inputMode="numeric" value={kod} onChange={(e) => setKod(e.target.value)}
                 placeholder="6 haneli kod" autoFocus
                 className="mt-1 w-full rounded-xl border-2 border-slate-200 px-3 py-2 text-center text-lg font-bold tracking-[0.3em] outline-none focus:border-brand-500" />
             </label>
-            {hata && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-600">{hata}</p>}
             <button type="submit" disabled={yukleniyor}
               className="w-full rounded-xl bg-brand-500 py-2.5 text-sm font-bold text-white transition hover:bg-brand-600 disabled:opacity-50">
               {yukleniyor ? "Doğrulanıyor…" : "Giriş Yap"}
             </button>
-            <button type="button" onClick={() => { setAsama("email"); setKod(""); setHata(""); }}
-              className="w-full text-center text-xs text-slate-400 hover:text-ink-800">← E-postayı değiştir / yeni kod</button>
+            <button type="button" onClick={() => { setAsama("giris"); setKod(""); setHata(""); }}
+              className="w-full text-center text-xs text-slate-400 hover:text-ink-800">← Geri</button>
           </form>
         )}
 
@@ -98,8 +105,8 @@ export default function GirisPage() {
             <span>{yerelAcik ? "▴" : "▾"}</span>
           </button>
           {yerelAcik && (
-            <form onSubmit={sifreIleGir} className="mt-2 flex gap-2">
-              <input type="password" value={sifre} onChange={(e) => setSifre(e.target.value)} placeholder="Ortak şifre"
+            <form onSubmit={ortakGir} className="mt-2 flex gap-2">
+              <input type="password" value={ortakSifre} onChange={(e) => setOrtakSifre(e.target.value)} placeholder="Ortak şifre"
                 className="flex-1 rounded-xl border-2 border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500" />
               <button type="submit" disabled={yukleniyor} className="rounded-xl border-2 border-ink-900 px-4 py-2 text-sm font-bold text-ink-900 hover:bg-ink-900 hover:text-white disabled:opacity-50">Gir</button>
             </form>

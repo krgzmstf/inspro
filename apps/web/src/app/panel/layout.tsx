@@ -28,6 +28,13 @@ export default function PanelLayout({
   useEffect(() => { yetkiGetir().then((y) => { setRol(y.rol); setYetkiler(y.yetkiler); }); }, [kullanici]);
   useEffect(() => { ayarGetir<MenuAyar | null>("menu", null).then(setMenuAyar); }, [kullanici]);
 
+  // Profili eksik kullanıcıyı profil tamamlama ekranına yönlendir
+  useEffect(() => {
+    if (kullanici && kullanici.profil_tamam === false && pathname !== "/panel/profil") {
+      router.replace("/panel/profil");
+    }
+  }, [kullanici, pathname, router]);
+
   // Yönetici menü ayarını (gizle/yeniden adlandır/sırala) uygula
   const navListesi = menuyuUygula(NAV, menuAyar);
 

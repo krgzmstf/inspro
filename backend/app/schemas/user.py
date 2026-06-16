@@ -44,6 +44,17 @@ def user_dto(u: User) -> dict:
         "firma": u.firma,
         "rol": u.rol,
         "yetkiler": u.yetkiler,
+        "ad": u.ad,
+        "soyad": u.soyad,
+        "telefon": u.telefon,
+        "dogum_tarihi": u.dogum_tarihi,
+        "meslek": u.meslek,
+        "sirket_mi": u.sirket_mi,
+        "sirket_adi": u.sirket_adi,
+        "vergi_dairesi": u.vergi_dairesi,
+        "vergi_no": u.vergi_no,
+        "profil_tamam": u.profil_tamam,
+        "iki_adim_yontem": u.iki_adim_yontem,
     }
 
 

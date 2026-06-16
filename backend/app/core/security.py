@@ -1,7 +1,14 @@
 """Kimlik doğrulama — JWT (access + refresh) + bağımlılıklar."""
 from __future__ import annotations
 
+import base64
 import datetime as dt
+import hashlib
+import hmac
+import secrets as _secrets
+import struct
+import time
+from urllib.parse import quote
 
 from fastapi import Depends, Header, HTTPException
 from jose import JWTError, jwt
@@ -69,3 +76,52 @@ async def get_admin(u: User = Depends(get_current_user)) -> User:
     if u.rol != "yonetici":
         raise HTTPException(403, "Bu işlem yalnız yönetici içindir.")
     return u
+
+
+# ── Parola (şifre) — PBKDF2-SHA256, stdlib ────────────────
+_PBKDF2_ITER = 200_000
+
+
+def sifre_hashle(sifre: str) -> str:
+    salt = _secrets.token_hex(16)
+    dk = hashlib.pbkdf2_hmac("sha256", sifre.encode(), bytes.fromhex(salt), _PBKDF2_ITER)
+    return f"pbkdf2_sha256${_PBKDF2_ITER}${salt}${dk.hex()}"
+
+
+def sifre_dogrula(sifre: str, kayit: str | None) -> bool:
+    if not kayit:
+        return False
+    try:
+        _algo, iters, salt, h = kayit.split("$")
+        dk = hashlib.pbkdf2_hmac("sha256", sifre.encode(), bytes.fromhex(salt), int(iters))
+        return _secrets.compare_digest(dk.hex(), h)
+    except Exception:
+        return False
+
+
+# ── TOTP (Google Authenticator) — RFC 6238, stdlib ────────
+def totp_secret_uret() -> str:
+    return base64.b32encode(_secrets.token_bytes(20)).decode().rstrip("=")
+
+
+def _totp_at(key: bytes, sayac: int) -> str:
+    h = hmac.new(key, struct.pack(">Q", sayac), hashlib.sha1).digest()
+    o = h[-1] & 0x0F
+    kod = (struct.unpack(">I", h[o : o + 4])[0] & 0x7FFFFFFF) % 1_000_000
+    return f"{kod:06d}"
+
+
+def totp_dogrula(secret: str, kod: str, pencere: int = 1) -> bool:
+    if not secret or not kod:
+        return False
+    try:
+        key = base64.b32decode(secret + "=" * (-len(secret) % 8), casefold=True)
+    except Exception:
+        return False
+    simdi = int(time.time() // 30)
+    kod = kod.strip()
+    return any(_secrets.compare_digest(_totp_at(key, simdi + d), kod) for d in range(-pencere, pencere + 1))
+
+
+def otpauth_uri(secret: str, email: str, issuer: str = "insPRO") -> str:
+    return f"otpauth://totp/{quote(issuer)}:{quote(email)}?secret={secret}&issuer={quote(issuer)}&digits=6&period=30"
