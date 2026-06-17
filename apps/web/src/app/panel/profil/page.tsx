@@ -29,6 +29,7 @@ export default function ProfilPage() {
   // TOTP kurulum
   const [totpSecret, setTotpSecret] = useState("");
   const [totpUri, setTotpUri] = useState("");
+  const [totpQr, setTotpQr] = useState("");
   const [totpKod, setTotpKod] = useState("");
 
   useEffect(() => {
@@ -62,7 +63,7 @@ export default function ProfilPage() {
 
   async function totpBaslat() {
     setHata(""); setMesaj("");
-    try { const r = await totpKur(); setTotpSecret(r.secret); setTotpUri(r.otpauth); }
+    try { const r = await totpKur(); setTotpSecret(r.secret); setTotpUri(r.otpauth); setTotpQr(r.qr); }
     catch (e) { setHata((e as Error).message); }
   }
   async function totpDogrula(e: React.FormEvent) {
@@ -70,7 +71,7 @@ export default function ProfilPage() {
     const s = await totpAktif(totpKod);
     if (!s.ok) { setHata(s.mesaj); return; }
     setMesaj("✓ Google Authenticator aktif edildi. Artık girişte uygulama kodunu kullanacaksınız.");
-    setTotpSecret(""); setTotpUri(""); setTotpKod("");
+    setTotpSecret(""); setTotpUri(""); setTotpQr(""); setTotpKod("");
     setU(await aktifKullanici());
   }
   async function totpDevreDisi() {
@@ -161,15 +162,27 @@ export default function ProfilPage() {
           <form onSubmit={totpDogrula} className="space-y-3">
             <ol className="list-decimal space-y-1 pl-5 text-sm text-slate-600">
               <li>Telefonunda <b>Google Authenticator</b> uygulamasını aç.</li>
-              <li>&quot;+&quot; → <b>Kurulum anahtarı gir</b> seç.</li>
-              <li>Hesap adı: <b>insPRO ({u.email})</b>, anahtar olarak aşağıdaki kodu yapıştır:</li>
+              <li>&quot;+&quot; → <b>QR kodunu tara</b> seç ve aşağıdaki kodu tarat.</li>
+              <li>Uygulamada beliren <b>6 haneli kodu</b> aşağıya gir.</li>
             </ol>
-            <div className="rounded-xl border-2 border-dashed border-brand-300 bg-brand-50 p-3 text-center">
-              <code className="select-all break-all text-base font-bold tracking-wider text-brand-700">{totpSecret}</code>
-            </div>
-            <details className="text-[11px] text-slate-400">
-              <summary className="cursor-pointer">Gelişmiş: otpauth bağlantısı</summary>
-              <code className="break-all">{totpUri}</code>
+            {totpQr && (
+              <div className="flex justify-center">
+                <div className="rounded-xl border-2 border-brand-200 bg-white p-3">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={totpQr.startsWith("data:") ? totpQr : `data:image/svg+xml;utf8,${encodeURIComponent(totpQr)}`}
+                    alt="Google Authenticator QR kodu"
+                    className="h-44 w-44"
+                  />
+                </div>
+              </div>
+            )}
+            <details className="text-[11px] text-slate-500">
+              <summary className="cursor-pointer font-semibold">QR taranmıyor mu? Anahtarı elle gir</summary>
+              <div className="mt-2 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-2 text-center">
+                <code className="select-all break-all text-sm font-bold tracking-wider text-brand-700">{totpSecret}</code>
+              </div>
+              <p className="mt-1">Hesap: insPRO ({u.email}) · tür: zamana dayalı (TOTP)</p>
             </details>
             <label className="block text-sm font-semibold text-slate-700">Uygulamadaki 6 haneli kod
               <input required inputMode="numeric" value={totpKod} onChange={(e) => setTotpKod(e.target.value)} placeholder="000000"
@@ -177,7 +190,7 @@ export default function ProfilPage() {
             </label>
             <div className="flex gap-2">
               <button type="submit" className="rounded-xl bg-brand-500 px-5 py-2 text-sm font-bold text-white hover:bg-brand-600">Doğrula ve aktif et</button>
-              <button type="button" onClick={() => { setTotpSecret(""); setTotpUri(""); setTotpKod(""); }} className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-bold text-slate-500 hover:bg-slate-50">Vazgeç</button>
+              <button type="button" onClick={() => { setTotpSecret(""); setTotpUri(""); setTotpQr(""); setTotpKod(""); }} className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-bold text-slate-500 hover:bg-slate-50">Vazgeç</button>
             </div>
           </form>
         )}

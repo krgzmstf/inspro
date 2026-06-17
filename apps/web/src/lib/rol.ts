@@ -12,7 +12,8 @@
    göre; boşsa rolün varsayılan menüsü geçerli.
    ────────────────────────────────────────────────────────── */
 
-import { apiGet, oturumVar } from "./api";
+import { supabase } from "./supabase/client";
+import { aktifKullaniciId } from "./sb";
 
 export type Rol = "yonetici" | "sefi" | "taseron" | "muhasebeci";
 
@@ -70,13 +71,15 @@ export function yerelYetki(): Yetki {
   return { rol, yetkiler };
 }
 
-/** Aktif kullanıcının rol + özel izinlerini getirir (backend'den). */
+/** Aktif kullanıcının rol + özel izinlerini getirir (profiles tablosundan). */
 export async function yetkiGetir(): Promise<Yetki> {
   try {
-    if (oturumVar()) {
-      const u = await apiGet<{ rol?: string; yetkiler?: string[] | null }>("/auth/ben");
-      const rol = rolNormalize(u.rol);
-      const yetkiler = Array.isArray(u.yetkiler) ? u.yetkiler : null;
+    const c = supabase();
+    const uid = await aktifKullaniciId();
+    if (c && uid) {
+      const { data: p } = await c.from("profiles").select("rol, yetkiler").eq("id", uid).maybeSingle();
+      const rol = rolNormalize(p?.rol);
+      const yetkiler = Array.isArray(p?.yetkiler) ? p.yetkiler : null;
       localStorage.setItem(KEY, rol);
       localStorage.setItem(KEY_Y, JSON.stringify(yetkiler));
       return { rol, yetkiler };

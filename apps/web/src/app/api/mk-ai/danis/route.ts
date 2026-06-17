@@ -7,6 +7,7 @@ import {
   type SaglayiciId,
 } from "@/lib/aiSaglayici";
 import { yonetmelikAra, type YonetmelikIsabet, type YonetmelikKayit } from "@/lib/yonetmelik";
+import { hesapOzeti } from "@/lib/mkAiSupabase";
 
 /* ──────────────────────────────────────────────────────────
    mk_ai — Agentic danışma (araç çağıran sohbet + RAG)
@@ -49,8 +50,14 @@ const TEMEL_SISTEM =
   "(2) Aracın sonucunu kullandığında cevabının sonunda 'Kaynak: <dayanak>' biçiminde dayanağı belirt ve mevzuat " +
   "değişebileceği için resmî güncel metinle (mevzuat.gov.tr / ÇŞB) teyidi öner. " +
   "(3) Araç sonuç döndürmezse bunu dürüstçe söyle, uydurma. " +
-  "(4) Proje verisiyle ilgili sorularda sana verilen proje bağlamındaki rakamları kullan; veri yoksa bunu söyle. " +
-  "(5) Türkçe, kısa, net ve uygulanabilir yaz.";
+  "(4) insPRO verileri Supabase bulut veritabanında saklanır. Kullanıcının HESABININ GENELİYLE ilgili (kaç projem var, " +
+  "toplam gelir/gider/bakiye, bekleyen/geciken ödemeler, personel sayısı/isimleri, hangi modüllerde ne kadar veri, " +
+  "projelerimin listesi vb.) sorularda `hesap_ozeti` aracını çağırıp gerçek güncel rakamları kullan; tahmin etme. " +
+  "Kullanıcı giriş yapmamışsa araç bunu bildirir; o zaman giriş yapmasını öner. Tek seçili projeye özel bağlam ayrıca " +
+  "aşağıda verilebilir. " +
+  "(5) Biçim: Türkçe, sıcak ama profesyonel bir ton. Kısa tut; önemli sayıları **kalın** yaz, birden çok madde varsa " +
+  "kısa madde imleri kullan. Para birimini ₺ ile belirt. Cevabın sonunda mümkünse 1 somut, uygulanabilir sonraki adım öner. " +
+  "(6) Geciken ödeme, bütçe aşımı veya yüksek risk görürsen kullanıcı sormasa bile kibarca uyar.";
 
 export async function POST(req: Request) {
   let body: Govde;
@@ -85,9 +92,23 @@ export async function POST(req: Request) {
     return Response.json({ demoMode: true, saglayici: null, text: metin, kaynaklar: kaynakDtoListesi(isabet) });
   }
 
+  // Kullanıcı oturum token'ı (hesap_ozeti aracı için — RLS korumalı kendi verisi)
+  const token = (req.headers.get("authorization") ?? "").replace(/^Bearer\s+/i, "");
+
   // ── Araç: yönetmelik arama (RAG). Getirilen maddeleri citation için topla. ──
   const toplanan = new Map<string, YonetmelikIsabet>();
   const tools = {
+    hesap_ozeti: tool({
+      description:
+        "Kullanıcının insPRO hesabının Supabase'deki GÜNCEL verisini getirir: proje sayısı ve listesi (ad/şehir/tip/bütçe), " +
+        "muhasebe toplamları (gelir, gider, bakiye), ve modüllerdeki kayıt sayıları. Hesap geneli/çapraz-proje veya " +
+        "toplam finans soruları için kullan.",
+      inputSchema: z.object({}),
+      execute: async () => {
+        if (!token) return { baglandi: false, not: "Oturum bulunamadı; kullanıcı giriş yapmamış olabilir." };
+        return await hesapOzeti(token);
+      },
+    }),
     yonetmelik_ara: tool({
       description:
         "Türk inşaat mevzuatı/yönetmelik/standart bilgi tabanında arama yapar. İmar (çekme mesafesi, kat yüksekliği, " +

@@ -1,18 +1,14 @@
 /* ──────────────────────────────────────────────────────────
-   insPRO — Genel modül bulut senkronu (JSONB blob)
+   insPRO — Genel modül bulut senkronu (self-hosted Supabase)
 
    metraj, iş süreçleri, saha, personel, puantaj, teklif, hakediş,
    aşama kalemleri, kasa/banka, firma, bilgi tabanı — her modülün
    tüm localStorage dizisi tek satırda (modul_veri tablosu) saklanır.
 
-   • modulYaz(modul): o modülün güncel localStorage verisini buluta yazar.
-   • tumModulleriSenkronla(): açılışta buluttan çeker (bulut otorite);
-     bulutta yoksa yereli yukarı taşır (ilk migrasyon).
-
    Supabase oturumu yoksa no-op → uygulama localStorage ile çalışır.
    ────────────────────────────────────────────────────────── */
 
-import { apiGet, apiPut, oturumVar } from "./api";
+import { blobOku, blobYaz, aktifKullaniciId } from "./sb";
 
 /** modul adı → localStorage anahtarı */
 const MODULLER: Record<string, string> = {
@@ -41,29 +37,22 @@ function oku(key: string): unknown[] {
 
 /** Bir modülün güncel verisini buluta yaz. Oturum yoksa sessiz geçer. */
 export async function modulYaz(modul: string): Promise<void> {
-  try {
-    if (!oturumVar()) return;
-    const key = MODULLER[modul];
-    if (!key) return;
-    await apiPut("/modul/" + modul, { veri: oku(key) });
-  } catch { /* sessiz */ }
+  const key = MODULLER[modul];
+  if (!key) return;
+  await blobYaz(modul, oku(key));
 }
 
-/** Açılış senkronu: bulut otorite; bulutta olmayan/boş olanlarda yereli yukarı taşır.
-   localStorage'ı günceller → true döner (senkron yapıldıysa). */
+/** Açılış senkronu: bulut otorite; bulutta olmayan/boş olanlarda yereli yukarı taşır. */
 export async function tumModulleriSenkronla(): Promise<boolean> {
-  if (!oturumVar()) return false;
+  if ((await aktifKullaniciId()) === null) return false;
   try {
     for (const [modul, key] of Object.entries(MODULLER)) {
-      const r = await apiGet<{ veri: unknown[] }>("/modul/" + modul);
-      const bulut = Array.isArray(r.veri) ? r.veri : [];
+      const bulut = (await blobOku(modul)) ?? [];
       const yerel = oku(key);
       if (bulut.length === 0 && yerel.length > 0) {
-        // Bulut boş ama yerel dolu → yereli yukarı taşı
-        await modulYaz(modul);
+        await blobYaz(modul, yerel); // yereli yukarı taşı
       } else {
-        // Bulut otorite
-        localStorage.setItem(key, JSON.stringify(bulut));
+        localStorage.setItem(key, JSON.stringify(bulut)); // bulut otorite
       }
     }
     return true;

@@ -17,6 +17,7 @@ import {
   mkAiSorgu, mkAiTespitler, uygulaTespit,
 } from "@/lib/mkAiYerel";
 import { pollinationsUrl } from "@/lib/gorsel";
+import { supabase } from "@/lib/supabase/client";
 
 interface AiYorum { yorum: string; oneriler: string[]; demoMode: boolean; saglayici: string | null; guven: number | null }
 interface Kaynak { id: string; baslik: string; kaynak: string }
@@ -172,10 +173,14 @@ export default function MkAiPage() {
       const baglam = [dosya, riskOzet && `## RİSK ANALİZİ (kural motoru)\n${riskOzet}`]
         .filter(Boolean)
         .join("\n\n") || undefined;
-      // Agentic uç: mk_ai gerekirse yönetmelik aracını çağırır, kaynak getirir.
+      // Oturum token'ı → mk_ai hesap_ozeti aracıyla Supabase'den canlı veri çekebilsin
+      const c = supabase();
+      const { data: oturum } = c ? await c.auth.getSession() : { data: { session: null } };
+      const tok = oturum.session?.access_token;
+      // Agentic uç: mk_ai gerekirse yönetmelik + hesap_ozeti araçlarını çağırır.
       const res = await fetch("/api/mk-ai/danis", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...(tok ? { Authorization: "Bearer " + tok } : {}) },
         body: JSON.stringify({ messages: yeni, baglam, ekBilgi: loadBilgiler() }),
       });
       const data = await res.json();

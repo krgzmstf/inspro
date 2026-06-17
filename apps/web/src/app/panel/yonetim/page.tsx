@@ -4,8 +4,17 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { type Rol, ROL_ETIKET, ROL_MENU, MENU_SECENEKLERI, rolGetir } from "@/lib/rol";
 import { supabaseVar } from "@/lib/supabase/auth";
-import { apiGet, apiPost, apiPatch, apiDelete, API_URL } from "@/lib/api";
+import {
+  ozetGetir, kullanicilariGetir, kullaniciGuncelle, kullaniciOlustur,
+  kullaniciAktif, kullaniciSil as kullaniciSilApi, veriGetir, veriSilApi,
+} from "@/lib/yonetimApi";
 import { ayarGetir, ayarYaz, MENU_KATALOG, type MenuAyar, type SiteAyar } from "@/lib/ayar";
+import { Spinner, Donut, AylikFinansGrafik, YatayBarlar, type DilimVeri } from "./grafikler";
+
+const ROL_RENK: Record<Rol, string> = { yonetici: "#2563eb", sefi: "#f59e0b", taseron: "#10b981", muhasebeci: "#8b5cf6" };
+const TIP_RENK: Record<string, string> = { konut: "#3b82f6", villa: "#f59e0b", ticari: "#10b981", diger: "#94a3b8" };
+const TIP_ETIKET: Record<string, string> = { konut: "Konut", villa: "Villa", ticari: "Ticari", diger: "Diğer" };
+const SAYFA_BOYUT = 10;
 
 interface Kullanici {
   id: string; email: string; ad_soyad: string; firma: string;
@@ -18,6 +27,8 @@ interface Ozet {
   sayilar: { kullanici: number; proje: number; muhasebe: number; modul: number; dosya: number };
   dosya_boyut_bayt: number;
   rol_dagilimi: Record<string, number>;
+  proje_tip: Record<string, number>;
+  aylik_finans: { ay: string; gelir: number; gider: number }[];
 }
 
 interface VeriSatir { id: string; owner_id: string; baslik: string; ek?: string; created_at?: string | null }
@@ -74,6 +85,9 @@ export default function YonetimPage() {
   const [veriTip, setVeriTip] = useState("projeler");
   const [veriler, setVeriler] = useState<VeriSatir[]>([]);
   const [veriYukleniyor, setVeriYukleniyor] = useState(false);
+  const [arama, setArama] = useState("");
+  const [siralama, setSiralama] = useState<{ alan: "baslik" | "ek"; yon: 1 | -1 }>({ alan: "baslik", yon: 1 });
+  const [sayfa, setSayfa] = useState(1);
 
   // Menü
   const [menuAyar, setMenuAyar] = useState<MenuAyar>({ gizli: [], etiket: {}, sira: [] });
@@ -83,9 +97,8 @@ export default function YonetimPage() {
 
   useEffect(() => {
     rolGetir().then((r) => { setRolum(r); setHazir(true); });
-    fetch(API_URL + "/health").then((r) => setSaglik(r.ok)).catch(() => setSaglik(false));
     yukleKullanicilar();
-    apiGet<Ozet>("/yonetim/ozet").then(setOzet).catch(() => {});
+    ozetGetir().then((o) => { setOzet(o); setSaglik(true); }).catch(() => setSaglik(false));
     ayarGetir<MenuAyar>("menu", { gizli: [], etiket: {}, sira: [] }).then((m) =>
       setMenuAyar({ gizli: m.gizli ?? [], etiket: m.etiket ?? {}, sira: m.sira ?? [] }));
     ayarGetir<SiteAyar>("site", {}).then(setSite);
@@ -95,12 +108,39 @@ export default function YonetimPage() {
     if (sekme === "veriler") yukleVeri(veriTip);
   }, [sekme, veriTip]);
 
+  // Veri tipi/arama değişince ilk sayfaya dön
+  useEffect(() => { setSayfa(1); }, [veriTip, arama]);
+
+  // Toast otomatik kaybolma
+  useEffect(() => {
+    if (!mesaj && !hata) return;
+    const t = setTimeout(() => { setMesaj(""); setHata(""); }, 5000);
+    return () => clearTimeout(t);
+  }, [mesaj, hata]);
+
+  // Aranan + sıralı + sayfalı veri
+  const filtreliVeri = veriler
+    .filter((r) => {
+      const q = arama.trim().toLocaleLowerCase("tr");
+      return !q || r.baslik.toLocaleLowerCase("tr").includes(q) || (r.ek ?? "").toLocaleLowerCase("tr").includes(q);
+    })
+    .sort((a, b) => {
+      const va = (a[siralama.alan] ?? "").toString();
+      const vb = (b[siralama.alan] ?? "").toString();
+      return va.localeCompare(vb, "tr") * siralama.yon;
+    });
+  const sayfaSayisi = Math.max(1, Math.ceil(filtreliVeri.length / SAYFA_BOYUT));
+  const sayfaliVeri = filtreliVeri.slice((sayfa - 1) * SAYFA_BOYUT, sayfa * SAYFA_BOYUT);
+  function siralamaDegis(alan: "baslik" | "ek") {
+    setSiralama((s) => s.alan === alan ? { alan, yon: (s.yon === 1 ? -1 : 1) } : { alan, yon: 1 });
+  }
+
   // ── Kullanıcılar ──
   async function yukleKullanicilar() {
     setYukleniyor(true); setHata("");
     try {
-      const data = await apiGet<{ users: Kullanici[] }>("/yonetim/kullanicilar");
-      setKullanicilar(data.users ?? []);
+      const data = await kullanicilariGetir();
+      setKullanicilar((data.users ?? []) as Kullanici[]);
     } catch (e) { setHata((e as Error).message); }
     finally { setYukleniyor(false); }
   }
@@ -109,7 +149,7 @@ export default function YonetimPage() {
     setMesaj(""); setHata("");
     setKullanicilar((list) => list.map((k) => (k.id === id ? { ...k, rol, ...(yetkiler !== undefined ? { yetkiler } : {}) } : k)));
     try {
-      await apiPost("/yonetim/kullanicilar", { id, rol, ...(yetkiler !== undefined ? { yetkiler } : {}) });
+      await kullaniciGuncelle(id, rol, yetkiler);
       setMesaj("✓ Kaydedildi.");
     } catch (e) { setHata((e as Error).message); yukleKullanicilar(); }
   }
@@ -118,21 +158,22 @@ export default function YonetimPage() {
     setMesaj(""); setHata("");
     if (!yeniK.email.includes("@")) { setHata("Geçerli bir e-posta girin."); return; }
     try {
-      await apiPost("/yonetim/kullanici-olustur", yeniK);
+      const r = await kullaniciOlustur(yeniK);
+      const mail = yeniK.email;
       setYeniK({ email: "", ad_soyad: "", firma: "", rol: "sefi" });
-      setMesaj("✓ Kullanıcı eklendi. (Kişi e-posta + kod ile giriş yapabilir.)");
+      setMesaj(`✓ ${mail} eklendi. Geçici şifre: ${r.gecici_sifre} — kişiye iletin, ilk girişte değiştirebilir.`);
       yukleKullanicilar();
     } catch (e) { setHata((e as Error).message); }
   }
 
   async function aktifDegistir(k: Kullanici) {
-    try { await apiPatch(`/yonetim/kullanicilar/${k.id}`, { aktif: !(k.aktif ?? true) }); yukleKullanicilar(); }
+    try { await kullaniciAktif(k.id, !(k.aktif ?? true)); yukleKullanicilar(); }
     catch (e) { setHata((e as Error).message); }
   }
 
   async function kullaniciSil(k: Kullanici) {
     if (!confirm(`${k.email} silinsin mi? Bu kişinin tüm verileri de silinir.`)) return;
-    try { await apiDelete(`/yonetim/kullanicilar/${k.id}`); setMesaj("✓ Silindi."); yukleKullanicilar(); }
+    try { await kullaniciSilApi(k.id); setMesaj("✓ Silindi."); yukleKullanicilar(); }
     catch (e) { setHata((e as Error).message); }
   }
 
@@ -151,14 +192,14 @@ export default function YonetimPage() {
   async function yukleVeri(tip: string) {
     setVeriYukleniyor(true); setHata("");
     try {
-      const d = await apiGet<{ satirlar: VeriSatir[] }>(`/yonetim/veri/${tip}`);
-      setVeriler(d.satirlar ?? []);
+      const d = await veriGetir(tip);
+      setVeriler((d.satirlar ?? []) as VeriSatir[]);
     } catch (e) { setHata((e as Error).message); setVeriler([]); }
     finally { setVeriYukleniyor(false); }
   }
   async function veriSil(tip: string, id: string) {
     if (!confirm("Bu kayıt kalıcı olarak silinsin mi?")) return;
-    try { await apiDelete(`/yonetim/veri/${tip}/${encodeURIComponent(id)}`); yukleVeri(tip); setMesaj("✓ Silindi."); }
+    try { await veriSilApi(tip, id); yukleVeri(tip); setMesaj("✓ Silindi."); }
     catch (e) { setHata((e as Error).message); }
   }
 
@@ -232,8 +273,24 @@ export default function YonetimPage() {
         ))}
       </div>
 
-      {mesaj && <p className="mt-4 rounded-lg bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700">{mesaj}</p>}
-      {hata && <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-600">{hata}</p>}
+      {/* Toast bildirimleri (sağ altta, otomatik kaybolur) */}
+      {(mesaj || hata) && (
+        <div className="fixed bottom-5 right-5 z-50 max-w-sm animate-[toastIn_0.25s_ease-out]">
+          {mesaj && (
+            <div className="mb-2 flex items-start gap-2 rounded-xl border border-emerald-200 bg-white px-4 py-3 text-sm font-semibold text-emerald-700 shadow-lg">
+              <span>✓</span><span className="flex-1">{mesaj}</span>
+              <button onClick={() => setMesaj("")} className="text-emerald-400 hover:text-emerald-700">✕</button>
+            </div>
+          )}
+          {hata && (
+            <div className="flex items-start gap-2 rounded-xl border border-red-200 bg-white px-4 py-3 text-sm font-semibold text-red-600 shadow-lg">
+              <span>⚠</span><span className="flex-1">{hata}</span>
+              <button onClick={() => setHata("")} className="text-red-400 hover:text-red-700">✕</button>
+            </div>
+          )}
+        </div>
+      )}
+      <style>{`@keyframes toastIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}`}</style>
 
       {/* ── GENEL ── */}
       {sekme === "genel" && (
@@ -255,28 +312,18 @@ export default function YonetimPage() {
                   </div>
                 ))}
               </div>
-              <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                <div className="text-[11px] font-bold text-slate-500">ROL DAĞILIMI</div>
-                <div className="mt-2 space-y-1.5">
-                  {ROLLER.map((r) => {
-                    const adet = ozet.rol_dagilimi[r] ?? 0;
-                    const toplam = Math.max(1, ozet.sayilar.kullanici);
-                    const yuzde = Math.round((adet / toplam) * 100);
-                    return (
-                      <div key={r} className="flex items-center gap-2">
-                        <span className="w-28 shrink-0 text-xs font-semibold text-slate-600">{ROL_ETIKET[r]}</span>
-                        <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-slate-100">
-                          <div className="h-full rounded-full bg-brand-500 transition-all" style={{ width: `${yuzde}%` }} />
-                        </div>
-                        <span className="w-8 shrink-0 text-right text-xs font-bold text-slate-700">{adet}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-                <p className="mt-3 text-[11px] text-slate-400">Sürüm v{ozet.surum} · ortam {ozet.ortam}</p>
+              <div className="mt-4 grid gap-3 lg:grid-cols-2">
+                <Donut baslik="ROL DAĞILIMI"
+                  veri={ROLLER.map((r): DilimVeri => ({ etiket: ROL_ETIKET[r], deger: ozet.rol_dagilimi[r] ?? 0, renk: ROL_RENK[r] }))} />
+                <YatayBarlar baslik="PROJE TİPİ DAĞILIMI"
+                  veri={Object.keys(TIP_ETIKET).map((t): DilimVeri => ({ etiket: TIP_ETIKET[t], deger: ozet.proje_tip?.[t] ?? 0, renk: TIP_RENK[t] }))} />
               </div>
+              <div className="mt-3">
+                <AylikFinansGrafik veri={ozet.aylik_finans ?? []} />
+              </div>
+              <p className="mt-3 text-[11px] text-slate-400">Sürüm v{ozet.surum} · ortam {ozet.ortam}</p>
             </>
-          ) : <p className="text-sm text-slate-500">Özet yükleniyor…</p>}
+          ) : <Spinner etiket="Özet yükleniyor…" />}
         </div>
       )}
 
@@ -308,7 +355,7 @@ export default function YonetimPage() {
           </div>
 
           {yukleniyor ? (
-            <p className="mt-6 text-sm text-slate-500">Yükleniyor…</p>
+            <div className="mt-6"><Spinner /></div>
           ) : kullanicilar.length === 0 ? (
             <p className="mt-6 rounded-2xl border-2 border-dashed border-slate-300 bg-white/60 p-8 text-center text-sm text-slate-500">Henüz kullanıcı yok.</p>
           ) : (
@@ -379,29 +426,62 @@ export default function YonetimPage() {
               </button>
             ))}
           </div>
-          {veriYukleniyor ? (
-            <p className="mt-4 text-sm text-slate-500">Yükleniyor…</p>
-          ) : veriler.length === 0 ? (
-            <p className="mt-4 rounded-2xl border-2 border-dashed border-slate-300 bg-white/60 p-8 text-center text-sm text-slate-500">Kayıt yok.</p>
-          ) : (
-            <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-              <table className="w-full text-sm">
-                <thead className="bg-slate-50 text-left text-[11px] uppercase text-slate-400">
-                  <tr><th className="px-4 py-2">Başlık</th><th className="px-4 py-2">Detay</th><th className="px-4 py-2 text-right">İşlem</th></tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {veriler.map((r) => (
-                    <tr key={r.id} className="hover:bg-slate-50">
-                      <td className="px-4 py-2 font-semibold text-slate-800">{r.baslik}</td>
-                      <td className="px-4 py-2 text-xs text-slate-500">{r.ek || ""}{r.created_at ? ` · ${r.created_at.slice(0, 10)}` : ""}</td>
-                      <td className="px-4 py-2 text-right">
-                        <button onClick={() => veriSil(veriTip, r.id)} className="rounded-lg border border-red-200 px-2.5 py-1 text-xs font-bold text-red-600 hover:bg-red-50">Sil</button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          {/* Arama */}
+          <div className="mt-3 flex items-center gap-2">
+            <div className="relative flex-1">
+              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">🔍</span>
+              <input value={arama} onChange={(e) => setArama(e.target.value)} placeholder="Ara (başlık veya detay)…"
+                className="w-full rounded-lg border-2 border-slate-200 py-2 pl-9 pr-3 text-sm outline-none focus:border-brand-500" />
             </div>
+            <span className="shrink-0 text-xs font-semibold text-slate-400">{filtreliVeri.length} kayıt</span>
+          </div>
+
+          {veriYukleniyor ? (
+            <div className="mt-4"><Spinner /></div>
+          ) : filtreliVeri.length === 0 ? (
+            <p className="mt-4 rounded-2xl border-2 border-dashed border-slate-300 bg-white/60 p-8 text-center text-sm text-slate-500">
+              {arama ? "Aramayla eşleşen kayıt yok." : "Kayıt yok."}
+            </p>
+          ) : (
+            <>
+              <div className="mt-3 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                <table className="w-full text-sm">
+                  <thead className="bg-slate-50 text-left text-[11px] uppercase text-slate-400">
+                    <tr>
+                      <th className="cursor-pointer select-none px-4 py-2 hover:text-slate-700" onClick={() => siralamaDegis("baslik")}>
+                        Başlık {siralama.alan === "baslik" ? (siralama.yon === 1 ? "▲" : "▼") : ""}
+                      </th>
+                      <th className="cursor-pointer select-none px-4 py-2 hover:text-slate-700" onClick={() => siralamaDegis("ek")}>
+                        Detay {siralama.alan === "ek" ? (siralama.yon === 1 ? "▲" : "▼") : ""}
+                      </th>
+                      <th className="px-4 py-2 text-right">İşlem</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {sayfaliVeri.map((r) => (
+                      <tr key={r.id} className="hover:bg-slate-50">
+                        <td className="px-4 py-2 font-semibold text-slate-800">{r.baslik}</td>
+                        <td className="px-4 py-2 text-xs text-slate-500">{r.ek || ""}{r.created_at ? ` · ${r.created_at.slice(0, 10)}` : ""}</td>
+                        <td className="px-4 py-2 text-right">
+                          <button onClick={() => veriSil(veriTip, r.id)} className="rounded-lg border border-red-200 px-2.5 py-1 text-xs font-bold text-red-600 hover:bg-red-50">Sil</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Sayfalama */}
+              {sayfaSayisi > 1 && (
+                <div className="mt-3 flex items-center justify-center gap-2 text-sm">
+                  <button disabled={sayfa <= 1} onClick={() => setSayfa((s) => s - 1)}
+                    className="rounded-lg border border-slate-200 px-3 py-1 font-bold text-slate-600 disabled:opacity-40 hover:bg-slate-50">← Önceki</button>
+                  <span className="text-xs font-semibold text-slate-500">{sayfa} / {sayfaSayisi}</span>
+                  <button disabled={sayfa >= sayfaSayisi} onClick={() => setSayfa((s) => s + 1)}
+                    className="rounded-lg border border-slate-200 px-3 py-1 font-bold text-slate-600 disabled:opacity-40 hover:bg-slate-50">Sonraki →</button>
+                </div>
+              )}
+            </>
           )}
           <p className="mt-3 text-[11px] text-slate-400">💡 Buradaki kayıtlar tüm kullanıcılara aittir. Silme geri alınamaz.</p>
         </div>

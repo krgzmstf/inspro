@@ -5,7 +5,8 @@
    Yönetici panelden değiştirir; tüm kullanıcılar okur.
    ────────────────────────────────────────────────────────── */
 
-import { apiGet, apiPut, oturumVar } from "./api";
+import { supabase } from "./supabase/client";
+import { aktifKullaniciId } from "./sb";
 
 /** Panel menü kataloğu — tek kaynak (layout + yönetim paneli kullanır). */
 export interface MenuOge { href: string; label: string; icon: string; img?: string }
@@ -50,16 +51,24 @@ export interface SiteAyar {
 
 export async function ayarGetir<T>(anahtar: string, varsayilan: T): Promise<T> {
   try {
-    if (!oturumVar()) return varsayilan;
-    const r = await apiGet<{ deger: T | null }>("/ayar/" + anahtar);
-    return (r.deger ?? varsayilan) as T;
+    const c = supabase();
+    if (!c || (await aktifKullaniciId()) === null) return varsayilan;
+    const { data, error } = await c.from("ayarlar").select("deger").eq("anahtar", anahtar).maybeSingle();
+    if (error) throw error;
+    return ((data?.deger ?? varsayilan) as T);
   } catch {
     return varsayilan;
   }
 }
 
 export async function ayarYaz(anahtar: string, deger: unknown): Promise<void> {
-  await apiPut("/ayar/" + anahtar, { deger });
+  const c = supabase();
+  if (!c) throw new Error("Supabase yapılandırılmadı.");
+  const { error } = await c.from("ayarlar").upsert(
+    { anahtar, deger, updated_at: new Date().toISOString() },
+    { onConflict: "anahtar" },
+  );
+  if (error) throw error;
 }
 
 /** Menü öğesi (href + label) listesine menü ayarını uygular. */

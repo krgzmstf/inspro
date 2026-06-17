@@ -40,6 +40,8 @@ export default function KayitPage() {
     const s = await kayitBasla(email, sifre);
     setYukleniyor(false);
     if (!s.ok) { setHata(s.mesaj); return; }
+    // Autoconfirm açıksa (yerel) oturum hemen açıldı → kod adımını atla
+    if (s.dogrulandi) { setAsama("profil"); return; }
     setBilgi(`${email} adresine kod gönderildi.`);
     setAsama("kod");
   }

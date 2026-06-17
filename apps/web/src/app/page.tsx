@@ -1,5 +1,4 @@
 import Link from "next/link";
-import MkAiWidget from "./MkAiWidget";
 import { YONETMELIK } from "@/lib/yonetmelik";
 
 /* Ana sayfada öne çıkarılacak mevzuat başlıkları */
@@ -729,8 +728,6 @@ export default function Home() {
         </div>
       </footer>
 
-      {/* Yüzen mk_ai sohbet balonu */}
-      <MkAiWidget />
     </main>
   );
 }

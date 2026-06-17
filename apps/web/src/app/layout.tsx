@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import ThemeVars from "@/components/ThemeVars";
+import MkAiWidget from "./MkAiWidget";
 import "./globals.css";
 
 const inter = Inter({
@@ -42,6 +43,8 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-white text-slate-800">
         <ThemeVars />
         {children}
+        {/* Tüm sayfalarda sağ altta yüzen mk_ai asistanı */}
+        <MkAiWidget />
       </body>
     </html>
   );

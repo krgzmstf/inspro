@@ -23,10 +23,10 @@ export default function GirisPage() {
     const s = await girisBasla(email, sifre);
     setYukleniyor(false);
     if (!s.ok) { setHata(s.mesaj); return; }
-    setYontem(s.asama ?? "email");
-    setBilgi(s.asama === "totp"
-      ? "Google Authenticator uygulamasındaki 6 haneli kodu girin."
-      : `${email} adresine doğrulama kodu gönderildi.`);
+    // 2FA yoksa giriş tamam → panele
+    if (s.tamam) { router.push("/panel"); return; }
+    setYontem(s.asama ?? "totp");
+    setBilgi("Google Authenticator uygulamasındaki 6 haneli kodu girin.");
     setAsama("dogrula");
   }
 

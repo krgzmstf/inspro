@@ -1,34 +1,32 @@
 /* ──────────────────────────────────────────────────────────
-   insPRO — Muhasebe bulut senkronu (kendi FastAPI backend'imiz)
+   insPRO — Muhasebe bulut senkronu (self-hosted Supabase)
+   modul_veri/'accounting' satırında JSONB dizi olarak tutulur.
    ────────────────────────────────────────────────────────── */
 
-import { apiGet, apiPost, apiDelete, oturumVar } from "./api";
+import { blobOku, blobYaz } from "./sb";
 import type { MuhasebeKayit } from "./muhasebe";
 
+const MODUL = "accounting";
+
 export async function muhasebeBulutaYaz(k: MuhasebeKayit): Promise<void> {
-  try {
-    if (!oturumVar()) return;
-    await apiPost("/muhasebe", k);
-  } catch { /* sessiz */ }
+  const arr = await blobOku<MuhasebeKayit>(MODUL);
+  if (arr === null) return;
+  const yeni = [k, ...arr.filter((x) => x.id !== k.id)];
+  await blobYaz(MODUL, yeni);
 }
 
 export async function muhasebeBuluttanSil(id: string): Promise<void> {
-  try {
-    if (!oturumVar()) return;
-    await apiDelete("/muhasebe/" + id);
-  } catch { /* sessiz */ }
+  const arr = await blobOku<MuhasebeKayit>(MODUL);
+  if (arr === null) return;
+  await blobYaz(MODUL, arr.filter((x) => x.id !== id));
 }
 
 export async function muhasebeSenkronla(yerel: MuhasebeKayit[]): Promise<MuhasebeKayit[] | null> {
-  if (!oturumVar()) return null;
-  try {
-    const bulut = await apiGet<MuhasebeKayit[]>("/muhasebe");
-    if (bulut.length === 0 && yerel.length > 0) {
-      for (const k of yerel) await apiPost("/muhasebe", k);
-      return yerel;
-    }
-    return bulut;
-  } catch {
-    return null;
+  const bulut = await blobOku<MuhasebeKayit>(MODUL);
+  if (bulut === null) return null;
+  if (bulut.length === 0 && yerel.length > 0) {
+    await blobYaz(MODUL, yerel);
+    return yerel;
   }
+  return bulut;
 }

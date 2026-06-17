@@ -1,11 +1,15 @@
 /* ──────────────────────────────────────────────────────────
-   insPRO — Auth (kendi FastAPI backend'imiz)
+   insPRO — Auth (self-hosted Supabase)
 
-   Parola + 2 adımlı doğrulama (e-posta kodu veya Google Authenticator).
-   Token localStorage'da. (Eski Supabase auth'un yerini aldı.)
+   Kayıt/giriş = Supabase Auth (e-posta + şifre).
+   2FA = Google Authenticator (TOTP) — Supabase native MFA.
+   Profil bilgileri public.profiles tablosunda tutulur.
+
+   Yerelde e-posta gönderimi kapalı olduğundan kayıt autoconfirm'dir
+   (kod adımı atlanır). Üretimde SMTP açılınca kod adımı devreye girer.
    ────────────────────────────────────────────────────────── */
 
-import { apiGet, apiPost, apiVar, tokenSet, tokenSil, oturumVar } from "@/lib/api";
+import { supabase, supabaseVar as sbVar } from "./client";
 
 export interface Kullanici {
   id: string;
@@ -28,90 +32,209 @@ export interface Kullanici {
 }
 
 export interface AuthSonuc { ok: boolean; mesaj: string }
-export interface GirisSonuc extends AuthSonuc { asama?: "email" | "totp" }
+export interface KayitSonuc extends AuthSonuc { dogrulandi?: boolean }
+export interface GirisSonuc extends AuthSonuc { asama?: "email" | "totp"; tamam?: boolean }
 
 export interface ProfilVeri {
   ad: string; soyad: string; telefon: string; dogum_tarihi: string; meslek: string;
   sirket_mi: boolean; sirket_adi: string; vergi_dairesi: string; vergi_no: string;
 }
 
-export function supabaseVar(): boolean { return apiVar(); }
+export function supabaseVar(): boolean { return sbVar(); }
+
+function sb() {
+  const c = supabase();
+  if (!c) throw new Error("Supabase yapılandırılmadı (.env.local).");
+  return c;
+}
+
+/** Supabase hata nesnesini Türkçe/okunur mesaja çevir. */
+function cevir(e: unknown): string {
+  const m = (e as { message?: string })?.message ?? String(e);
+  const map: Record<string, string> = {
+    "Invalid login credentials": "E-posta veya şifre hatalı.",
+    "User already registered": "Bu e-posta zaten kayıtlı.",
+    "Email not confirmed": "E-posta henüz doğrulanmadı.",
+    "Token has expired or is invalid": "Kod geçersiz veya süresi dolmuş.",
+    "Invalid TOTP code entered": "Authenticator kodu hatalı.",
+    "Password should be at least 6 characters": "Şifre en az 6 karakter olmalı.",
+  };
+  return map[m] ?? m;
+}
 
 // ── KAYIT ──
-/** 1. adım: e-posta + şifre → e-postaya kod gönderilir. */
-export async function kayitBasla(email: string, sifre: string): Promise<AuthSonuc> {
+/** 1. adım: e-posta + şifre. Autoconfirm açıksa oturum hemen açılır. */
+export async function kayitBasla(email: string, sifre: string): Promise<KayitSonuc> {
   try {
-    await apiPost("/auth/kayit-basla", { email: email.trim(), sifre });
-    return { ok: true, mesaj: "Doğrulama kodu e-postana gönderildi." };
-  } catch (e) { return { ok: false, mesaj: (e as Error).message }; }
+    const { data, error } = await sb().auth.signUp({ email: email.trim(), password: sifre });
+    if (error) throw error;
+    const dogrulandi = !!data.session; // autoconfirm → oturum var, kod gerekmez
+    return {
+      ok: true,
+      dogrulandi,
+      mesaj: dogrulandi ? "" : "Doğrulama kodu e-postana gönderildi.",
+    };
+  } catch (e) { return { ok: false, mesaj: cevir(e) }; }
 }
 
-/** 2. adım: kodu doğrula → oturum açılır (profil eksik kalır). */
+/** 2. adım (yalnız SMTP açıkken): e-posta kodunu doğrula. */
 export async function kayitDogrula(email: string, kod: string): Promise<AuthSonuc> {
   try {
-    const r = await apiPost<{ access_token: string; refresh_token?: string }>("/auth/kayit-dogrula", { email: email.trim(), kod: kod.trim() });
-    tokenSet(r.access_token, r.refresh_token);
+    const { error } = await sb().auth.verifyOtp({ email: email.trim(), token: kod.trim(), type: "signup" });
+    if (error) throw error;
     return { ok: true, mesaj: "Doğrulandı." };
-  } catch (e) { return { ok: false, mesaj: (e as Error).message }; }
+  } catch (e) { return { ok: false, mesaj: cevir(e) }; }
 }
 
-/** 3. adım: profil bilgilerini kaydet. */
+/** 3. adım: profil bilgilerini kaydet (profiles tablosu). */
 export async function profilTamamla(v: ProfilVeri): Promise<AuthSonuc> {
   try {
-    await apiPost("/auth/profil-tamamla", v);
+    const c = sb();
+    const { data: { user } } = await c.auth.getUser();
+    if (!user) throw new Error("Oturum bulunamadı.");
+    const ad_soyad = `${v.ad} ${v.soyad}`.trim();
+    const { error } = await c.from("profiles").update({
+      ad: v.ad, soyad: v.soyad, ad_soyad,
+      telefon: v.telefon || null,
+      dogum_tarihi: v.dogum_tarihi || null,
+      meslek: v.meslek || null,
+      sirket_mi: v.sirket_mi,
+      sirket_adi: v.sirket_adi || null,
+      vergi_dairesi: v.vergi_dairesi || null,
+      vergi_no: v.vergi_no || null,
+      firma: v.sirket_mi ? (v.sirket_adi || null) : null,
+      profil_tamam: true,
+    }).eq("id", user.id);
+    if (error) throw error;
     return { ok: true, mesaj: "Profil kaydedildi." };
-  } catch (e) { return { ok: false, mesaj: (e as Error).message }; }
+  } catch (e) { return { ok: false, mesaj: cevir(e) }; }
 }
 
-// ── GİRİŞ (2FA) ──
-/** 1. adım: e-posta + şifre → ikinci adım yöntemi döner (email kodu / totp). */
+// ── GİRİŞ (şifre + opsiyonel TOTP 2FA) ──
+/** 1. adım: e-posta + şifre. MFA varsa asama:"totp", yoksa tamam:true. */
 export async function girisBasla(email: string, sifre: string): Promise<GirisSonuc> {
   try {
-    const r = await apiPost<{ asama: "email" | "totp" }>("/auth/giris", { email: email.trim(), sifre });
-    return { ok: true, mesaj: "", asama: r.asama };
-  } catch (e) { return { ok: false, mesaj: (e as Error).message }; }
+    const c = sb();
+    const { error } = await c.auth.signInWithPassword({ email: email.trim(), password: sifre });
+    if (error) throw error;
+    const { data: aal } = await c.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (aal?.nextLevel === "aal2" && aal.currentLevel !== "aal2") {
+      return { ok: true, mesaj: "", asama: "totp" };
+    }
+    return { ok: true, mesaj: "", tamam: true };
+  } catch (e) { return { ok: false, mesaj: cevir(e) }; }
 }
 
-/** 2. adım: e-posta kodu VEYA Authenticator kodu → oturum açılır. */
-export async function girisDogrula(email: string, kod: string): Promise<AuthSonuc> {
+/** 2. adım: Google Authenticator kodu ile MFA doğrulaması. */
+export async function girisDogrula(_email: string, kod: string): Promise<AuthSonuc> {
   try {
-    const r = await apiPost<{ access_token: string; refresh_token?: string }>("/auth/giris-dogrula", { email: email.trim(), kod: kod.trim() });
-    tokenSet(r.access_token, r.refresh_token);
+    const c = sb();
+    const { data: factors } = await c.auth.mfa.listFactors();
+    const totp = factors?.totp?.[0];
+    if (!totp) throw new Error("Authenticator faktörü bulunamadı.");
+    const { data: ch, error: e1 } = await c.auth.mfa.challenge({ factorId: totp.id });
+    if (e1) throw e1;
+    const { error: e2 } = await c.auth.mfa.verify({ factorId: totp.id, challengeId: ch.id, code: kod.trim() });
+    if (e2) throw e2;
     return { ok: true, mesaj: "Giriş yapıldı." };
-  } catch (e) { return { ok: false, mesaj: (e as Error).message }; }
+  } catch (e) { return { ok: false, mesaj: cevir(e) }; }
 }
 
 // ── Google Authenticator (TOTP) ──
-export async function totpKur(): Promise<{ secret: string; otpauth: string }> {
-  return apiPost<{ secret: string; otpauth: string }>("/auth/totp/kur");
-}
-export async function totpAktif(kod: string): Promise<AuthSonuc> {
-  try { await apiPost("/auth/totp/aktif", { kod: kod.trim() }); return { ok: true, mesaj: "Google Authenticator aktif." }; }
-  catch (e) { return { ok: false, mesaj: (e as Error).message }; }
-}
-export async function totpKapat(): Promise<AuthSonuc> {
-  try { await apiPost("/auth/totp/kapat"); return { ok: true, mesaj: "E-posta koduna dönüldü." }; }
-  catch (e) { return { ok: false, mesaj: (e as Error).message }; }
+export async function totpKur(): Promise<{ secret: string; otpauth: string; qr: string }> {
+  const c = sb();
+  // Yarım kalmış (unverified) faktörleri temizle
+  try {
+    const { data: f } = await c.auth.mfa.listFactors();
+    for (const fac of (f?.all ?? [])) {
+      if (fac.status === "unverified") await c.auth.mfa.unenroll({ factorId: fac.id });
+    }
+  } catch { /* yok say */ }
+  const { data, error } = await c.auth.mfa.enroll({ factorType: "totp", friendlyName: "insPRO-" + Date.now() });
+  if (error) throw error;
+  // qr_code: Supabase'in sunucuda ürettiği SVG QR (data URI) — harici servise secret gitmez
+  return { secret: data.totp.secret, otpauth: data.totp.uri, qr: data.totp.qr_code };
 }
 
-// ── Ortak yerel hızlı giriş ──
-export async function ortakGiris(sifre: string): Promise<AuthSonuc> {
+export async function totpAktif(kod: string): Promise<AuthSonuc> {
   try {
-    const r = await apiPost<{ access_token: string; refresh_token?: string }>("/auth/yerel-giris", { sifre });
-    tokenSet(r.access_token, r.refresh_token);
+    const c = sb();
+    const { data: f } = await c.auth.mfa.listFactors();
+    const fac = f?.all?.find((x) => x.status === "unverified") ?? f?.totp?.[0];
+    if (!fac) throw new Error("Önce kurulumu başlatın.");
+    const { data: ch, error: e1 } = await c.auth.mfa.challenge({ factorId: fac.id });
+    if (e1) throw e1;
+    const { error: e2 } = await c.auth.mfa.verify({ factorId: fac.id, challengeId: ch.id, code: kod.trim() });
+    if (e2) throw e2;
+    return { ok: true, mesaj: "Google Authenticator aktif." };
+  } catch (e) { return { ok: false, mesaj: cevir(e) }; }
+}
+
+export async function totpKapat(): Promise<AuthSonuc> {
+  try {
+    const c = sb();
+    const { data: f } = await c.auth.mfa.listFactors();
+    for (const fac of (f?.totp ?? [])) await c.auth.mfa.unenroll({ factorId: fac.id });
+    return { ok: true, mesaj: "İki adımlı doğrulama kapatıldı." };
+  } catch (e) { return { ok: false, mesaj: cevir(e) }; }
+}
+
+// ── Ortak yerel hızlı giriş (kayıtsız DEMO kapısı) ──
+const ORTAK_SIFRE = "Yaze.12345";
+export async function ortakGiris(sifre: string): Promise<AuthSonuc> {
+  if (sifre !== ORTAK_SIFRE) return { ok: false, mesaj: "Ortak şifre hatalı." };
+  try {
+    const { yerelGiris } = await import("@/lib/yerelOturum");
+    yerelGiris("Yerel Kullanıcı");
     return { ok: true, mesaj: "Giriş yapıldı." };
   } catch (e) { return { ok: false, mesaj: (e as Error).message }; }
 }
 
-export async function cikisYap(): Promise<void> { tokenSil(); }
-
-export async function aktifKullanici(): Promise<Kullanici | null> {
-  if (!oturumVar()) return null;
-  try { return await apiGet<Kullanici>("/auth/ben"); }
-  catch { tokenSil(); return null; }
+export async function cikisYap(): Promise<void> {
+  try { await sb().auth.signOut(); } catch { /* yok say */ }
 }
 
+export async function aktifKullanici(): Promise<Kullanici | null> {
+  if (!supabaseVar()) return null;
+  const c = supabase();
+  if (!c) return null;
+  try {
+    const { data: { user } } = await c.auth.getUser();
+    if (!user) return null;
+    const { data: p } = await c.from("profiles").select("*").eq("id", user.id).maybeSingle();
+    let yontem: "email" | "totp" = "email";
+    try {
+      const { data: f } = await c.auth.mfa.listFactors();
+      if ((f?.totp?.length ?? 0) > 0) yontem = "totp";
+    } catch { /* yok say */ }
+    return {
+      id: user.id,
+      email: user.email ?? "",
+      ad_soyad: p?.ad_soyad ?? undefined,
+      firma: p?.firma ?? undefined,
+      rol: p?.rol ?? "yonetici",
+      yetkiler: Array.isArray(p?.yetkiler) ? p.yetkiler : null,
+      ad: p?.ad ?? undefined,
+      soyad: p?.soyad ?? undefined,
+      telefon: p?.telefon ?? undefined,
+      dogum_tarihi: p?.dogum_tarihi ?? undefined,
+      meslek: p?.meslek ?? undefined,
+      sirket_mi: p?.sirket_mi ?? undefined,
+      sirket_adi: p?.sirket_adi ?? undefined,
+      vergi_dairesi: p?.vergi_dairesi ?? undefined,
+      vergi_no: p?.vergi_no ?? undefined,
+      profil_tamam: p?.profil_tamam ?? false,
+      iki_adim_yontem: yontem,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/** Oturum değişimini dinle (giriş/çıkış). */
 export function oturumDinle(cb: (user: Kullanici | null) => void): () => void {
-  aktifKullanici().then(cb);
-  return () => {};
+  const c = supabase();
+  if (!c) { cb(null); return () => {}; }
+  const { data } = c.auth.onAuthStateChange(() => { aktifKullanici().then(cb); });
+  return () => { data.subscription.unsubscribe(); };
 }
