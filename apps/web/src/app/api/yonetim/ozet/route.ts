@@ -7,9 +7,11 @@ export async function GET(req: Request) {
   if (!d.ok) return d.resp;
   const sb = d.sb;
 
-  // Kullanıcılar
+  // Kullanıcılar (gizli süper adminler hariç)
+  const { data: gizliProfiller } = await sb.from("profiles").select("id").eq("gizli", true);
+  const gizliSet = new Set((gizliProfiller ?? []).map((p) => p.id));
   const { data: liste } = await sb.auth.admin.listUsers({ perPage: 1000 });
-  const kullaniciSay = liste?.users.length ?? 0;
+  const kullaniciSay = (liste?.users ?? []).filter((u) => !gizliSet.has(u.id)).length;
 
   // modul_veri → proje / muhasebe / diğer modüller + grafik toplamları
   const { data: rows } = await sb.from("modul_veri").select("modul, veri");
@@ -62,9 +64,10 @@ export async function GET(req: Request) {
   } catch { /* storage şeması erişilemezse 0 */ }
 
   // Rol dağılımı
-  const { data: profs } = await sb.from("profiles").select("rol");
+  const { data: profs } = await sb.from("profiles").select("rol, gizli");
   const dagilim: Record<string, number> = { yonetici: 0, sefi: 0, taseron: 0, muhasebeci: 0 };
   for (const p of profs ?? []) {
+    if (p.gizli) continue; // gizli süper adminler dağılımda yok
     const r = rolNormalize(p.rol);
     dagilim[r] = (dagilim[r] ?? 0) + 1;
   }

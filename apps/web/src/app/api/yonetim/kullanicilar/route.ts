@@ -15,7 +15,10 @@ export async function GET(req: Request) {
   const profMap = new Map((profs ?? []).map((p) => [p.id, p]));
 
   const now = Date.now();
-  const users = (liste?.users ?? []).map((u) => {
+  const users = (liste?.users ?? [])
+    // Gizli süper adminler listede görünmez
+    .filter((u) => !(profMap.get(u.id) as Record<string, unknown> | undefined)?.gizli)
+    .map((u) => {
     const p = profMap.get(u.id) as Record<string, unknown> | undefined;
     const banUntil = (u as { banned_until?: string }).banned_until;
     const aktif = !banUntil || new Date(banUntil).getTime() <= now;
