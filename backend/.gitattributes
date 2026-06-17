@@ -1,3 +1,0 @@
-# Shell betikleri her zaman LF olmalı (Docker entrypoint CRLF ile çalışmaz)
-*.sh text eol=lf
-entrypoint.sh text eol=lf

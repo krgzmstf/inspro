@@ -1,9 +1,0 @@
-.env
-.env.*
-!.env.example
-!.env.prod.example
-__pycache__/
-*.pyc
-.pytest_cache/
-data/
-*.sqlite3
