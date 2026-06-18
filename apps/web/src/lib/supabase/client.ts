@@ -16,11 +16,12 @@ const URETIM_URL = "https://api-inspro.yazeproje.com";
 const URETIM_ANON =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzgxNzIzMTYzLCJleHAiOjE5Mzk0MDMxNjN9.2PQm7klk3t-_s_yUWufITguCn0x1s_COLs3LgB9NRdM";
 
-// Ortam değişkeni geçerliyse onu kullan (yerelde localhost), yoksa/bozuksa üretim varsayılanı.
-const envUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const envAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const URL = envUrl && envUrl.startsWith("http") ? envUrl : URETIM_URL;
-const ANON = envAnon && envAnon.length > 100 ? envAnon : URETIM_ANON;
+// Ortam değişkenine yapıştırırken boşluk/satır sonu karışabiliyor (Kong key'i reddeder) → temizle.
+const temiz = (s?: string) => (s ?? "").replace(/\s+/g, "");
+const envUrl = temiz(process.env.NEXT_PUBLIC_SUPABASE_URL);
+const envAnon = temiz(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+const URL = envUrl.startsWith("http") ? envUrl : URETIM_URL;
+const ANON = envAnon.length > 100 ? envAnon : URETIM_ANON;
 
 /** Supabase yapılandırılmış mı? (anahtar var mı) */
 export function supabaseVar(): boolean {
