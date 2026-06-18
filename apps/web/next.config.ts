@@ -12,7 +12,7 @@ const guvenlikBasliklari = [
 ];
 
 const nextConfig: NextConfig = {
-  output: "standalone", // Docker üretim imajı için (küçük, kendi kendine yeten)
+  // Not: Vercel kendi çıktısını yönetir; "standalone" (Docker) kaldırıldı.
   async headers() {
     return [{ source: "/:path*", headers: guvenlikBasliklari }];
   },
