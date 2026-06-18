@@ -6,6 +6,9 @@ import { useRouter } from "next/navigation";
 import { girisBasla, girisDogrula, ortakGiris, googleGiris, sifremiUnuttum } from "@/lib/supabase/auth";
 import SifreInput from "@/components/SifreInput";
 
+// Google ile giriş: Supabase'de Google sağlayıcısı (Client ID/Secret) kurulunca true yap.
+const GOOGLE_GIRIS_AKTIF = false;
+
 export default function GirisPage() {
   const router = useRouter();
   const [asama, setAsama] = useState<"giris" | "dogrula">("giris");
@@ -80,17 +83,21 @@ export default function GirisPage() {
 
         {asama === "giris" ? (
           <>
-            {/* Google ile hızlı giriş */}
-            <button onClick={googleGir} type="button"
-              className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl border-2 border-slate-200 bg-white py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="https://www.google.com/favicon.ico" alt="" className="h-4 w-4" />
-              Google ile giriş yap
-            </button>
-            <div className="my-4 flex items-center gap-3 text-[11px] text-slate-400">
-              <span className="h-px flex-1 bg-slate-200" /> veya e-posta ile <span className="h-px flex-1 bg-slate-200" />
-            </div>
-          <form onSubmit={girisYap} className="space-y-3">
+            {GOOGLE_GIRIS_AKTIF && (
+              <>
+                {/* Google ile hızlı giriş */}
+                <button onClick={googleGir} type="button"
+                  className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl border-2 border-slate-200 bg-white py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="https://www.google.com/favicon.ico" alt="" className="h-4 w-4" />
+                  Google ile giriş yap
+                </button>
+                <div className="my-4 flex items-center gap-3 text-[11px] text-slate-400">
+                  <span className="h-px flex-1 bg-slate-200" /> veya e-posta ile <span className="h-px flex-1 bg-slate-200" />
+                </div>
+              </>
+            )}
+          <form onSubmit={girisYap} className="mt-6 space-y-3">
             <label className="block text-sm font-semibold text-slate-700">E-posta
               <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoFocus
                 className="mt-1 w-full rounded-xl border-2 border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500" />
