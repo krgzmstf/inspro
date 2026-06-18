@@ -23,9 +23,10 @@ export default function PanelLayout({
   const [menuAcik, setMenuAcik] = useState(false);
   const [rol, setRol] = useState<Rol>("yonetici");
   const [yetkiler, setYetkiler] = useState<string[] | null>(null);
+  const [superAdmin, setSuperAdmin] = useState(false);
   const [menuAyar, setMenuAyar] = useState<MenuAyar | null>(null);
 
-  useEffect(() => { yetkiGetir().then((y) => { setRol(y.rol); setYetkiler(y.yetkiler); }); }, [kullanici]);
+  useEffect(() => { yetkiGetir().then((y) => { setRol(y.rol); setYetkiler(y.yetkiler); setSuperAdmin(y.superAdmin); }); }, [kullanici]);
   useEffect(() => { ayarGetir<MenuAyar | null>("menu", null).then(setMenuAyar); }, [kullanici]);
 
   // Profili eksik kullanıcıyı profil tamamlama ekranına yönlendir
@@ -92,7 +93,7 @@ export default function PanelLayout({
           <span className="text-xs font-medium uppercase tracking-widest text-white/50">Panel</span>
         </div>
         <nav className="flex-1 space-y-1 p-4">
-          {navListesi.filter((item) => menuyeYetkili(rol, item.href, yetkiler) && (item.href !== "/panel/yonetim" || rol === "yonetici")).map((item) => (
+          {navListesi.filter((item) => menuyeYetkili(rol, item.href, yetkiler) && (item.href !== "/panel/yonetim" || superAdmin)).map((item) => (
             <Link
               key={item.label}
               href={item.href}

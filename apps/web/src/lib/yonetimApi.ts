@@ -30,7 +30,8 @@ async function iste<T = unknown>(yol: string, init?: RequestInit): Promise<T> {
 
 export interface YonetimKullanici {
   id: string; email: string; ad_soyad: string; firma: string;
-  rol: string; yetkiler: string[] | null; aktif?: boolean; created_at: string; son_giris: string | null;
+  rol: string; yetkiler: string[] | null; proje_limiti?: number | null;
+  aktif?: boolean; created_at: string; son_giris: string | null;
 }
 export interface AylikFinans { ay: string; gelir: number; gider: number }
 export interface YonetimOzet {
@@ -41,12 +42,15 @@ export interface YonetimOzet {
   proje_tip: Record<string, number>;
   aylik_finans: AylikFinans[];
 }
-export interface YonetimVeri { id: string; owner_id: string; baslik: string; ek?: string; created_at?: string | null }
+export interface YonetimVeri { id: string; owner_id: string; owner_email?: string; baslik: string; ek?: string; created_at?: string | null }
 
 export const ozetGetir = () => iste<YonetimOzet>("/ozet");
 export const kullanicilariGetir = () => iste<{ users: YonetimKullanici[] }>("/kullanicilar");
 export const kullaniciGuncelle = (id: string, rol: string, yetkiler?: string[] | null) =>
   iste("/kullanicilar", { method: "POST", body: JSON.stringify({ id, rol, ...(yetkiler !== undefined ? { yetkiler } : {}) }) });
+/** Üye bilgisi/limit düzenle (ad_soyad, firma, proje_limiti). */
+export const kullaniciDuzenle = (id: string, alanlar: { ad_soyad?: string; firma?: string; proje_limiti?: number | null }) =>
+  iste("/kullanicilar", { method: "POST", body: JSON.stringify({ id, ...alanlar }) });
 export const kullaniciOlustur = (k: { email: string; ad_soyad: string; firma: string; rol: string }) =>
   iste<{ ok: boolean; gecici_sifre: string }>("/kullanicilar", { method: "PUT", body: JSON.stringify(k) });
 export const kullaniciAktif = (id: string, aktif: boolean) =>
@@ -56,3 +60,10 @@ export const kullaniciSil = (id: string) =>
 export const veriGetir = (tip: string) => iste<{ satirlar: YonetimVeri[] }>("/veri?tip=" + encodeURIComponent(tip));
 export const veriSilApi = (tip: string, id: string) =>
   iste("/veri?tip=" + encodeURIComponent(tip) + "&id=" + encodeURIComponent(id), { method: "DELETE" });
+
+/** Tek projeyi incele (sahip + tam nesne). */
+export const projeGetir = (owner: string, id: string) =>
+  iste<{ proje: Record<string, unknown>; owner_email: string }>("/proje?owner=" + encodeURIComponent(owner) + "&id=" + encodeURIComponent(id));
+/** Projenin verilen alanlarını güncelle. */
+export const projeGuncelle = (owner: string, id: string, alanlar: Record<string, unknown>) =>
+  iste<{ ok: boolean; proje: Record<string, unknown> }>("/proje", { method: "POST", body: JSON.stringify({ owner, id, alanlar }) });

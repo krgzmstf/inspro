@@ -11,8 +11,6 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 const URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
 
-const ADMIN_ROLLER = ["yonetici", "sahip", "ofis"];
-
 export function adminClient(): SupabaseClient {
   return createClient(URL, SERVICE, { auth: { autoRefreshToken: false, persistSession: false } });
 }
@@ -27,7 +25,11 @@ export type Dogrulama =
   | { ok: true; sb: SupabaseClient; uid: string }
   | { ok: false; resp: Response };
 
-/** Authorization: Bearer <access_token> → kullanıcıyı doğrula + yönetici mi kontrol et. */
+/**
+ * Authorization: Bearer <access_token> → kullanıcıyı doğrula + SÜPER ADMIN mi kontrol et.
+ * Not: Her üye rol=yonetici (kendi verisinin yöneticisi). Platform yönetim merkezine
+ * yalnızca gizli süper adminler (profiles.gizli=true) erişebilir.
+ */
 export async function adminDogrula(req: Request): Promise<Dogrulama> {
   if (!URL || !SERVICE) return { ok: false, resp: yanit("Supabase sunucu anahtarı tanımsız.", 500) };
   const token = (req.headers.get("authorization") ?? "").replace(/^Bearer\s+/i, "");
@@ -35,8 +37,8 @@ export async function adminDogrula(req: Request): Promise<Dogrulama> {
   const sb = adminClient();
   const { data, error } = await sb.auth.getUser(token);
   if (error || !data.user) return { ok: false, resp: yanit("Geçersiz oturum.", 401) };
-  const { data: p } = await sb.from("profiles").select("rol").eq("id", data.user.id).maybeSingle();
-  if (!ADMIN_ROLLER.includes(p?.rol ?? "")) return { ok: false, resp: yanit("Yalnızca yönetici erişebilir.", 403) };
+  const { data: p } = await sb.from("profiles").select("gizli").eq("id", data.user.id).maybeSingle();
+  if (!p?.gizli) return { ok: false, resp: yanit("Yalnızca süper admin erişebilir.", 403) };
   return { ok: true, sb, uid: data.user.id };
 }
 

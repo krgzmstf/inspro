@@ -2,12 +2,14 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { type Rol, ROL_ETIKET, ROL_MENU, MENU_SECENEKLERI, rolGetir } from "@/lib/rol";
+import { type Rol, ROL_ETIKET, ROL_MENU, MENU_SECENEKLERI, yetkiGetir, VARSAYILAN_PROJE_LIMITI } from "@/lib/rol";
 import { supabaseVar } from "@/lib/supabase/auth";
 import {
-  ozetGetir, kullanicilariGetir, kullaniciGuncelle, kullaniciOlustur,
+  ozetGetir, kullanicilariGetir, kullaniciGuncelle, kullaniciDuzenle, kullaniciOlustur,
   kullaniciAktif, kullaniciSil as kullaniciSilApi, veriGetir, veriSilApi,
+  projeGetir, projeGuncelle,
 } from "@/lib/yonetimApi";
+import { TYPE_LABELS, type ProjectType } from "@/lib/projects";
 import { ayarGetir, ayarYaz, MENU_KATALOG, type MenuAyar, type SiteAyar } from "@/lib/ayar";
 import { Spinner, Donut, AylikFinansGrafik, YatayBarlar, type DilimVeri } from "./grafikler";
 
@@ -18,7 +20,8 @@ const SAYFA_BOYUT = 10;
 
 interface Kullanici {
   id: string; email: string; ad_soyad: string; firma: string;
-  rol: Rol; yetkiler: string[] | null; aktif?: boolean; created_at: string; son_giris: string | null;
+  rol: Rol; yetkiler: string[] | null; proje_limiti?: number | null;
+  aktif?: boolean; created_at: string; son_giris: string | null;
 }
 
 interface Ozet {
@@ -31,7 +34,7 @@ interface Ozet {
   aylik_finans: { ay: string; gelir: number; gider: number }[];
 }
 
-interface VeriSatir { id: string; owner_id: string; baslik: string; ek?: string; created_at?: string | null }
+interface VeriSatir { id: string; owner_id: string; owner_email?: string; baslik: string; ek?: string; created_at?: string | null }
 
 const ROLLER: Rol[] = ["yonetici", "sefi", "taseron", "muhasebeci"];
 
@@ -65,7 +68,7 @@ function boyutBicim(b: number): string {
 }
 
 export default function YonetimPage() {
-  const [rolum, setRolum] = useState<Rol>("yonetici");
+  const [superAdmin, setSuperAdmin] = useState(false);
   const [hazir, setHazir] = useState(false);
   const [sekme, setSekme] = useState<SekmeId>("genel");
   const [hata, setHata] = useState("");
@@ -79,6 +82,8 @@ export default function YonetimPage() {
   const [kullanicilar, setKullanicilar] = useState<Kullanici[]>([]);
   const [yukleniyor, setYukleniyor] = useState(false);
   const [acikIzin, setAcikIzin] = useState<string | null>(null);
+  const [acikDuzen, setAcikDuzen] = useState<string | null>(null);
+  const [duzen, setDuzen] = useState({ ad_soyad: "", firma: "", proje_limiti: "" });
   const [yeniK, setYeniK] = useState({ email: "", ad_soyad: "", firma: "", rol: "sefi" as Rol });
 
   // Veriler
@@ -89,6 +94,12 @@ export default function YonetimPage() {
   const [siralama, setSiralama] = useState<{ alan: "baslik" | "ek"; yon: 1 | -1 }>({ alan: "baslik", yon: 1 });
   const [sayfa, setSayfa] = useState(1);
 
+  // Proje inceleme/düzenleme modalı
+  const [inceleAcik, setInceleAcik] = useState(false);
+  const [inceleYuk, setInceleYuk] = useState(false);
+  const [inceleMeta, setInceleMeta] = useState<{ owner: string; id: string; email: string; createdAt?: string; phases: { name: string; status: string }[]; binaOzet: string } | null>(null);
+  const [inceleForm, setInceleForm] = useState({ name: "", city: "", type: "konut" as ProjectType, area: "", floors: "", budget: "" });
+
   // Menü
   const [menuAyar, setMenuAyar] = useState<MenuAyar>({ gizli: [], etiket: {}, sira: [] });
 
@@ -96,7 +107,7 @@ export default function YonetimPage() {
   const [site, setSite] = useState<SiteAyar>({});
 
   useEffect(() => {
-    rolGetir().then((r) => { setRolum(r); setHazir(true); });
+    yetkiGetir().then((y) => { setSuperAdmin(y.superAdmin); setHazir(true); });
     yukleKullanicilar();
     ozetGetir().then((o) => { setOzet(o); setSaglik(true); }).catch(() => setSaglik(false));
     ayarGetir<MenuAyar>("menu", { gizli: [], etiket: {}, sira: [] }).then((m) =>
@@ -188,6 +199,38 @@ export default function YonetimPage() {
     rolKaydet(k.id, k.rol, yeni);
   }
 
+  // ── Üye bilgileri / proje limiti düzenleme ──
+  function duzenAc(k: Kullanici) {
+    if (acikDuzen === k.id) { setAcikDuzen(null); return; }
+    setAcikIzin(null);
+    setDuzen({
+      ad_soyad: k.ad_soyad ?? "",
+      firma: k.firma ?? "",
+      proje_limiti: k.proje_limiti == null ? "" : String(k.proje_limiti),
+    });
+    setAcikDuzen(k.id);
+  }
+  async function duzenKaydet(id: string) {
+    setMesaj(""); setHata("");
+    const ham = duzen.proje_limiti.trim();
+    let limit: number | null = null;
+    if (ham !== "") {
+      const n = parseInt(ham, 10);
+      if (Number.isNaN(n) || n < 0) { setHata("Proje limiti 0 veya pozitif bir sayı olmalı (0 = sınırsız, boş = varsayılan)."); return; }
+      limit = n;
+    }
+    try {
+      await kullaniciDuzenle(id, { ad_soyad: duzen.ad_soyad.trim(), firma: duzen.firma.trim(), proje_limiti: limit });
+      setMesaj("✓ Bilgiler kaydedildi.");
+      setAcikDuzen(null);
+      yukleKullanicilar();
+    } catch (e) { setHata((e as Error).message); }
+  }
+  function limitEtiket(l: number | null | undefined): string {
+    if (l == null) return `varsayılan (${VARSAYILAN_PROJE_LIMITI})`;
+    return l === 0 ? "sınırsız" : String(l);
+  }
+
   // ── Veriler ──
   async function yukleVeri(tip: string) {
     setVeriYukleniyor(true); setHata("");
@@ -201,6 +244,55 @@ export default function YonetimPage() {
     if (!confirm("Bu kayıt kalıcı olarak silinsin mi?")) return;
     try { await veriSilApi(tip, id); yukleVeri(tip); setMesaj("✓ Silindi."); }
     catch (e) { setHata((e as Error).message); }
+  }
+
+  // ── Proje incele / düzenle (süper admin, sahibi fark etmeksizin) ──
+  async function inceleAc(r: VeriSatir) {
+    setInceleAcik(true); setInceleYuk(true); setHata("");
+    setInceleMeta(null);
+    try {
+      const { proje, owner_email } = await projeGetir(r.owner_id, r.id);
+      const p = proje as Record<string, unknown>;
+      const bina = (p.bina ?? {}) as Record<string, unknown>;
+      const binaOzet = [
+        p.floors != null ? `${p.floors} kat` : "",
+        bina.toplamDaire != null ? `${bina.toplamDaire} bağımsız bölüm` : "",
+        Array.isArray(p.katlar) ? `${(p.katlar as unknown[]).length} kat planı` : "",
+      ].filter(Boolean).join(" · ") || "—";
+      setInceleMeta({
+        owner: r.owner_id, id: r.id, email: owner_email || r.owner_email || "",
+        createdAt: p.createdAt as string | undefined,
+        phases: Array.isArray(p.phases) ? (p.phases as { name: string; status: string }[]) : [],
+        binaOzet,
+      });
+      setInceleForm({
+        name: (p.name as string) ?? "",
+        city: (p.city as string) ?? "",
+        type: ((p.type as ProjectType) ?? "konut"),
+        area: p.area != null ? String(p.area) : "",
+        floors: p.floors != null ? String(p.floors) : "",
+        budget: p.budget != null ? String(p.budget) : "",
+      });
+    } catch (e) { setHata((e as Error).message); setInceleAcik(false); }
+    finally { setInceleYuk(false); }
+  }
+  async function inceleKaydet() {
+    if (!inceleMeta) return;
+    setHata("");
+    const alanlar: Record<string, unknown> = {
+      name: inceleForm.name.trim(),
+      city: inceleForm.city.trim(),
+      type: inceleForm.type,
+    };
+    const area = parseFloat(inceleForm.area); if (!Number.isNaN(area)) alanlar.area = area;
+    const floors = parseInt(inceleForm.floors, 10); if (!Number.isNaN(floors)) alanlar.floors = floors;
+    const b = inceleForm.budget.trim(); alanlar.budget = b === "" ? null : parseFloat(b);
+    try {
+      await projeGuncelle(inceleMeta.owner, inceleMeta.id, alanlar);
+      setMesaj("✓ Proje güncellendi.");
+      setInceleAcik(false);
+      yukleVeri(veriTip);
+    } catch (e) { setHata((e as Error).message); }
   }
 
   // ── Menü ──
@@ -238,12 +330,12 @@ export default function YonetimPage() {
       </div>
     );
   }
-  if (hazir && rolum !== "yonetici") {
+  if (hazir && !superAdmin) {
     return (
       <div className="mx-auto max-w-3xl">
         <h1 className="text-2xl font-extrabold text-slate-900">⚙️ Yönetim Merkezi</h1>
         <p className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
-          Bu sayfaya yalnızca <b>Yönetici</b> erişebilir.
+          Bu sayfaya yalnızca <b>süper admin</b> erişebilir.
         </p>
         <Link href="/panel" className="mt-4 inline-block text-sm font-semibold text-slate-500 hover:text-ink-800">← Panele dön</Link>
       </div>
@@ -368,7 +460,7 @@ export default function YonetimPage() {
                         {k.ad_soyad || "—"} <span className="text-[11px] font-normal text-slate-400">{k.email}</span>
                         {k.aktif === false && <span className="ml-2 rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-bold text-red-600">PASİF</span>}
                       </div>
-                      <div className="text-[11px] text-slate-400">{k.firma || ""}{k.firma ? " · " : ""}kayıt {k.created_at?.slice(0, 10)}</div>
+                      <div className="text-[11px] text-slate-400">{k.firma || ""}{k.firma ? " · " : ""}kayıt {k.created_at?.slice(0, 10)} · proje limiti: <b className="text-slate-500">{limitEtiket(k.proje_limiti)}</b></div>
                     </div>
                     <div className="flex items-center gap-2">
                       <select value={k.rol} onChange={(e) => rolKaydet(k.id, e.target.value as Rol, undefined)}
@@ -380,6 +472,9 @@ export default function YonetimPage() {
                           {acikIzin === k.id ? "İzinleri gizle" : "Özel izinler"}
                         </button>
                       )}
+                      <button onClick={() => duzenAc(k)} className="rounded-lg border border-slate-200 px-2.5 py-1 text-xs font-bold text-slate-600 hover:bg-slate-50">
+                        {acikDuzen === k.id ? "Kapat" : "✏️ Bilgiler"}
+                      </button>
                       <button onClick={() => aktifDegistir(k)} className="rounded-lg border border-slate-200 px-2.5 py-1 text-xs font-bold text-slate-600 hover:bg-slate-50">
                         {k.aktif === false ? "Aktifleştir" : "Pasifleştir"}
                       </button>
@@ -405,6 +500,33 @@ export default function YonetimPage() {
                             </label>
                           );
                         })}
+                      </div>
+                    </div>
+                  )}
+
+                  {acikDuzen === k.id && (
+                    <div className="mt-3 rounded-xl border border-slate-100 bg-slate-50 p-3">
+                      <div className="grid gap-2 sm:grid-cols-3">
+                        <label className="text-xs font-semibold text-slate-600">Ad soyad
+                          <input value={duzen.ad_soyad} onChange={(e) => setDuzen({ ...duzen, ad_soyad: e.target.value })}
+                            className="mt-1 w-full rounded-lg border-2 border-slate-200 px-2 py-1.5 text-sm outline-none focus:border-brand-500" />
+                        </label>
+                        <label className="text-xs font-semibold text-slate-600">Firma
+                          <input value={duzen.firma} onChange={(e) => setDuzen({ ...duzen, firma: e.target.value })}
+                            className="mt-1 w-full rounded-lg border-2 border-slate-200 px-2 py-1.5 text-sm outline-none focus:border-brand-500" />
+                        </label>
+                        <label className="text-xs font-semibold text-slate-600">Proje limiti
+                          <input value={duzen.proje_limiti} onChange={(e) => setDuzen({ ...duzen, proje_limiti: e.target.value })}
+                            inputMode="numeric" placeholder={`varsayılan (${VARSAYILAN_PROJE_LIMITI})`}
+                            className="mt-1 w-full rounded-lg border-2 border-slate-200 px-2 py-1.5 text-sm outline-none focus:border-brand-500" />
+                        </label>
+                      </div>
+                      <p className="mt-2 text-[11px] text-slate-400">
+                        Proje limiti: <b>boş</b> = varsayılan ({VARSAYILAN_PROJE_LIMITI}) · <b>0</b> = sınırsız · <b>sayı</b> = en fazla o kadar proje. (Süper adminler her zaman sınırsızdır.)
+                      </p>
+                      <div className="mt-2 flex justify-end gap-2">
+                        <button onClick={() => setAcikDuzen(null)} className="rounded-lg border border-slate-200 px-3 py-1 text-xs font-bold text-slate-500 hover:bg-white">Vazgeç</button>
+                        <button onClick={() => duzenKaydet(k.id)} className="rounded-lg bg-brand-500 px-4 py-1 text-xs font-bold text-white hover:bg-brand-600">Kaydet</button>
                       </div>
                     </div>
                   )}
@@ -454,6 +576,7 @@ export default function YonetimPage() {
                       <th className="cursor-pointer select-none px-4 py-2 hover:text-slate-700" onClick={() => siralamaDegis("ek")}>
                         Detay {siralama.alan === "ek" ? (siralama.yon === 1 ? "▲" : "▼") : ""}
                       </th>
+                      <th className="px-4 py-2">Oluşturan</th>
                       <th className="px-4 py-2 text-right">İşlem</th>
                     </tr>
                   </thead>
@@ -462,8 +585,14 @@ export default function YonetimPage() {
                       <tr key={r.id} className="hover:bg-slate-50">
                         <td className="px-4 py-2 font-semibold text-slate-800">{r.baslik}</td>
                         <td className="px-4 py-2 text-xs text-slate-500">{r.ek || ""}{r.created_at ? ` · ${r.created_at.slice(0, 10)}` : ""}</td>
+                        <td className="px-4 py-2 text-xs text-slate-500">{r.owner_email || "—"}</td>
                         <td className="px-4 py-2 text-right">
-                          <button onClick={() => veriSil(veriTip, r.id)} className="rounded-lg border border-red-200 px-2.5 py-1 text-xs font-bold text-red-600 hover:bg-red-50">Sil</button>
+                          <div className="flex justify-end gap-1.5">
+                            {veriTip === "projeler" && (
+                              <button onClick={() => inceleAc(r)} className="rounded-lg border border-brand-200 px-2.5 py-1 text-xs font-bold text-brand-600 hover:bg-brand-50">İncele</button>
+                            )}
+                            <button onClick={() => veriSil(veriTip, r.id)} className="rounded-lg border border-red-200 px-2.5 py-1 text-xs font-bold text-red-600 hover:bg-red-50">Sil</button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -554,6 +683,71 @@ export default function YonetimPage() {
       <div className="mt-8 text-sm">
         <Link href="/panel" className="font-semibold text-slate-500 transition hover:text-ink-800">← Projelere dön</Link>
       </div>
+
+      {/* ── PROJE İNCELE / DÜZENLE MODALI ── */}
+      {inceleAcik && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setInceleAcik(false)}>
+          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-extrabold text-ink-900">🏗️ Proje incele / düzenle</h3>
+              <button onClick={() => setInceleAcik(false)} className="text-slate-400 hover:text-ink-900">✕</button>
+            </div>
+            {inceleYuk || !inceleMeta ? (
+              <div className="py-10"><Spinner etiket="Proje yükleniyor…" /></div>
+            ) : (
+              <>
+                <p className="mt-1 text-xs text-slate-500">Oluşturan: <b>{inceleMeta.email || "—"}</b>{inceleMeta.createdAt ? ` · ${inceleMeta.createdAt.slice(0, 10)}` : ""}</p>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  <label className="text-xs font-semibold text-slate-600 sm:col-span-2">Proje adı
+                    <input value={inceleForm.name} onChange={(e) => setInceleForm({ ...inceleForm, name: e.target.value })}
+                      className="mt-1 w-full rounded-lg border-2 border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500" />
+                  </label>
+                  <label className="text-xs font-semibold text-slate-600">Şehir
+                    <input value={inceleForm.city} onChange={(e) => setInceleForm({ ...inceleForm, city: e.target.value })}
+                      className="mt-1 w-full rounded-lg border-2 border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500" />
+                  </label>
+                  <label className="text-xs font-semibold text-slate-600">Tip
+                    <select value={inceleForm.type} onChange={(e) => setInceleForm({ ...inceleForm, type: e.target.value as ProjectType })}
+                      className="mt-1 w-full rounded-lg border-2 border-slate-200 px-3 py-2 text-sm font-semibold outline-none focus:border-brand-500">
+                      {(Object.keys(TYPE_LABELS) as ProjectType[]).map((t) => <option key={t} value={t}>{TYPE_LABELS[t]}</option>)}
+                    </select>
+                  </label>
+                  <label className="text-xs font-semibold text-slate-600">İnşaat alanı (m²)
+                    <input value={inceleForm.area} onChange={(e) => setInceleForm({ ...inceleForm, area: e.target.value })} inputMode="numeric"
+                      className="mt-1 w-full rounded-lg border-2 border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500" />
+                  </label>
+                  <label className="text-xs font-semibold text-slate-600">Kat sayısı
+                    <input value={inceleForm.floors} onChange={(e) => setInceleForm({ ...inceleForm, floors: e.target.value })} inputMode="numeric"
+                      className="mt-1 w-full rounded-lg border-2 border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500" />
+                  </label>
+                  <label className="text-xs font-semibold text-slate-600 sm:col-span-2">Tahmini bütçe (₺) — boş = belirsiz
+                    <input value={inceleForm.budget} onChange={(e) => setInceleForm({ ...inceleForm, budget: e.target.value })} inputMode="numeric"
+                      className="mt-1 w-full rounded-lg border-2 border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500" />
+                  </label>
+                </div>
+                <div className="mt-3 rounded-xl border border-slate-100 bg-slate-50 p-3 text-xs text-slate-600">
+                  <div><b>Bina:</b> {inceleMeta.binaOzet}</div>
+                  {inceleMeta.phases.length > 0 && (
+                    <div className="mt-2">
+                      <b>Aşamalar:</b>
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {inceleMeta.phases.map((f, idx) => (
+                          <span key={idx} className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${f.status === "tamam" ? "bg-emerald-100 text-emerald-700" : f.status === "devam" ? "bg-amber-100 text-amber-700" : "bg-slate-200 text-slate-500"}`}>{f.name}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <p className="mt-2 text-[11px] text-slate-400">Not: Detaylı kat/daire metrajı sahibinin proje editöründen düzenlenir; buradan projenin ana bilgileri güncellenir.</p>
+                <div className="mt-4 flex justify-end gap-2">
+                  <button onClick={() => setInceleAcik(false)} className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-bold text-slate-500 hover:bg-slate-50">Kapat</button>
+                  <button onClick={inceleKaydet} className="rounded-lg bg-brand-500 px-5 py-2 text-sm font-bold text-white hover:bg-brand-600">Kaydet</button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

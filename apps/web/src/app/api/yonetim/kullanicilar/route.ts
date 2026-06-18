@@ -29,6 +29,7 @@ export async function GET(req: Request) {
       firma: (p?.firma as string) ?? "",
       rol: rolNormalize(p?.rol as string),
       yetkiler: Array.isArray(p?.yetkiler) ? (p?.yetkiler as string[]) : null,
+      proje_limiti: (p?.proje_limiti as number) ?? null,
       aktif,
       created_at: u.created_at,
       son_giris: u.last_sign_in_at ?? null,
@@ -37,15 +38,23 @@ export async function GET(req: Request) {
   return Response.json({ users });
 }
 
-/** POST — rol/yetki güncelle {id, rol, yetkiler?}. */
+/** POST — kullanıcı güncelle {id, rol?, yetkiler?, ad_soyad?, firma?, proje_limiti?}. */
 export async function POST(req: Request) {
   const d = await adminDogrula(req);
   if (!d.ok) return d.resp;
   const body = await req.json().catch(() => ({}));
-  const { id, rol, yetkiler } = body as { id?: string; rol?: string; yetkiler?: string[] | null };
-  if (!id || !rol) return yanit("id ve rol gerekli.", 400);
-  const guncelle: Record<string, unknown> = { rol };
+  const { id, rol, yetkiler, ad_soyad, firma, proje_limiti } = body as {
+    id?: string; rol?: string; yetkiler?: string[] | null;
+    ad_soyad?: string; firma?: string; proje_limiti?: number | null;
+  };
+  if (!id) return yanit("id gerekli.", 400);
+  const guncelle: Record<string, unknown> = {};
+  if (rol !== undefined) guncelle.rol = rol;
   if (yetkiler !== undefined) guncelle.yetkiler = yetkiler;
+  if (ad_soyad !== undefined) guncelle.ad_soyad = ad_soyad;
+  if (firma !== undefined) guncelle.firma = firma;
+  if (proje_limiti !== undefined) guncelle.proje_limiti = proje_limiti;
+  if (Object.keys(guncelle).length === 0) return yanit("Güncellenecek alan yok.", 400);
   const { error } = await d.sb.from("profiles").update(guncelle).eq("id", id);
   if (error) return yanit(error.message, 500);
   return Response.json({ ok: true });

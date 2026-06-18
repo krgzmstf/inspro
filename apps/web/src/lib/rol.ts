@@ -60,29 +60,36 @@ export function rolNormalize(r: string | null | undefined): Rol {
 
 const KEY = "inspro-rol";
 const KEY_Y = "inspro-yetkiler";
+const KEY_SA = "inspro-superadmin";
 
-export interface Yetki { rol: Rol; yetkiler: string[] | null }
+/** Varsayılan proje limiti (kişiye özel ayar yoksa). */
+export const VARSAYILAN_PROJE_LIMITI = 3;
+
+export interface Yetki { rol: Rol; yetkiler: string[] | null; superAdmin: boolean }
 
 export function yerelYetki(): Yetki {
-  if (typeof window === "undefined") return { rol: "yonetici", yetkiler: null };
+  if (typeof window === "undefined") return { rol: "yonetici", yetkiler: null, superAdmin: false };
   const rol = rolNormalize(localStorage.getItem(KEY));
   let yetkiler: string[] | null = null;
   try { const y = JSON.parse(localStorage.getItem(KEY_Y) || "null"); if (Array.isArray(y)) yetkiler = y; } catch { /* yok */ }
-  return { rol, yetkiler };
+  const superAdmin = localStorage.getItem(KEY_SA) === "1";
+  return { rol, yetkiler, superAdmin };
 }
 
-/** Aktif kullanıcının rol + özel izinlerini getirir (profiles tablosundan). */
+/** Aktif kullanıcının rol + özel izinler + süper admin bilgisini getirir (profiles tablosundan). */
 export async function yetkiGetir(): Promise<Yetki> {
   try {
     const c = supabase();
     const uid = await aktifKullaniciId();
     if (c && uid) {
-      const { data: p } = await c.from("profiles").select("rol, yetkiler").eq("id", uid).maybeSingle();
+      const { data: p } = await c.from("profiles").select("rol, yetkiler, gizli").eq("id", uid).maybeSingle();
       const rol = rolNormalize(p?.rol);
       const yetkiler = Array.isArray(p?.yetkiler) ? p.yetkiler : null;
+      const superAdmin = p?.gizli === true;
       localStorage.setItem(KEY, rol);
       localStorage.setItem(KEY_Y, JSON.stringify(yetkiler));
-      return { rol, yetkiler };
+      localStorage.setItem(KEY_SA, superAdmin ? "1" : "0");
+      return { rol, yetkiler, superAdmin };
     }
   } catch { /* sessiz */ }
   return yerelYetki();
@@ -91,6 +98,33 @@ export async function yetkiGetir(): Promise<Yetki> {
 /** Geriye uyumlu: sadece rolü döndürür. */
 export async function rolGetir(): Promise<Rol> {
   return (await yetkiGetir()).rol;
+}
+
+/** Aktif kullanıcı gizli süper admin mi? */
+export async function superAdminMi(): Promise<boolean> {
+  return (await yetkiGetir()).superAdmin;
+}
+
+/**
+ * Aktif kullanıcının etkin proje limitini döndürür.
+ *   süper admin → Infinity (sınırsız)
+ *   proje_limiti = 0 → Infinity (sınırsız)
+ *   proje_limiti > 0 → o değer
+ *   yoksa → VARSAYILAN_PROJE_LIMITI
+ */
+export async function projeLimitiGetir(): Promise<number> {
+  try {
+    const c = supabase();
+    const uid = await aktifKullaniciId();
+    if (c && uid) {
+      const { data: p } = await c.from("profiles").select("gizli, proje_limiti").eq("id", uid).maybeSingle();
+      if (p?.gizli === true) return Infinity;
+      const l = p?.proje_limiti;
+      if (l === 0) return Infinity;
+      if (typeof l === "number" && l > 0) return l;
+    }
+  } catch { /* sessiz */ }
+  return VARSAYILAN_PROJE_LIMITI;
 }
 
 /** Kişiye özel izin (yetkiler) doluysa onu, değilse rolün varsayılanını kullanır. */

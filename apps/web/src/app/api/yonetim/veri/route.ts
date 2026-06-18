@@ -3,9 +3,19 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 export const dynamic = "force-dynamic";
 
-interface Satir { id: string; owner_id: string; baslik: string; ek?: string; created_at?: string | null }
+interface Satir { id: string; owner_id: string; owner_email?: string; baslik: string; ek?: string; created_at?: string | null }
 
 const BUCKET = "saha-foto";
+
+/** owner_id → e-posta haritası (kimin oluşturduğunu göstermek için). */
+async function emailHaritasi(sb: SupabaseClient): Promise<Map<string, string>> {
+  const m = new Map<string, string>();
+  try {
+    const { data } = await sb.auth.admin.listUsers({ perPage: 1000 });
+    for (const u of data?.users ?? []) m.set(u.id, u.email ?? "");
+  } catch { /* yok */ }
+  return m;
+}
 
 /** GET ?tip=projeler|muhasebe|modul|dosyalar — yönetilebilir kayıt listesi. */
 export async function GET(req: Request) {
@@ -13,9 +23,11 @@ export async function GET(req: Request) {
   if (!d.ok) return d.resp;
   const sb = d.sb;
   const tip = new URL(req.url).searchParams.get("tip") ?? "projeler";
+  const emailler = await emailHaritasi(sb);
+  const epostaEkle = (arr: Satir[]) => arr.map((s) => ({ ...s, owner_email: emailler.get(s.owner_id) ?? "" }));
 
   if (tip === "dosyalar") {
-    const satirlar = await dosyalariListele(sb);
+    const satirlar = epostaEkle(await dosyalariListele(sb));
     return Response.json({ satirlar });
   }
 
@@ -41,7 +53,7 @@ export async function GET(req: Request) {
     }
   }
 
-  return Response.json({ satirlar });
+  return Response.json({ satirlar: epostaEkle(satirlar) });
 }
 
 /** DELETE ?tip=&id= — kaydı sil. */

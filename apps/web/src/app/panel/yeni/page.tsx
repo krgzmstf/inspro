@@ -26,11 +26,10 @@ import {
   formatTL,
 } from "@/lib/projects";
 
-const PROJE_LIMITI = 3; // her kullanıcı en fazla 3 proje
 import { DOGRAMA_TIPLERI, HOL_MALZEME } from "@/lib/binaAlanlari";
 import { type Poz, type LibId, ensurePozlarSeeded, POZ_KUTUPHANELER, DEFAULT_LIB } from "@/lib/pozlar";
 import { aiMetrajPozKalemleri } from "@/lib/kesifEslesme";
-import { yetkiGetir } from "@/lib/rol";
+import { projeLimitiGetir } from "@/lib/rol";
 
 const CITIES = [
   "İstanbul", "Ankara", "İzmir", "Bursa", "Antalya", "Adana", "Konya",
@@ -74,9 +73,10 @@ export default function YeniProjePage() {
   const [step, setStep] = useState(1);
   const [yetkiHazir, setYetkiHazir] = useState(false);
   const [projeSayisi, setProjeSayisi] = useState(0);
+  const [limit, setLimit] = useState(Infinity); // kişiye özel proje limiti (yüklenene kadar engelleme yok)
 
   useEffect(() => {
-    yetkiGetir().then(() => setYetkiHazir(true));
+    projeLimitiGetir().then((l) => { setLimit(l); setYetkiHazir(true); });
     setProjeSayisi(loadProjects().length);
   }, []);
 
@@ -525,8 +525,8 @@ export default function YeniProjePage() {
         return;
       }
     }
-    if (loadProjects().length >= PROJE_LIMITI) {
-      alert(`En fazla ${PROJE_LIMITI} proje oluşturabilirsiniz. Yeni proje için bir projeyi silin.`);
+    if (loadProjects().length >= limit) {
+      alert(`En fazla ${limit} proje oluşturabilirsiniz. Yeni proje için bir projeyi silin.`);
       return;
     }
     const proje = createProject(ortak);
@@ -535,12 +535,12 @@ export default function YeniProjePage() {
 
   /* ─────────────── RENDER ─────────────── */
 
-  if (yetkiHazir && !editId && projeSayisi >= PROJE_LIMITI) {
+  if (yetkiHazir && !editId && projeSayisi >= limit) {
     return (
       <div className="mx-auto max-w-lg rounded-2xl border border-slate-200 bg-white p-10 text-center shadow-sm">
         <div className="text-4xl">📁</div>
         <h1 className="mt-3 text-lg font-bold text-slate-900">Proje limitine ulaştın</h1>
-        <p className="mt-1 text-sm text-slate-500">Her kullanıcı en fazla <b>{PROJE_LIMITI} proje</b> oluşturabilir. Yeni proje için önce mevcut bir projeyi silmelisin.</p>
+        <p className="mt-1 text-sm text-slate-500">Hesabın en fazla <b>{limit} proje</b> oluşturabilir. Yeni proje için önce mevcut bir projeyi silmelisin.</p>
         <Link href="/panel" className="mt-5 inline-block rounded-xl bg-ink-900 px-6 py-3 text-sm font-bold text-white transition hover:bg-ink-800">← Panele Dön</Link>
       </div>
     );
