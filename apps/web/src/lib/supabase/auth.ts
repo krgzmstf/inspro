@@ -190,6 +190,41 @@ export async function ortakGiris(sifre: string): Promise<AuthSonuc> {
   } catch (e) { return { ok: false, mesaj: (e as Error).message }; }
 }
 
+// ── Google ile giriş (OAuth) ──
+export async function googleGiris(): Promise<AuthSonuc> {
+  try {
+    const c = sb();
+    const { error } = await c.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: typeof window !== "undefined" ? `${window.location.origin}/panel` : undefined },
+    });
+    if (error) throw error;
+    return { ok: true, mesaj: "" };
+  } catch (e) { return { ok: false, mesaj: cevir(e) }; }
+}
+
+// ── Şifremi unuttum (e-posta ile sıfırlama bağlantısı) ──
+export async function sifremiUnuttum(email: string): Promise<AuthSonuc> {
+  try {
+    const c = sb();
+    const { error } = await c.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: typeof window !== "undefined" ? `${window.location.origin}/sifre-sifirla` : undefined,
+    });
+    if (error) throw error;
+    return { ok: true, mesaj: "Şifre sıfırlama bağlantısı e-postana gönderildi." };
+  } catch (e) { return { ok: false, mesaj: cevir(e) }; }
+}
+
+// ── Yeni şifre belirle (sıfırlama sayfasında) ──
+export async function sifreyiGuncelle(yeniSifre: string): Promise<AuthSonuc> {
+  try {
+    const c = sb();
+    const { error } = await c.auth.updateUser({ password: yeniSifre });
+    if (error) throw error;
+    return { ok: true, mesaj: "Şifren güncellendi." };
+  } catch (e) { return { ok: false, mesaj: cevir(e) }; }
+}
+
 export async function cikisYap(): Promise<void> {
   try { await sb().auth.signOut(); } catch { /* yok say */ }
 }

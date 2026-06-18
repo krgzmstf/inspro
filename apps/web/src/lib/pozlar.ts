@@ -20,13 +20,13 @@ export const DEFAULT_LIB: LibId = "kut2";
 
 /** Tüm kütüphaneler BOŞ başlar; pozlar Excel/CSV ile içe aktarılır veya elle eklenir. */
 export const POZ_KUTUPHANELER: { id: LibId; ad: string; csb: boolean }[] = [
-  { id: "kut1", ad: "POZ-KÜT-1", csb: false },
-  { id: "kut2", ad: "Genel Poz Küt-2", csb: false },
-  { id: "kut3", ad: "Küt-3 (Özelim)", csb: false },
+  { id: "kut1", ad: "POZ KÜTÜPHANESİ 1", csb: false },
+  { id: "kut2", ad: "TÜM POZLAR", csb: false },
+  { id: "kut3", ad: "ÖZEL POZ KÜTÜPHANESİ", csb: false },
 ];
 
 export function pozKutuphaneAdi(id: string | undefined): string {
-  return POZ_KUTUPHANELER.find((k) => k.id === id)?.ad ?? "Genel Poz Küt-2";
+  return POZ_KUTUPHANELER.find((k) => k.id === id)?.ad ?? "TÜM POZLAR";
 }
 function isCsbLib(libId: LibId): boolean {
   return POZ_KUTUPHANELER.find((k) => k.id === libId)?.csb ?? true;

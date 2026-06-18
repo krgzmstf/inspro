@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { kayitBasla, kayitDogrula, profilTamamla } from "@/lib/supabase/auth";
 import { MESLEKLER } from "@/lib/meslekler";
 import { ULKELER } from "@/lib/ulkeler";
+import SifreInput from "@/components/SifreInput";
 
 type Asama = "kayit" | "kod" | "profil";
 
@@ -102,11 +103,11 @@ export default function KayitPage() {
                 className="mt-1 w-full rounded-xl border-2 border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500" />
             </label>
             <label className="block text-sm font-semibold text-slate-700">Şifre
-              <input type="password" required value={sifre} onChange={(e) => setSifre(e.target.value)} placeholder="en az 6 karakter"
+              <SifreInput required value={sifre} onChange={(e) => setSifre(e.target.value)} placeholder="en az 6 karakter"
                 className="mt-1 w-full rounded-xl border-2 border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500" />
             </label>
             <label className="block text-sm font-semibold text-slate-700">Şifre (tekrar)
-              <input type="password" required value={sifre2} onChange={(e) => setSifre2(e.target.value)}
+              <SifreInput required value={sifre2} onChange={(e) => setSifre2(e.target.value)}
                 className="mt-1 w-full rounded-xl border-2 border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500" />
             </label>
             <button type="submit" disabled={yukleniyor}

@@ -21,6 +21,7 @@ import {
   DEFAULT_LIB,
 } from "@/lib/pozlar";
 import { parsePozRows } from "@/lib/pozImport";
+import { yetkiGetir } from "@/lib/rol";
 import { excelOku, excelYaz, pdfYazdir } from "@/lib/disaAktar";
 import { formatTL } from "@/lib/projects";
 
@@ -58,6 +59,9 @@ export default function PozlarPage() {
 
   // Hangi kütüphane? ?lib=kut1 / kut2 / kut3
   const [libId, setLibId] = useState<LibId>(DEFAULT_LIB);
+  const [rol, setRol] = useState<string>("yonetici");
+  // TÜM POZLAR (kut2) yalnızca yöneticiye açık; diğerleri herkese.
+  const saltOkunur = libId === "kut2" && rol !== "yonetici";
 
   // Özel poz ekleme formu
   const [ozelAcik, setOzelAcik] = useState(false);
@@ -76,6 +80,7 @@ export default function PozlarPage() {
 
   function handleOzelEkle(e: React.FormEvent) {
     e.preventDefault();
+    if (saltOkunur) return;
     setOzelMsg("");
     const f = parseFloat(oFiyat);
     if (!oKod.trim() || !oAd.trim()) { setOzelMsg("❌ Poz kodu ve adı gerekli."); return; }
@@ -93,6 +98,7 @@ export default function PozlarPage() {
       .slice(0, 25);
   })();
   function kopyala(p: Poz) {
+    if (saltOkunur) return;
     setPozlar(upsertPozlar(libId, [{ ...p }]));
     setKopyaMsg(`✓ "${p.kod}" bu kütüphaneye kopyalandı.`);
   }
@@ -102,6 +108,7 @@ export default function PozlarPage() {
     const lib: LibId = q === "kut1" || q === "kut3" ? q : "kut2";
     setLibId(lib);
     setYukleniyor(true);
+    yetkiGetir().then((y) => setRol(y.rol));
     ensurePozlarSeeded(lib).then((p) => {
       setPozlar(p);
       setYukleniyor(false);
@@ -124,17 +131,20 @@ export default function PozlarPage() {
   const gosterilen = filtreli.slice(0, limit);
 
   function handleResmiDuzelt(kod: string, value: string) {
+    if (saltOkunur) return;
     const f = parseFloat(value);
     if (!f || f <= 0) return;
     setPozlar(updateResmiFiyat(libId, kod, f, "Resmî fiyat elle düzeltildi"));
   }
 
   function handleDelete(kod: string) {
+    if (saltOkunur) return;
     if (!confirm(`${kod} pozu silinsin mi?`)) return;
     setPozlar(deletePoz(libId, kod));
   }
 
   async function handleReset() {
+    if (saltOkunur) return;
     if (!confirm("Bu kütüphanedeki TÜM pozlar silinsin mi? Bu işlem geri alınamaz.")) return;
     setYukleniyor(true);
     setPozlar(await resetPozlar(libId));
@@ -153,6 +163,7 @@ export default function PozlarPage() {
   }
 
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    if (saltOkunur) return;
     const file = e.target.files?.[0];
     if (!file) return;
     setImportMsg("Okunuyor…");
@@ -194,6 +205,7 @@ export default function PozlarPage() {
   }
 
   async function handleAiGuncelle() {
+    if (saltOkunur) return;
     const hedef = filtreli.slice(0, 40);
     if (hedef.length === 0) return;
     setAiBusy(true);
@@ -236,6 +248,11 @@ export default function PozlarPage() {
 
   return (
     <div className="mx-auto max-w-6xl">
+      {saltOkunur && (
+        <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">
+          🔒 <b>TÜM POZLAR</b> kütüphanesini yalnızca <b>yönetici</b> düzenleyebilir. Listeyi görüntüleyip projelerinde kullanabilirsin; ekleme/düzenleme/silme kapalıdır.
+        </div>
+      )}
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-extrabold text-slate-900">
