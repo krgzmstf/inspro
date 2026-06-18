@@ -6,8 +6,8 @@ import { useRouter } from "next/navigation";
 import { girisBasla, girisDogrula, ortakGiris, googleGiris, sifremiUnuttum } from "@/lib/supabase/auth";
 import SifreInput from "@/components/SifreInput";
 
-// Google ile giriş: Supabase'de Google sağlayıcısı (Client ID/Secret) kurulunca true yap.
-const GOOGLE_GIRIS_AKTIF = false;
+// Google ile giriş: Supabase'de Google sağlayıcısı kuruldu → aktif.
+const GOOGLE_GIRIS_AKTIF = true;
 
 export default function GirisPage() {
   const router = useRouter();
