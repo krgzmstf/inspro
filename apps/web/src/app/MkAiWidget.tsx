@@ -11,6 +11,7 @@
    ────────────────────────────────────────────────────────── */
 
 import { useEffect, useRef, useState } from "react";
+import { apiFetch } from "@/lib/apiTaban";
 import { loadBilgiler } from "@/lib/bilgiTabani";
 import { supabase } from "@/lib/supabase/client";
 import { pollinationsUrl } from "@/lib/gorsel";
@@ -69,7 +70,7 @@ export default function MkAiWidget() {
       const c = supabase();
       const { data: oturum } = c ? await c.auth.getSession() : { data: { session: null } };
       const tok = oturum.session?.access_token;
-      const res = await fetch("/api/mk-ai/danis", {
+      const res = await apiFetch("/api/mk-ai/danis", {
         method: "POST",
         headers: { "Content-Type": "application/json", ...(tok ? { Authorization: "Bearer " + tok } : {}) },
         body: JSON.stringify({ messages: yeni, ekBilgi: loadBilgiler() }),
@@ -78,8 +79,12 @@ export default function MkAiWidget() {
       if (!res.ok) throw new Error(data.error || "İstek başarısız.");
       setSaglayici(data.saglayici ?? null);
       setMesajlar([...yeni, { role: "assistant", content: data.text ?? "", kaynaklar: data.kaynaklar ?? [], demo: !!data.demoMode }]);
-    } catch (e) {
-      setMesajlar([...yeni, { role: "assistant", content: "⚠️ " + (e as Error).message }]);
+    } catch {
+      // Sunucuya ulaşılamadı (çevrimdışı) → yerel bilgi tabanından yanıt ver
+      const { yerelDanis } = await import("@/lib/mkAiCevapYerel");
+      const y = yerelDanis(q);
+      setSaglayici(null);
+      setMesajlar([...yeni, { role: "assistant", content: y.text, kaynaklar: y.kaynaklar, demo: true }]);
     } finally {
       setYukleniyor(false);
     }
@@ -93,7 +98,7 @@ export default function MkAiWidget() {
     setGorselYukleniyor(true);
     try {
       // 1) İstekten zengin İngilizce prompt üret
-      const pr = await fetch("/api/mk-ai/gorsel", {
+      const pr = await apiFetch("/api/mk-ai/gorsel", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ istek: istek.trim() }),
@@ -101,7 +106,7 @@ export default function MkAiWidget() {
       const pd = await pr.json();
       const prompt = (pd.prompt as string) || istek.trim();
       // 2) Görseli üret (HF/Gemini); olmazsa Pollinations yedeği
-      const gr = await fetch("/api/mk-ai/gorsel-uret", {
+      const gr = await apiFetch("/api/mk-ai/gorsel-uret", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt }),

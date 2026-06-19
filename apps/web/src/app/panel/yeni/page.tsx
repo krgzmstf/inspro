@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { apiFetch } from "@/lib/apiTaban";
 import {
   type ProjectType,
   type FloorPlan,
@@ -250,7 +251,7 @@ export default function YeniProjePage() {
     try {
       const buf = await file.arrayBuffer();
       const base64 = arrayBufferToBase64(buf);
-      const res = await fetch("/api/plan-oku", {
+      const res = await apiFetch("/api/plan-oku", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ pdfBase64: base64, dosyaAdi: file.name, kapsam: "kat" }),
@@ -521,7 +522,7 @@ export default function YeniProjePage() {
       const mevcut = getProject(editId);
       if (mevcut) {
         updateProject({ ...mevcut, ...ortak }); // id, createdAt, phases korunur
-        router.push(`/panel/proje/${editId}`);
+        router.push(`/panel/proje?id=${editId}`);
         return;
       }
     }
@@ -530,7 +531,7 @@ export default function YeniProjePage() {
       return;
     }
     const proje = createProject(ortak);
-    router.push(`/panel/proje/${proje.id}`);
+    router.push(`/panel/proje?id=${proje.id}`);
   }
 
   /* ─────────────── RENDER ─────────────── */

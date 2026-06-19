@@ -31,3 +31,6 @@
 # Self-hosted Supabase docker yığını (supabase/supabase klonu, kendi git'i var).
 # Yerelde durur; repo'ya gömülmez. Şema: supabase/migrations/ altında.
 /supabase-docker/
+
+# native build çıktısı (paylaşım için ayrı tutulur)
+*.apk

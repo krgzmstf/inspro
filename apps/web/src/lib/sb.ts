@@ -46,20 +46,22 @@ export async function blobOku<T = unknown>(modul: string): Promise<T[] | null> {
   }
 }
 
-/** Bir modülün tüm dizisini buluta yaz (upsert). Oturum yoksa no-op. */
-export async function blobYaz(modul: string, dizi: unknown[]): Promise<void> {
+/** Bir modülün tüm dizisini buluta yaz (upsert). Başarılıysa true.
+    Oturum yoksa/ağ hatasında false → senkron kuyruğu yeniden dener. */
+export async function blobYaz(modul: string, dizi: unknown[]): Promise<boolean> {
   const c = supabase();
-  if (!c) return;
+  if (!c) return false;
   const uid = await aktifKullaniciId();
-  if (!uid) return;
+  if (!uid) return false;
   try {
-    await c
+    const { error } = await c
       .from("modul_veri")
       .upsert(
         { owner_id: uid, modul, veri: dizi, updated_at: new Date().toISOString() },
         { onConflict: "owner_id,modul" },
       );
+    return !error;
   } catch {
-    /* sessiz */
+    return false;
   }
 }

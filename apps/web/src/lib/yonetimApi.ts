@@ -7,6 +7,7 @@
    ────────────────────────────────────────────────────────── */
 
 import { supabase } from "./supabase/client";
+import { apiFetch } from "./apiTaban";
 
 async function basliklar(): Promise<HeadersInit> {
   const c = supabase();
@@ -18,7 +19,7 @@ async function basliklar(): Promise<HeadersInit> {
 }
 
 async function iste<T = unknown>(yol: string, init?: RequestInit): Promise<T> {
-  const res = await fetch("/api/yonetim" + yol, { ...init, headers: { ...(await basliklar()), ...(init?.headers ?? {}) } });
+  const res = await apiFetch("/api/yonetim" + yol, { ...init, headers: { ...(await basliklar()), ...(init?.headers ?? {}) } });
   if (!res.ok) {
     let mesaj = "İşlem başarısız.";
     try { const j = await res.json(); mesaj = (j.detail ?? mesaj) as string; } catch { /* gövde yok */ }

@@ -7,6 +7,7 @@ import { type Kullanici, supabaseVar, aktifKullanici, cikisYap, oturumDinle } fr
 import { yerelKullanici, yerelCikis } from "@/lib/yerelOturum";
 import { type Rol, ROL_ETIKET, yetkiGetir, menuyeYetkili } from "@/lib/rol";
 import { ayarGetir, menuyuUygula, MENU_KATALOG, type MenuAyar } from "@/lib/ayar";
+import BaglantiDurumu from "@/components/BaglantiDurumu";
 
 const NAV = MENU_KATALOG;
 
@@ -153,6 +154,7 @@ export default function PanelLayout({
             })}
           </div>
           <div className="flex items-center gap-3">
+            <BaglantiDurumu />
             {(() => {
               const ad = kullanici?.email ?? yerelAd ?? "Kullanıcı";
               return (

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">insPRO</string>
+    <string name="title_activity_main">insPRO</string>
+    <string name="package_name">com.yazeproje.inspro</string>
+    <string name="custom_url_scheme">com.yazeproje.inspro</string>
+</resources>

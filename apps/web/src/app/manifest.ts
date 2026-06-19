@@ -1,5 +1,8 @@
 import type { MetadataRoute } from "next";
 
+// Statik export (Capacitor) için manifest'i derleme anında üret.
+export const dynamic = "force-static";
+
 /** PWA manifesti — telefona "uygulama gibi" kurulabilmesi için kimlik kartı. */
 export default function manifest(): MetadataRoute.Manifest {
   return {

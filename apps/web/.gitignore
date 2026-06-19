@@ -36,6 +36,19 @@ yarn-error.log*
 # vercel
 .vercel
 
+# capacitor / native build çıktıları
+/.cap-stash/
+/android/app/build/
+/android/build/
+/android/.gradle/
+/android/local.properties
+/android/app/src/main/assets/public/
+/android/app/src/main/assets/capacitor.config.json
+/ios/App/build/
+/ios/App/Pods/
+dev*.log
+devserver.log
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

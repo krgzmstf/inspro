@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { apiFetch } from "@/lib/apiTaban";
 import { type Project, loadProjects, getProject, formatTL } from "@/lib/projects";
 import { loadMuhasebe } from "@/lib/muhasebe";
 import { loadSaha } from "@/lib/saha";
@@ -140,7 +141,7 @@ export default function MkAiPage() {
     if (!girdi || !rapor) return;
     setYukleniyor(true); setHata(""); setAi(null);
     try {
-      const res = await fetch("/api/mk-ai", {
+      const res = await apiFetch("/api/mk-ai", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ozet: riskOzetMetni(girdi, rapor), skor: rapor.skor, seviye: rapor.seviye }),
@@ -178,7 +179,7 @@ export default function MkAiPage() {
       const { data: oturum } = c ? await c.auth.getSession() : { data: { session: null } };
       const tok = oturum.session?.access_token;
       // Agentic uç: mk_ai gerekirse yönetmelik + hesap_ozeti araçlarını çağırır.
-      const res = await fetch("/api/mk-ai/danis", {
+      const res = await apiFetch("/api/mk-ai/danis", {
         method: "POST",
         headers: { "Content-Type": "application/json", ...(tok ? { Authorization: "Bearer " + tok } : {}) },
         body: JSON.stringify({ messages: yeni, baglam, ekBilgi: loadBilgiler() }),
@@ -190,8 +191,12 @@ export default function MkAiPage() {
         ...yeni,
         { role: "assistant", content: data.text ?? "", kaynaklar: data.kaynaklar ?? [], demo: !!data.demoMode },
       ]);
-    } catch (err) {
-      setMesajlar([...yeni, { role: "assistant", content: "⚠️ " + (err as Error).message }]);
+    } catch {
+      // Sunucuya ulaşılamadı (çevrimdışı) → yerel bilgi tabanından yanıt
+      const { yerelDanis } = await import("@/lib/mkAiCevapYerel");
+      const y = yerelDanis(q);
+      setSohbetSaglayici(null);
+      setMesajlar([...yeni, { role: "assistant", content: y.text, kaynaklar: y.kaynaklar, demo: true }]);
     } finally {
       setSohbetYukleniyor(false);
     }
@@ -227,7 +232,7 @@ export default function MkAiPage() {
       const ekIstek = yuklenenGorsel
         ? `${gorselIstek ? gorselIstek + ". " : ""}Use the provided image as the base; transform it into a clean photorealistic architectural render while keeping its overall composition.`
         : gorselIstek;
-      const res = await fetch("/api/mk-ai/gorsel", {
+      const res = await apiFetch("/api/mk-ai/gorsel", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ baglam: dosya, istek: ekIstek }),
@@ -238,7 +243,7 @@ export default function MkAiPage() {
       setGorselPrompt(prompt);
 
       // 2) Önce Gemini (Nano Banana) dene — hem üretir hem yüklenen görseli düzenler.
-      const gRes = await fetch("/api/mk-ai/gorsel-uret", {
+      const gRes = await apiFetch("/api/mk-ai/gorsel-uret", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

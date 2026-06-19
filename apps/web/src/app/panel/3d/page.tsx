@@ -281,7 +281,7 @@ export default function Bina3DPage() {
           </div>
 
           {proje && (
-            <Link href={`/panel/proje/${proje.id}`} className="block rounded-xl border-2 border-slate-200 px-4 py-2.5 text-center text-sm font-bold text-slate-600 transition hover:border-brand-500 hover:text-brand-600">
+            <Link href={`/panel/proje?id=${proje.id}`} className="block rounded-xl border-2 border-slate-200 px-4 py-2.5 text-center text-sm font-bold text-slate-600 transition hover:border-brand-500 hover:text-brand-600">
               Proje detayına git →
             </Link>
           )}

@@ -1,11 +1,13 @@
 /* ──────────────────────────────────────────────────────────
-   insPRO — Projeler bulut senkronu (self-hosted Supabase)
+   insPRO — Projeler bulut senkronu (offline-first)
 
-   localStorage ana depo; bu katman bulut (modul_veri/'projects')
-   ile eşitler. Oturum yoksa no-op → localStorage ile çalışır.
+   localStorage ana depo; senkronKuyruk bulut (modul_veri/'projects')
+   ile eşitler. Çevrimdışı düzenlemeler kuyruğa alınır, online olunca
+   otomatik itilir. Açılış senkronunda kirli (offline) veri korunur.
    ────────────────────────────────────────────────────────── */
 
-import { blobOku, blobYaz, aktifKullaniciId } from "./sb";
+import { blobOku, aktifKullaniciId } from "./sb";
+import { degisti, kirliMi, cevrimici } from "./senkronKuyruk";
 import type { Project } from "./projects";
 
 const MODUL = "projects";
@@ -15,26 +17,21 @@ export async function bulutAktif(): Promise<boolean> {
   return (await aktifKullaniciId()) !== null;
 }
 
-export async function projeyiBulutaYaz(p: Project): Promise<void> {
-  const arr = await blobOku<Project>(MODUL);
-  if (arr === null) return; // oturum yok
-  const yeni = [p, ...arr.filter((x) => x.id !== p.id)];
-  await blobYaz(MODUL, yeni);
+export async function projeyiBulutaYaz(_p: Project): Promise<void> {
+  degisti(MODUL); // localStorage zaten güncellendi → tüm diziyi itele/kuyrukla
 }
 
-export async function projeyiBuluttanSil(id: string): Promise<void> {
-  const arr = await blobOku<Project>(MODUL);
-  if (arr === null) return;
-  await blobYaz(MODUL, arr.filter((x) => x.id !== id));
+export async function projeyiBuluttanSil(_id: string): Promise<void> {
+  degisti(MODUL);
 }
 
-/** Açılış senkronu: bulut otorite; bulut boş + yerel doluysa yereli taşır. */
+/** Açılış senkronu: kirliyse yerel kazanır; değilse bulut otorite. */
 export async function projeleriSenkronla(yerel: Project[]): Promise<Project[] | null> {
+  if ((await aktifKullaniciId()) === null) return null; // oturum yok
+  if (kirliMi(MODUL)) { if (cevrimici()) degisti(MODUL); return yerel; } // yerel kazanır
+  if (!cevrimici()) return yerel;
   const bulut = await blobOku<Project>(MODUL);
-  if (bulut === null) return null; // oturum yok
-  if (bulut.length === 0 && yerel.length > 0) {
-    await blobYaz(MODUL, yerel);
-    return yerel;
-  }
+  if (bulut === null) return yerel;
+  if (bulut.length === 0 && yerel.length > 0) { degisti(MODUL); return yerel; }
   return bulut;
 }

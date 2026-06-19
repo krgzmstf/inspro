@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { apiFetch } from "@/lib/apiTaban";
 import {
   type Poz,
   type PozKaynak,
@@ -211,7 +212,7 @@ export default function PozlarPage() {
     setAiBusy(true);
     setAiMsg(`${hedef.length} poz için piyasa fiyatları araştırılıyor…`);
     try {
-      const res = await fetch("/api/fiyat-guncelle", {
+      const res = await apiFetch("/api/fiyat-guncelle", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

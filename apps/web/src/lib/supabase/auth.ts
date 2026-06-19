@@ -42,6 +42,44 @@ export interface ProfilVeri {
 
 export function supabaseVar(): boolean { return sbVar(); }
 
+// ── Çevrimdışı oturum önbelleği ──
+// getUser() ağ ister; internet yokken kullanıcı panelden atılmasın diye
+// son başarılı profil localStorage'da saklanır ve getSession() (ağsız) ile
+// birleştirilir.
+const PROFIL_CACHE = "inspro-profil-cache";
+
+function profilCacheYaz(k: Kullanici) {
+  try { localStorage.setItem(PROFIL_CACHE, JSON.stringify(k)); } catch { /* yok say */ }
+}
+function profilCacheOku(): Kullanici | null {
+  try {
+    const s = typeof window !== "undefined" ? localStorage.getItem(PROFIL_CACHE) : null;
+    return s ? (JSON.parse(s) as Kullanici) : null;
+  } catch { return null; }
+}
+function profilCacheSil() {
+  try { localStorage.removeItem(PROFIL_CACHE); } catch { /* yok say */ }
+}
+
+/** Ağ yokken: yerel oturumdan (getSession ağ istemez) kullanıcıyı kur. */
+async function cevrimdisiYedek(c: ReturnType<typeof supabase>): Promise<Kullanici | null> {
+  if (!c) return null;
+  try {
+    const { data: { session } } = await c.auth.getSession();
+    if (!session?.user) return null; // gerçekten oturum yok
+    const cache = profilCacheOku();
+    if (cache && cache.id === session.user.id) return cache;
+    // Önbellek yoksa en azından oturum bilgisiyle içeri al
+    return {
+      id: session.user.id,
+      email: session.user.email ?? "",
+      rol: "yonetici",
+      yetkiler: null,
+      profil_tamam: true,
+    };
+  } catch { return null; }
+}
+
 function sb() {
   const c = supabase();
   if (!c) throw new Error("Supabase yapılandırılmadı (.env.local).");
@@ -226,6 +264,7 @@ export async function sifreyiGuncelle(yeniSifre: string): Promise<AuthSonuc> {
 }
 
 export async function cikisYap(): Promise<void> {
+  profilCacheSil();
   try { await sb().auth.signOut(); } catch { /* yok say */ }
 }
 
@@ -235,14 +274,20 @@ export async function aktifKullanici(): Promise<Kullanici | null> {
   if (!c) return null;
   try {
     const { data: { user } } = await c.auth.getUser();
-    if (!user) return null;
+    if (!user) {
+      // getUser ağ ister; user=null ise (online) gerçekten oturum yok.
+      // Yine de bir oturum kalıntısı varsa çevrimdışı yedeğe bak.
+      const yedek = await cevrimdisiYedek(c);
+      if (!yedek) profilCacheSil();
+      return yedek;
+    }
     const { data: p } = await c.from("profiles").select("*").eq("id", user.id).maybeSingle();
     let yontem: "email" | "totp" = "email";
     try {
       const { data: f } = await c.auth.mfa.listFactors();
       if ((f?.totp?.length ?? 0) > 0) yontem = "totp";
     } catch { /* yok say */ }
-    return {
+    const k: Kullanici = {
       id: user.id,
       email: user.email ?? "",
       ad_soyad: p?.ad_soyad ?? undefined,
@@ -261,8 +306,11 @@ export async function aktifKullanici(): Promise<Kullanici | null> {
       profil_tamam: p?.profil_tamam ?? false,
       iki_adim_yontem: yontem,
     };
+    profilCacheYaz(k); // çevrimdışı giriş için sakla
+    return k;
   } catch {
-    return null;
+    // Ağ hatası (offline) → yerel oturum + önbellekten gir
+    return cevrimdisiYedek(c);
   }
 }
 

@@ -1,8 +1,11 @@
 import type { NextConfig } from "next";
 
+// Capacitor (native) yapısı: CAP_EXPORT=1 verildiğinde statik export üretilir
+// (out/). Bu mod Vercel'i etkilemez; Vercel normal sunucu yapısını kullanır.
+const capExport = process.env.CAP_EXPORT === "1";
+
 // Güvenlik başlıkları — clickjacking, MIME-sniffing, bilgi sızıntısı sertleştirme.
-// (CSP eklenmedi: Next.js geliştirme modu eval gerektirir; ileride üretim için
-//  ayrı, alan adına özel bir CSP tanımlanabilir.)
+// (Statik export'ta headers() desteklenmez → yalnız sunucu yapısında uygulanır.)
 const guvenlikBasliklari = [
   { key: "X-Frame-Options", value: "SAMEORIGIN" },
   { key: "X-Content-Type-Options", value: "nosniff" },
@@ -11,11 +14,19 @@ const guvenlikBasliklari = [
   { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" },
 ];
 
-const nextConfig: NextConfig = {
-  // Not: Vercel kendi çıktısını yönetir; "standalone" (Docker) kaldırıldı.
-  async headers() {
-    return [{ source: "/:path*", headers: guvenlikBasliklari }];
-  },
-};
+const nextConfig: NextConfig = capExport
+  ? {
+      // Native (Capacitor) için tamamen statik istemci paketi → out/
+      output: "export",
+      images: { unoptimized: true },
+      // Statik dosya sunumunda /panel → /panel/index.html çözümü
+      trailingSlash: true,
+    }
+  : {
+      // Vercel (web) — sunucu yapısı + güvenlik başlıkları
+      async headers() {
+        return [{ source: "/:path*", headers: guvenlikBasliklari }];
+      },
+    };
 
 export default nextConfig;

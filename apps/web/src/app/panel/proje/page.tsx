@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import {
   type Project,
   type PhaseStatus,
@@ -60,8 +60,8 @@ const STATUS_UI: Record<
   },
 };
 
-export default function ProjeDetayPage() {
-  const { id } = useParams<{ id: string }>();
+function ProjeDetayInner() {
+  const id = useSearchParams().get("id") ?? "";
   const [project, setProject] = useState<Project | null | undefined>(undefined);
 
   // Aşama kalemleri (yol haritası alt adımları)
@@ -796,5 +796,13 @@ function PersonelPicker({
         </div>
       )}
     </div>
+  );
+}
+
+export default function ProjeDetayPage() {
+  return (
+    <Suspense fallback={<div className="p-6 text-sm text-slate-500">Yükleniyor…</div>}>
+      <ProjeDetayInner />
+    </Suspense>
   );
 }

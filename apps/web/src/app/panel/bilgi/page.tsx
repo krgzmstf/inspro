@@ -5,11 +5,32 @@ import Link from "next/link";
 import type { YonetmelikKayit } from "@/lib/yonetmelik";
 import { YONETMELIK } from "@/lib/yonetmelik";
 import { loadBilgiler, bosBilgi, saveBilgi, deleteBilgi } from "@/lib/bilgiTabani";
+import { dokumandanBilgiler } from "@/lib/dokumanMetni";
 
 export default function BilgiTabaniPage() {
   const [liste, setListe] = useState<YonetmelikKayit[]>([]);
   const [form, setForm] = useState<YonetmelikKayit | null>(null);
   const [etiketMetni, setEtiketMetni] = useState("");
+  const [dokYukleniyor, setDokYukleniyor] = useState(false);
+  const [dokDurum, setDokDurum] = useState("");
+
+  async function dokumanYukle(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    e.target.value = "";
+    if (!f) return;
+    setDokYukleniyor(true);
+    setDokDurum(`"${f.name}" işleniyor…`);
+    try {
+      const kayitlar = await dokumandanBilgiler(f);
+      for (const k of kayitlar) saveBilgi(k);
+      setDokDurum(`✓ "${f.name}" eklendi — ${kayitlar.length} bölüm. mk_ai artık (çevrimdışı da) bu dökümandan yanıtlayabilir.`);
+      yenile();
+    } catch (err) {
+      setDokDurum("⚠️ " + (err as Error).message);
+    } finally {
+      setDokYukleniyor(false);
+    }
+  }
 
   useEffect(() => { setListe(loadBilgiler()); }, []);
 
@@ -48,11 +69,26 @@ export default function BilgiTabaniPage() {
           </p>
         </div>
         {!form && (
-          <button onClick={yeni} className="rounded-xl bg-brand-500 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-brand-600">
-            + Bilgi Ekle
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <label className={`cursor-pointer rounded-xl border-2 border-brand-500/50 px-5 py-2.5 text-sm font-bold text-brand-600 transition hover:bg-brand-50 ${dokYukleniyor ? "pointer-events-none opacity-60" : ""}`}>
+              {dokYukleniyor ? "İşleniyor…" : "📄 Doküman Yükle"}
+              <input type="file" accept=".pdf,.docx,.txt,.md,application/pdf,text/plain" onChange={dokumanYukle} disabled={dokYukleniyor} className="hidden" />
+            </label>
+            <button onClick={yeni} className="rounded-xl bg-brand-500 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-brand-600">
+              + Bilgi Ekle
+            </button>
+          </div>
         )}
       </div>
+
+      {dokDurum && (
+        <p className={`mt-3 rounded-xl px-3 py-2 text-sm font-semibold ${dokDurum.startsWith("⚠️") ? "bg-red-50 text-red-600" : dokDurum.startsWith("✓") ? "bg-emerald-50 text-emerald-700" : "bg-sky-50 text-sky-700"}`}>
+          {dokDurum}
+        </p>
+      )}
+      <p className="mt-2 text-xs text-slate-400">
+        PDF, Word (.docx), TXT veya MD yükleyin. Metin <b>cihazınızda</b> çıkarılır (dosya sunucuya gitmez), bölümlere ayrılıp bilgi tabanına eklenir; mk_ai çevrimdışı da bu dökümanlardan kaynak göstererek yanıtlar.
+      </p>
 
       {/* Form */}
       {form && (
