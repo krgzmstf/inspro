@@ -234,11 +234,11 @@ export default function MkAiWidget() {
         <button
           onClick={() => setAcik((v) => !v)}
           aria-label="mk_ai'ye sor"
-          className={`relative flex items-center gap-2 rounded-full bg-ink-950 py-2.5 pl-2.5 pr-4 text-white shadow-2xl ring-2 ring-brand-500/40 transition hover:scale-105 hover:ring-brand-500 ${acik ? "" : "animate-[mkFloat_2.4s_ease-in-out_infinite]"}`}
+          className={`relative flex items-center gap-1.5 rounded-full bg-ink-950 py-1.5 pl-1.5 pr-3 text-white shadow-2xl ring-2 ring-brand-500/40 transition hover:scale-105 hover:ring-brand-500 ${acik ? "" : "animate-[mkFloat_2.4s_ease-in-out_infinite]"}`}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/mk-ai-logo.jpg" alt="mk_ai" className="h-9 w-9 rounded-full object-cover" />
-          <span className="text-sm font-extrabold">{acik ? "Kapat" : "mk'ye Sor"}</span>
+          <img src="/mk-ai-logo.jpg" alt="mk_ai" className="h-7 w-7 rounded-full object-cover" />
+          <span className="text-xs font-extrabold">{acik ? "Kapat" : "mk'ye Sor"}</span>
         </button>
       </div>
 

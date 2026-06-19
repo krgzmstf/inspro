@@ -246,16 +246,16 @@ export default function IsSurecleriPage() {
           </div>
         </div>
         <div className="mt-3 overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <table className="w-full min-w-[900px] text-sm">
+          <table className="w-full min-w-[560px] text-xs">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50 text-left text-[11px] font-bold uppercase text-slate-500">
-                <th className="px-3 py-2.5">İş Kalemi</th>
-                <th className="px-3 py-2.5">Sorumlu</th>
-                <th className="px-3 py-2.5">Başlangıç</th>
-                <th className="px-3 py-2.5">Bitiş</th>
-                <th className="px-3 py-2.5">İlerleme</th>
-                <th className="px-3 py-2.5">Bağımlılık</th>
-                <th className="px-2 py-2.5" />
+                <th className="px-2 py-2">İş Kalemi</th>
+                <th className="px-2 py-2">Sorumlu</th>
+                <th className="px-2 py-2">Başlangıç</th>
+                <th className="px-2 py-2">Bitiş</th>
+                <th className="px-2 py-2">İlerleme</th>
+                <th className="px-2 py-2">Bağımlılık</th>
+                <th className="px-1 py-2" />
               </tr>
             </thead>
             <tbody>
@@ -263,31 +263,31 @@ export default function IsSurecleriPage() {
                 const oncekiAdlar = (k.oncekiler ?? []).map((id) => kalemler.find((x) => x.id === id)?.ad).filter(Boolean);
                 return (
                   <tr key={k.id} className="border-b border-slate-100 hover:bg-slate-50/60">
-                    <td className="px-3 py-1.5">
+                    <td className="px-2 py-1.5">
                       <input value={k.ad} onChange={(e) => guncelle(k.id, { ad: e.target.value })}
-                        className="w-48 rounded-lg border border-slate-200 px-2 py-1 text-sm font-semibold outline-none focus:border-brand-500" />
+                        className="w-32 rounded-lg border border-slate-200 px-2 py-1 text-xs font-semibold outline-none focus:border-brand-500" />
                     </td>
-                    <td className="px-3 py-1.5">
+                    <td className="px-2 py-1.5">
                       <input value={k.sorumlu} onChange={(e) => guncelle(k.id, { sorumlu: e.target.value })} placeholder="—"
-                        className="w-28 rounded-lg border border-slate-200 px-2 py-1 text-sm outline-none focus:border-brand-500" />
+                        className="w-20 rounded-lg border border-slate-200 px-2 py-1 text-xs outline-none focus:border-brand-500" />
                     </td>
-                    <td className="px-3 py-1.5">
+                    <td className="px-2 py-1.5">
                       <input type="date" value={k.baslangic} onChange={(e) => guncelle(k.id, { baslangic: e.target.value })}
-                        className="rounded-lg border border-slate-200 px-2 py-1 text-xs outline-none focus:border-brand-500" />
+                        className="rounded-lg border border-slate-200 px-1.5 py-1 text-[11px] outline-none focus:border-brand-500" />
                     </td>
-                    <td className="px-3 py-1.5">
+                    <td className="px-2 py-1.5">
                       <input type="date" value={k.bitis} onChange={(e) => guncelle(k.id, { bitis: e.target.value })}
-                        className="rounded-lg border border-slate-200 px-2 py-1 text-xs outline-none focus:border-brand-500" />
+                        className="rounded-lg border border-slate-200 px-1.5 py-1 text-[11px] outline-none focus:border-brand-500" />
                     </td>
-                    <td className="px-3 py-1.5">
-                      <div className="flex items-center gap-2">
+                    <td className="px-2 py-1.5">
+                      <div className="flex items-center gap-1.5">
                         <input type="range" min="0" max="100" step="5" value={k.ilerleme}
                           onChange={(e) => guncelle(k.id, { ilerleme: parseInt(e.target.value) })}
-                          className="w-20 accent-[var(--color-brand-500)]" />
-                        <span className="w-9 text-right text-xs font-bold text-slate-700">%{k.ilerleme}</span>
+                          className="w-16 accent-[var(--color-brand-500)]" />
+                        <span className="w-8 text-right text-[11px] font-bold text-slate-700">%{k.ilerleme}</span>
                       </div>
                     </td>
-                    <td className="relative px-3 py-1.5">
+                    <td className="relative px-2 py-1.5">
                       <button onClick={() => setAcikDep(acikDep === k.id ? null : k.id)}
                         className="rounded-lg border border-slate-200 px-2 py-1 text-xs font-semibold text-slate-600 transition hover:border-brand-500">
                         ↳ {oncekiAdlar.length ? `${oncekiAdlar.length} iş` : "ekle"}

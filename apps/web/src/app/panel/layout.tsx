@@ -92,20 +92,20 @@ export default function PanelLayout({
           menuAcik ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         }`}
       >
-        <div className="flex flex-col items-center gap-1 border-b border-white/10 px-4 py-5">
+        <div className="flex shrink-0 flex-col items-center gap-1 border-b border-white/10 px-4 py-4">
           <Link href="/" className="block">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/inspro-logo.png" alt="insPRO" className="h-24 w-auto object-contain" />
+            <img src="/inspro-logo.png" alt="insPRO" className="h-16 w-auto object-contain" />
           </Link>
           <span className="text-xs font-medium uppercase tracking-widest text-white/50">Panel</span>
         </div>
-        <nav className="flex-1 space-y-1 p-4">
+        <nav className="flex-1 min-h-0 space-y-1 overflow-y-auto overscroll-contain p-4">
           {navListesi.filter((item) => menuyeYetkili(rol, item.href, yetkiler) && (item.href !== "/panel/yonetim" || superAdmin)).map((item) => (
             <Link
               key={item.label}
               href={item.href}
               onClick={() => setMenuAcik(false)}
-              className={`flex items-center gap-3 rounded-xl px-4 py-2.5 text-base font-semibold transition ${
+              className={`flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-semibold transition ${
                 pathname === item.href ||
                 (item.href === "/panel" && pathname.startsWith("/panel/proje"))
                   ? "bg-brand-500 text-white shadow-lg shadow-brand-500/20"
@@ -122,7 +122,7 @@ export default function PanelLayout({
             </Link>
           ))}
         </nav>
-        <div className="border-t border-white/10 p-4 text-sm text-white/50">
+        <div className="shrink-0 border-t border-white/10 p-4 text-sm text-white/50">
           <Link href="/tema" className="block transition hover:text-white">
             🎨 Tema Ayarları
           </Link>

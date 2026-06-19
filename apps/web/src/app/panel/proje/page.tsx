@@ -45,13 +45,13 @@ const STATUS_UI: Record<
 > = {
   bekliyor: {
     label: "Bekliyor",
-    chip: "bg-slate-100 text-slate-500",
-    ring: "border-slate-200 bg-white",
+    chip: "bg-amber-100 text-amber-700",
+    ring: "border-amber-200 bg-[#fdf8ee]",
   },
   devam: {
     label: "Devam Ediyor",
-    chip: "bg-brand-500/15 text-brand-600",
-    ring: "border-brand-500/50 bg-brand-500/5",
+    chip: "bg-sky-100 text-sky-700",
+    ring: "border-sky-400 bg-[#eaf4fc]",
   },
   tamam: {
     label: "Tamamlandı ✓",
@@ -212,8 +212,8 @@ function ProjeDetayInner() {
                       ph.status === "tamam"
                         ? "bg-emerald-500 text-white"
                         : ph.status === "devam"
-                          ? "bg-brand-500 text-white"
-                          : "bg-slate-200 text-slate-500"
+                          ? "bg-sky-600 text-white"
+                          : "bg-amber-400 text-white"
                     }`}
                   >
                     {ph.status === "tamam" ? "✓" : i + 1}
