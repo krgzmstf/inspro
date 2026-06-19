@@ -135,7 +135,10 @@ export default function PanelLayout({
       {/* İçerik */}
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Üst bar (mobilde logo da burada) */}
-        <header className="flex h-16 items-center justify-between border-b border-slate-200 bg-white px-4 sm:px-6">
+        <header
+          className="flex h-16 items-center justify-between border-b border-slate-200 bg-white px-4 sm:px-6"
+          style={native ? { paddingTop: "env(safe-area-inset-top)", height: "calc(4rem + env(safe-area-inset-top))" } : undefined}
+        >
           <div className="flex items-center gap-2 md:hidden">
             <button
               onClick={() => setMenuAcik(true)}
