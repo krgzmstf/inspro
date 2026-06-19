@@ -8,6 +8,9 @@ import { yerelKullanici, yerelCikis } from "@/lib/yerelOturum";
 import { type Rol, ROL_ETIKET, yetkiGetir, menuyeYetkili } from "@/lib/rol";
 import { ayarGetir, menuyuUygula, MENU_KATALOG, type MenuAyar } from "@/lib/ayar";
 import BaglantiDurumu from "@/components/BaglantiDurumu";
+import AltNav from "@/components/AltNav";
+import NativeInit from "@/components/NativeInit";
+import { nativeMi } from "@/lib/apiTaban";
 
 const NAV = MENU_KATALOG;
 
@@ -26,7 +29,9 @@ export default function PanelLayout({
   const [yetkiler, setYetkiler] = useState<string[] | null>(null);
   const [superAdmin, setSuperAdmin] = useState(false);
   const [menuAyar, setMenuAyar] = useState<MenuAyar | null>(null);
+  const [native, setNative] = useState(false);
 
+  useEffect(() => { setNative(nativeMi()); }, []);
   useEffect(() => { yetkiGetir().then((y) => { setRol(y.rol); setYetkiler(y.yetkiler); setSuperAdmin(y.superAdmin); }); }, [kullanici]);
   useEffect(() => { ayarGetir<MenuAyar | null>("menu", null).then(setMenuAyar); }, [kullanici]);
 
@@ -76,6 +81,7 @@ export default function PanelLayout({
 
   return (
     <div className="flex min-h-screen bg-slate-100">
+      <NativeInit />
       {/* Dar ekranda çekmece arka planı */}
       {menuAcik && (
         <div className="fixed inset-0 z-30 bg-black/40 md:hidden" onClick={() => setMenuAcik(false)} />
@@ -175,8 +181,9 @@ export default function PanelLayout({
             })()}
           </div>
         </header>
-        <main className="flex-1 p-4 sm:p-6 lg:p-8">{children}</main>
+        <main className={`flex-1 p-4 sm:p-6 lg:p-8 ${native ? "pb-24" : ""}`}>{children}</main>
       </div>
+      {native && <AltNav onMenu={() => setMenuAcik(true)} />}
     </div>
   );
 }
