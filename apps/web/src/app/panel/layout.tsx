@@ -80,7 +80,7 @@ export default function PanelLayout({
   }
 
   return (
-    <div className="flex min-h-screen bg-slate-100">
+    <div className={`flex min-h-screen ${native ? "bg-white" : "bg-slate-100"}`}>
       <NativeInit />
       {/* Dar ekranda çekmece arka planı */}
       {menuAcik && (
@@ -122,13 +122,19 @@ export default function PanelLayout({
             </Link>
           ))}
         </nav>
-        <div className="shrink-0 border-t border-white/10 p-4 text-sm text-white/50">
-          <Link href="/tema" className="block transition hover:text-white">
+        <div className="shrink-0 space-y-2 border-t border-white/10 p-4 text-sm text-white/50">
+          <Link href="/panel" onClick={() => setMenuAcik(false)} className="block transition hover:text-white">
+            🏠 Ana Sayfa
+          </Link>
+          <Link href="/tema" onClick={() => setMenuAcik(false)} className="block transition hover:text-white">
             🎨 Tema Ayarları
           </Link>
-          <Link href="/" className="mt-2 block transition hover:text-white">
-            ← Vitrin sayfası
-          </Link>
+          <button
+            onClick={cikis}
+            className="mt-1 flex w-full items-center justify-center gap-2 rounded-xl border border-red-400/40 bg-red-500/10 px-4 py-2.5 text-sm font-bold text-red-300 transition hover:bg-red-500/20 hover:text-red-200"
+          >
+            🚪 Çıkış Yap
+          </button>
         </div>
       </aside>
 
@@ -173,9 +179,6 @@ export default function PanelLayout({
                   )}
                   <span className="hidden rounded-full bg-brand-500/15 px-2.5 py-1 text-[10px] font-bold text-brand-600 sm:block">{ROL_ETIKET[rol]}</span>
                   <span className="hidden text-xs font-semibold text-slate-600 sm:block">{ad}</span>
-                  <button onClick={cikis} className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-bold text-slate-600 transition hover:border-red-300 hover:bg-red-50 hover:text-red-600">
-                    Çıkış
-                  </button>
                   <div className="flex h-9 w-9 items-center justify-center rounded-full bg-ink-900 text-sm font-bold uppercase text-white">
                     {ad.charAt(0)}
                   </div>

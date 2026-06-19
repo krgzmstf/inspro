@@ -126,13 +126,13 @@ export default function PanelPage() {
       {/* Özet kartları — komuta merkezi */}
       <div className="mt-6 grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
         {[
-          ["Aktif Proje", String(projects.length), "🏗️"],
-          ["Toplam Alan", `${totalArea.toLocaleString("tr-TR")} m²`, "📐"],
-        ].map(([label, value, icon]) => (
-          <div key={label} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          ["Aktif Proje", String(projects.length), "🏗️", "border-sky-200 bg-[#eaf4fc]"],
+          ["Toplam Alan", `${totalArea.toLocaleString("tr-TR")} m²`, "📐", "border-amber-200 bg-[#fdf8ee]"],
+        ].map(([label, value, icon, renk]) => (
+          <div key={label} className={`rounded-2xl border p-4 shadow-sm ${renk}`}>
             <div className="text-lg">{icon}</div>
             <div className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500">{label}</div>
-            <div className="text-base font-extrabold text-slate-900">{value}</div>    
+            <div className="text-base font-extrabold text-slate-900">{value}</div>
           </div>
         ))}
       </div>
@@ -195,7 +195,7 @@ export default function PanelPage() {
             return (
               <div
                 key={p.id}
-                className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-brand-500/50 hover:shadow-md"
+                className="group rounded-2xl border border-sky-200 bg-[#f2f8fd] p-5 shadow-sm transition hover:border-brand-500 hover:bg-[#eaf4fc] hover:shadow-md"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">

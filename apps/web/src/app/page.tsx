@@ -258,13 +258,23 @@ export default function Home() {
             </Link>
             <Link
               href="/giris"
-              className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-brand-500/25 transition hover:bg-brand-600"
+              className="hidden rounded-lg bg-brand-500 px-3 py-1.5 text-sm font-semibold text-white shadow-lg shadow-brand-500/25 transition hover:bg-brand-600 md:block"
             >
-              Ücretsiz Başla
+              GİRİŞ
             </Link>
           </div>
         </div>
       </header>
+
+      {/* Mobil: GİRİŞ butonu menü çubuğunun hemen altında */}
+      <div className="flex justify-end border-b border-white/10 bg-ink-950/95 px-4 py-2 backdrop-blur md:hidden">
+        <Link
+          href="/giris"
+          className="rounded-lg bg-brand-500 px-3 py-1.5 text-sm font-semibold text-white shadow-lg shadow-brand-500/25 transition hover:bg-brand-600"
+        >
+          GİRİŞ
+        </Link>
+      </div>
 
       {/* ── HERO ───────────────────────────────────────────── */}
       <section className="relative overflow-hidden bg-gradient-to-b from-slate-200 via-slate-100 to-white text-ink-900">
