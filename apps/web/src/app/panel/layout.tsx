@@ -8,7 +8,6 @@ import { yerelKullanici, yerelCikis } from "@/lib/yerelOturum";
 import { type Rol, ROL_ETIKET, yetkiGetir, menuyeYetkili } from "@/lib/rol";
 import { ayarGetir, menuyuUygula, MENU_KATALOG, type MenuAyar } from "@/lib/ayar";
 import BaglantiDurumu from "@/components/BaglantiDurumu";
-import AltNav from "@/components/AltNav";
 import NativeInit from "@/components/NativeInit";
 import { nativeMi } from "@/lib/apiTaban";
 
@@ -187,9 +186,8 @@ export default function PanelLayout({
             })()}
           </div>
         </header>
-        <main className={`flex-1 p-4 sm:p-6 lg:p-8 ${native ? "pb-24" : ""}`}>{children}</main>
+        <main className="flex-1 p-4 sm:p-6 lg:p-8">{children}</main>
       </div>
-      {native && <AltNav onMenu={() => setMenuAcik(true)} />}
     </div>
   );
 }
