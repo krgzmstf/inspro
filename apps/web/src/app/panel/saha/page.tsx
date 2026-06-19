@@ -159,7 +159,7 @@ export default function SahaPage() {
           <p className="mt-1 text-sm text-slate-500">İş emri, kusur, ilerleme ve malzeme talepleri · fotoğraf, atama, termin, yorum.</p>
         </div>
         <select value={projectId} onChange={(e) => seçProje(e.target.value)}
-          className="rounded-xl border-2 border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold outline-none focus:border-brand-500">
+          className="rounded-xl border-2 border-sky-200 bg-[#f2f8fd] px-4 py-2.5 text-sm font-semibold outline-none focus:border-brand-500">
           {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
       </div>
@@ -172,7 +172,7 @@ export default function SahaPage() {
           ["Açık Kusur", ozet.acikKusur, "⚠️", ozet.acikKusur > 0],
           ["Geciken (termin)", ozet.geciken, "⏰", ozet.geciken > 0],
         ].map(([l, v, i, kirmizi]) => (
-          <div key={l as string} className={`flex items-center gap-3 rounded-2xl border p-4 shadow-sm ${kirmizi ? "border-red-200 bg-red-50" : "border-slate-200 bg-white"}`}>
+          <div key={l as string} className={`flex items-center gap-3 rounded-2xl border p-4 shadow-sm ${kirmizi ? "border-red-200 bg-red-50" : "border-sky-200 bg-[#f2f8fd]"}`}>
             <div className="text-xl">{i as string}</div>
             <div>
               <div className="text-[10px] font-semibold uppercase text-slate-500">{l as string}</div>
@@ -258,7 +258,7 @@ export default function SahaPage() {
           {gosterilen.map((k) => {
             const gecikti = k.termin && k.termin < bugun && k.durum !== "tamam";
             return (
-              <div key={k.id} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+              <div key={k.id} className="overflow-hidden rounded-2xl border border-sky-200 bg-[#f2f8fd] shadow-sm">
                 {k.fotograflar.length > 0 && (
                   <div className="flex gap-0.5 overflow-x-auto bg-slate-100">
                     {k.fotograflar.map((f, i) => (

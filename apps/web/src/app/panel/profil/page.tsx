@@ -95,7 +95,7 @@ export default function ProfilPage() {
       {hata && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-600">{hata}</p>}
 
       {/* Profil */}
-      <form onSubmit={profilKaydet} className="space-y-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <form onSubmit={profilKaydet} className="space-y-3 rounded-2xl border border-sky-200 bg-[#f2f8fd] p-5 shadow-sm">
         <div className="text-sm font-bold text-ink-900">Kişisel bilgiler</div>
         <div className="grid grid-cols-2 gap-2">
           <label className="block text-xs font-semibold text-slate-600">Ad
@@ -140,7 +140,7 @@ export default function ProfilPage() {
       </form>
 
       {/* 2FA */}
-      <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="space-y-3 rounded-2xl border border-sky-200 bg-[#f2f8fd] p-5 shadow-sm">
         <div className="flex items-center justify-between">
           <div className="text-sm font-bold text-ink-900">İki Adımlı Doğrulama (2FA)</div>
           <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${totpAcik ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>

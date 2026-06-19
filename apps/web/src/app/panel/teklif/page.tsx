@@ -185,7 +185,7 @@ export default function TeklifPage() {
           <p className="mt-1 text-sm text-slate-500">Keşiften müşteriye profesyonel fiyat teklifi (PDF/Excel).</p>
         </div>
         <select value={projectId} onChange={(e) => seçProje(e.target.value)}
-          className="rounded-xl border-2 border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold outline-none focus:border-brand-500">
+          className="rounded-xl border-2 border-sky-200 bg-[#f2f8fd] px-4 py-2.5 text-sm font-semibold outline-none focus:border-brand-500">
           {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
       </div>
@@ -200,7 +200,7 @@ export default function TeklifPage() {
               const tt = teklifToplam(x);
               return (
                 <button key={x.id} onClick={() => duzenle(x)}
-                  className={`block w-full rounded-xl border-2 p-3 text-left transition ${t?.id === x.id ? "border-brand-500 bg-brand-500/5" : "border-slate-200 bg-white hover:border-slate-300"}`}>
+                  className={`block w-full rounded-xl border-2 p-3 text-left transition ${t?.id === x.id ? "border-brand-500 bg-brand-500/5" : "border-sky-200 bg-[#f2f8fd] hover:border-slate-300"}`}>
                   <div className="flex items-center justify-between">
                     <span className="font-mono text-xs font-bold text-ink-800">{x.no}</span>
                     <span className="text-xs text-slate-400">{x.tarih}</span>
@@ -221,7 +221,7 @@ export default function TeklifPage() {
         ) : (
           <div className="space-y-5">
             {/* Müşteri + teklif bilgileri */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="rounded-2xl border border-sky-200 bg-[#f2f8fd] p-5 shadow-sm">
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 <Fld label="Teklif No"><input value={t.no} onChange={(e) => setT({ ...t, no: e.target.value })} className={inp} /></Fld>
                 <Fld label="Tarih"><input type="date" value={t.tarih} onChange={(e) => setT({ ...t, tarih: e.target.value })} className={inp} /></Fld>
@@ -250,7 +250,7 @@ export default function TeklifPage() {
             </div>
 
             {/* Kalemler */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="rounded-2xl border border-sky-200 bg-[#f2f8fd] p-5 shadow-sm">
               <div className="flex items-center justify-between">
                 <h2 className="text-sm font-extrabold text-slate-900">Teklif Kalemleri ({t.kalemler.length})</h2>
                 <button onClick={kalemEkle} className="rounded-lg bg-brand-500 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-brand-600">+ Satır</button>
@@ -285,7 +285,7 @@ export default function TeklifPage() {
             </div>
 
             {/* Şartlar + not */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="rounded-2xl border border-sky-200 bg-[#f2f8fd] p-5 shadow-sm">
               <Fld label="Şartlar"><textarea value={t.sartlar} onChange={(e) => setT({ ...t, sartlar: e.target.value })} rows={3} className={inp} /></Fld>
               <div className="mt-3"><Fld label="Not (opsiyonel)"><textarea value={t.not} onChange={(e) => setT({ ...t, not: e.target.value })} rows={2} className={inp} /></Fld></div>
             </div>

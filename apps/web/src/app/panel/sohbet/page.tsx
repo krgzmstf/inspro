@@ -52,7 +52,7 @@ export default function SohbetPage() {
   }
 
   return (
-    <div className="mx-auto flex h-[calc(100vh-8rem)] max-w-6xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+    <div className="mx-auto flex h-[calc(100vh-8rem)] max-w-6xl overflow-hidden rounded-2xl border border-sky-200 bg-[#f2f8fd] shadow-sm">
       {/* Sol: kişi/konuşma listesi */}
       <aside className={`flex w-full flex-col border-r border-slate-200 sm:w-72 ${secili ? "hidden sm:flex" : "flex"}`}>
         <div className="border-b border-slate-100 p-3">
@@ -106,7 +106,7 @@ export default function SohbetPage() {
               {mesajlar.length === 0 && <p className="text-center text-xs text-slate-400">İlk mesajı siz gönderin 👋</p>}
               {mesajlar.map((m) => (
                 <div key={m.id} className={`flex ${m.benim ? "justify-end" : "justify-start"}`}>
-                  <div className={`max-w-[78%] rounded-2xl px-3 py-2 text-sm shadow-sm ${m.benim ? "bg-brand-500 text-white" : "border border-slate-200 bg-white text-slate-800"}`}>
+                  <div className={`max-w-[78%] rounded-2xl px-3 py-2 text-sm shadow-sm ${m.benim ? "bg-brand-500 text-white" : "border border-sky-200 bg-[#f2f8fd] text-slate-800"}`}>
                     <p className="whitespace-pre-wrap break-words">{m.metin}</p>
                     <div className={`mt-0.5 text-right text-[10px] ${m.benim ? "text-white/70" : "text-slate-400"}`}>
                       {new Date(m.ts).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}

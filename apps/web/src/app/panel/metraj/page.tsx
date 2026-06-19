@@ -197,7 +197,7 @@ export default function MetrajPage() {
           <select
             value={projectId}
             onChange={(e) => switchProject(e.target.value)}
-            className="rounded-xl border-2 border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold outline-none transition focus:border-brand-500"
+            className="rounded-xl border-2 border-sky-200 bg-[#f2f8fd] px-4 py-2.5 text-sm font-semibold outline-none transition focus:border-brand-500"
           >
             {projects.map((p) => (
               <option key={p.id} value={p.id}>
@@ -221,7 +221,7 @@ export default function MetrajPage() {
 
       {/* ═══ İş Takibi Kalemleri (yol haritası) — keşfe dahil ═══ */}
       {asamaKalemler.length > 0 && (
-        <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <section className="mt-6 rounded-2xl border border-sky-200 bg-[#f2f8fd] p-5 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
               <h2 className="text-lg font-extrabold text-slate-900">🗂️ İş Takibi Kalemleri</h2>
@@ -295,7 +295,7 @@ export default function MetrajPage() {
             {/* Yeni satır */}
             <form
               onSubmit={handleAdd}
-              className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+              className="rounded-2xl border border-sky-200 bg-[#f2f8fd] p-5 shadow-sm"
             >
               <div className="grid gap-3 sm:grid-cols-[1fr_2fr_auto_auto]">
                 <div>
@@ -328,7 +328,7 @@ export default function MetrajPage() {
                     className="w-full rounded-xl border-2 border-slate-200 px-3.5 py-2.5 text-sm outline-none transition focus:border-brand-500"
                   />
                   {pozAcik && eslesenler.length > 0 && (
-                    <ul className="absolute z-20 mt-1 max-h-72 w-full overflow-auto rounded-xl border border-slate-200 bg-white shadow-xl">
+                    <ul className="absolute z-20 mt-1 max-h-72 w-full overflow-auto rounded-xl border border-sky-200 bg-[#f2f8fd] shadow-xl">
                       {eslesenler.map((p) => (
                         <li key={p.kod}>
                           <button
@@ -389,7 +389,7 @@ export default function MetrajPage() {
                 <b>Ekle</b>&apos;ye basın.
               </div>
             ) : (
-              <div className="mt-5 overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
+              <div className="mt-5 overflow-x-auto rounded-2xl border border-sky-200 bg-[#f2f8fd] shadow-sm">
                 <table className="w-full min-w-[640px] text-sm">
                   <thead>
                     <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-bold uppercase tracking-wide text-slate-500">
@@ -516,7 +516,7 @@ export default function MetrajPage() {
             </div>
 
             {ozet.kategoriToplamlari.length > 0 && (
-              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="rounded-2xl border border-sky-200 bg-[#f2f8fd] p-5 shadow-sm">
                 <h2 className="text-xs font-extrabold uppercase tracking-wide text-slate-600">
                   Kategori Dağılımı
                 </h2>
@@ -613,7 +613,7 @@ function AutoKesif({
   }
 
   return (
-    <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <section className="mt-6 rounded-2xl border border-sky-200 bg-[#f2f8fd] p-5 shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-extrabold text-slate-900">🧮 Otomatik Keşif & Maliyet</h2>

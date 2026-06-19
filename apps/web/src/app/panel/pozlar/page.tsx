@@ -278,7 +278,7 @@ export default function PozlarPage() {
       </div>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="rounded-2xl border border-sky-200 bg-[#f2f8fd] p-5 shadow-sm">
           <h2 className="text-sm font-extrabold text-slate-900">⬆ Poz Listesi İçe Aktar (Excel / CSV)</h2>
           <p className="mt-1 text-xs text-slate-500">
             <b>.xlsx, .xls veya .csv</b> dosyası yükleyin (KGM/İLBANK resmî listeler veya kendi
@@ -288,7 +288,7 @@ export default function PozlarPage() {
             <label className="text-xs font-semibold text-slate-600">
               Kaynak
               <select value={importKaynak} onChange={(e) => setImportKaynak(e.target.value as PozKaynak)}
-                className="mt-1 block rounded-lg border-2 border-slate-200 bg-white px-3 py-1.5 text-sm outline-none focus:border-brand-500">
+                className="mt-1 block rounded-lg border-2 border-sky-200 bg-[#f2f8fd] px-3 py-1.5 text-sm outline-none focus:border-brand-500">
                 {(["ÇŞB", "KGM", "DSİ", "İLBANK", "Piyasa", "Özel"] as PozKaynak[]).map((k) => (<option key={k}>{k}</option>))}
               </select>
             </label>
@@ -316,7 +316,7 @@ export default function PozlarPage() {
             <label className="text-xs font-semibold text-slate-600">
               Bölge / İl
               <select value={il} onChange={(e) => setIl(e.target.value)}
-                className="mt-1 block rounded-lg border-2 border-slate-200 bg-white px-3 py-1.5 text-sm outline-none focus:border-brand-500">
+                className="mt-1 block rounded-lg border-2 border-sky-200 bg-[#f2f8fd] px-3 py-1.5 text-sm outline-none focus:border-brand-500">
                 {CITIES.map((c) => (<option key={c}>{c}</option>))}
               </select>
             </label>
@@ -332,7 +332,7 @@ export default function PozlarPage() {
       {/* Özel poz ekle + başka kütüphaneden kopyala */}
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
         {/* Yeni özel poz */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="rounded-2xl border border-sky-200 bg-[#f2f8fd] p-5 shadow-sm">
           <button onClick={() => setOzelAcik((v) => !v)} className="flex w-full items-center justify-between text-sm font-extrabold text-slate-900">
             ➕ Kendi Pozunu Ekle
             <span className="text-xs text-slate-400">{ozelAcik ? "▴" : "▾"}</span>
@@ -355,7 +355,7 @@ export default function PozlarPage() {
         </div>
 
         {/* Başka kütüphaneden kopyala */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="rounded-2xl border border-sky-200 bg-[#f2f8fd] p-5 shadow-sm">
           <button onClick={() => setKopyaAcik((v) => !v)} className="flex w-full items-center justify-between text-sm font-extrabold text-slate-900">
             ⇄ Başka Kütüphaneden Poz Al
             <span className="text-xs text-slate-400">{kopyaAcik ? "▴" : "▾"}</span>
@@ -365,7 +365,7 @@ export default function PozlarPage() {
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-xs font-semibold text-slate-600">Kaynak:</span>
                 <select value={kaynakLib} onChange={(e) => setKaynakLib(e.target.value as LibId)}
-                  className="rounded-lg border-2 border-slate-200 bg-white px-3 py-1.5 text-sm outline-none focus:border-brand-500">
+                  className="rounded-lg border-2 border-sky-200 bg-[#f2f8fd] px-3 py-1.5 text-sm outline-none focus:border-brand-500">
                   {POZ_KUTUPHANELER.filter((k) => k.id !== libId).map((k) => <option key={k.id} value={k.id}>{k.ad}</option>)}
                 </select>
               </div>
@@ -395,7 +395,7 @@ export default function PozlarPage() {
           placeholder="Poz kodu (ör: 15.100) veya ad ara…"
           className="min-w-56 flex-1 rounded-xl border-2 border-slate-200 px-4 py-2.5 text-sm outline-none transition focus:border-brand-500" />
         <select value={kategori} onChange={(e) => { setKategori(e.target.value); setLimit(SAYFA); }}
-          className="max-w-64 rounded-xl border-2 border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold outline-none focus:border-brand-500">
+          className="max-w-64 rounded-xl border-2 border-sky-200 bg-[#f2f8fd] px-4 py-2.5 text-sm font-semibold outline-none focus:border-brand-500">
           <option value="">Tüm kategoriler</option>
           {kategoriler.map((k) => (<option key={k} value={k}>{k.length > 40 ? k.slice(0, 40) + "…" : k}</option>))}
         </select>
@@ -404,7 +404,7 @@ export default function PozlarPage() {
         {filtreli.length.toLocaleString("tr-TR")} sonuç{filtreli.length > limit ? ` · ilk ${limit} gösteriliyor` : ""}
       </p>
 
-      <div className="mt-3 overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="mt-3 overflow-x-auto rounded-2xl border border-sky-200 bg-[#f2f8fd] shadow-sm">
         <table className="w-full min-w-[860px] text-sm">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-bold uppercase tracking-wide text-slate-500">

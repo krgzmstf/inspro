@@ -222,7 +222,7 @@ export default function Bina3DPage() {
           <p className="mt-1 text-sm text-slate-500">Kat verisinden otomatik bina kütlesi. Döndür · yakınlaştır · kata tıkla.</p>
         </div>
         <select value={projectId} onChange={(e) => setProjectId(e.target.value)}
-          className="rounded-xl border-2 border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold outline-none focus:border-brand-500">
+          className="rounded-xl border-2 border-sky-200 bg-[#f2f8fd] px-4 py-2.5 text-sm font-semibold outline-none focus:border-brand-500">
           {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
       </div>
@@ -268,7 +268,7 @@ export default function Bina3DPage() {
           )}
 
           {/* lejant */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="rounded-2xl border border-sky-200 bg-[#f2f8fd] p-4 shadow-sm">
             <h4 className="text-xs font-extrabold uppercase text-slate-500">Kat Kullanımı</h4>
             <ul className="mt-2 space-y-1.5 text-sm">
               {(Object.keys(KULLANIM_RENK) as (keyof typeof KULLANIM_RENK)[]).map((u) => (

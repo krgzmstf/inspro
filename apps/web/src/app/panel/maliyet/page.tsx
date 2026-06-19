@@ -104,7 +104,7 @@ export default function MaliyetPage() {
         {/* ── Form ── */}
         <form
           onSubmit={handleCalculate}
-          className="h-fit rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+          className="h-fit rounded-2xl border border-sky-200 bg-[#f2f8fd] p-6 shadow-sm"
         >
           {projects.length > 0 && (
             <label className="block">
@@ -119,7 +119,7 @@ export default function MaliyetPage() {
                     ? fillFromProject(e.target.value)
                     : setSelectedProjectId("")
                 }
-                className="mt-1.5 w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-brand-500"
+                className="mt-1.5 w-full rounded-xl border-2 border-sky-200 bg-[#f2f8fd] px-4 py-2.5 text-sm outline-none transition focus:border-brand-500"
               >
                 <option value="">— Elle gireceğim —</option>
                 {projects.map((p) => (
@@ -167,7 +167,7 @@ export default function MaliyetPage() {
               <select
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
-                className="mt-1.5 w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-brand-500"
+                className="mt-1.5 w-full rounded-xl border-2 border-sky-200 bg-[#f2f8fd] px-4 py-2.5 text-sm outline-none transition focus:border-brand-500"
               >
                 {CITIES.map((c) => (
                   <option key={c}>{c}</option>
@@ -300,7 +300,7 @@ export default function MaliyetPage() {
               </div>
 
               {/* Kalem dağılımı */}
-              <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="rounded-2xl border border-sky-200 bg-[#f2f8fd] p-6 shadow-sm">
                 <h2 className="text-sm font-extrabold uppercase tracking-wide text-slate-700">
                   Maliyet Kalemi Dağılımı
                 </h2>

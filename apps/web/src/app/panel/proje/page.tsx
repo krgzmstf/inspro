@@ -120,7 +120,7 @@ function ProjeDetayInner() {
 
   if (project === null) {
     return (
-      <div className="mx-auto max-w-lg rounded-2xl border border-slate-200 bg-white p-10 text-center shadow-sm">
+      <div className="mx-auto max-w-lg rounded-2xl border border-sky-200 bg-[#f2f8fd] p-10 text-center shadow-sm">
         <div className="text-4xl">🤔</div>
         <h1 className="mt-3 text-lg font-bold text-slate-900">Proje bulunamadı</h1>
         <p className="mt-1 text-sm text-slate-500">
@@ -298,7 +298,7 @@ function ProjeDetayInner() {
               ]
                 .filter(([, v]) => v)
                 .map(([k, v]) => (
-                  <div key={k} className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+                  <div key={k} className="rounded-xl border border-sky-200 bg-[#f2f8fd] p-3 shadow-sm">
                     <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{k}</div>
                     <div className="mt-0.5 text-sm font-bold text-slate-900">{v}</div>
                   </div>
@@ -309,7 +309,7 @@ function ProjeDetayInner() {
           {project.katlar && project.katlar.length > 0 && (
             <div className="mt-4 space-y-3">
               {project.katlar.map((kat) => (
-                <div key={kat.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div key={kat.id} className="rounded-2xl border border-sky-200 bg-[#f2f8fd] p-4 shadow-sm">
                   <div className="flex items-center gap-2">
                     <span className="rounded-lg bg-ink-900 px-2.5 py-1 text-xs font-bold text-white">{kat.ad}</span>
                     {kat.benzerAdet && kat.benzerAdet > 1 && (
@@ -543,7 +543,7 @@ function AsamaModal({
               {kalemler.map((k, i) => {
                 const ui = KALEM_DURUM_UI[k.durum];
                 return (
-                  <li key={k.id} className="rounded-xl border border-slate-200 bg-white p-2.5">
+                  <li key={k.id} className="rounded-xl border border-sky-200 bg-[#f2f8fd] p-2.5">
                     {/* Üst satır: sıra · durum · ad · sırala · sil */}
                     <div className="flex items-center gap-2">
                       <span className="w-5 shrink-0 text-center text-xs font-bold text-slate-400">{i + 1}</span>
@@ -645,7 +645,7 @@ function TakipPanel({
   }
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+    <div className="overflow-hidden rounded-2xl border border-sky-200 bg-[#f2f8fd] shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 bg-slate-50 px-4 py-3">
         <div>
           <h3 className="text-sm font-extrabold text-slate-900">{asama}</h3>
@@ -765,7 +765,7 @@ function PersonelPicker({
       </button>
 
       {acik && (
-        <div className="absolute left-0 z-10 mt-1 w-56 rounded-xl border border-slate-200 bg-white p-2 shadow-xl">
+        <div className="absolute left-0 z-10 mt-1 w-56 rounded-xl border border-sky-200 bg-[#f2f8fd] p-2 shadow-xl">
           <input autoFocus value={ara} onChange={(e) => setAra(e.target.value)}
             placeholder="Ad / telefon / görev ara…"
             className="w-full rounded-lg border border-slate-200 px-2 py-1.5 text-xs outline-none focus:border-brand-500" />

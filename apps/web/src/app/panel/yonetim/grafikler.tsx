@@ -27,7 +27,7 @@ export function Donut({ veri, baslik }: { veri: DilimVeri[]; baslik?: string }) 
   const gradient = toplam > 0 ? `conic-gradient(${parcalar.join(", ")})` : "conic-gradient(#e2e8f0 0% 100%)";
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+    <div className="rounded-2xl border border-sky-200 bg-[#f2f8fd] p-4 shadow-sm">
       {baslik && <div className="text-[11px] font-bold text-slate-500">{baslik}</div>}
       <div className="mt-3 flex items-center gap-5">
         <div className="relative h-28 w-28 shrink-0 rounded-full" style={{ background: gradient }}>
@@ -60,7 +60,7 @@ export function AylikFinansGrafik({ veri }: { veri: AylikFinans[] }) {
   const bicim = (n: number) => n >= 1000 ? `${(n / 1000).toFixed(0)}k` : `${n}`;
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+    <div className="rounded-2xl border border-sky-200 bg-[#f2f8fd] p-4 shadow-sm">
       <div className="flex items-center justify-between">
         <div className="text-[11px] font-bold text-slate-500">SON 6 AY · GELİR / GİDER (₺)</div>
         <div className="flex items-center gap-3 text-[10px] font-semibold">
@@ -88,7 +88,7 @@ export function AylikFinansGrafik({ veri }: { veri: AylikFinans[] }) {
 export function YatayBarlar({ veri, baslik }: { veri: DilimVeri[]; baslik?: string }) {
   const toplam = Math.max(1, veri.reduce((a, d) => a + d.deger, 0));
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+    <div className="rounded-2xl border border-sky-200 bg-[#f2f8fd] p-4 shadow-sm">
       {baslik && <div className="text-[11px] font-bold text-slate-500">{baslik}</div>}
       <div className="mt-3 space-y-2">
         {veri.map((d) => (

@@ -472,7 +472,7 @@ export default function Plan3DPage() {
               className="w-full cursor-crosshair rounded-xl border border-slate-200 bg-slate-100 shadow-sm" />
 
             {kaynak === "raster" && (
-              <div className="rounded-xl border border-slate-200 bg-white p-3 text-sm shadow-sm">
+              <div className="rounded-xl border border-sky-200 bg-[#f2f8fd] p-3 text-sm shadow-sm">
                 <div className="flex gap-2">
                   <button onClick={() => setRasterMod("oto")} className={btn(rasterMod === "oto")}>⚡ Otomatik tanı</button>
                   <button onClick={() => setRasterMod("ciz")} className={btn(rasterMod === "ciz")}>✏️ Elle çiz</button>
@@ -511,7 +511,7 @@ export default function Plan3DPage() {
               </div>
             )}
             {kaynak === "dxf" && (
-              <div className="rounded-xl border border-slate-200 bg-white p-3 text-sm shadow-sm">
+              <div className="rounded-xl border border-sky-200 bg-[#f2f8fd] p-3 text-sm shadow-sm">
                 <label className="flex items-center gap-2">
                   <span className="text-xs font-semibold text-slate-600">DXF birim → metre</span>
                   <input type="number" step="0.001" value={dxfBirimMetre} onChange={(e) => setDxfBirimMetre(parseFloat(e.target.value) || 1)}
@@ -529,7 +529,7 @@ export default function Plan3DPage() {
               {kayit && <span className="absolute left-3 top-3 flex items-center gap-1.5 rounded-lg bg-red-600 px-2.5 py-1 text-xs font-bold text-white"><span className="h-2 w-2 animate-pulse rounded-full bg-white" />REC</span>}
             </div>
 
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="rounded-xl border border-sky-200 bg-[#f2f8fd] p-4 shadow-sm">
               <div className="grid grid-cols-2 gap-3">
                 <label className="block"><span className="text-xs font-semibold text-slate-600">Duvar yüksekliği (m)</span>
                   <input type="number" step="0.1" value={duvarYuksek} onChange={(e) => setDuvarYuksek(parseFloat(e.target.value) || 2.8)} className="mt-1 w-full rounded-lg border-2 border-slate-200 px-2 py-1.5 text-sm outline-none focus:border-brand-500" /></label>
@@ -539,7 +539,7 @@ export default function Plan3DPage() {
               <button onClick={olustur3D} className="mt-3 w-full rounded-xl bg-ink-900 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-ink-800">🧊 3B Oluştur / Güncelle</button>
             </div>
 
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="rounded-xl border border-sky-200 bg-[#f2f8fd] p-4 shadow-sm">
               <h4 className="text-xs font-extrabold uppercase text-slate-500">Animasyon</h4>
               <div className="mt-2 flex flex-wrap gap-2">
                 {([["donme", "🔄 Döndür"], ["insa", "🏗️ İnşa"], ["yuruyus", "🚶 Yürüyüş"], ["yok", "✋ Serbest"]] as [Anim, string][]).map(([a, l]) => (

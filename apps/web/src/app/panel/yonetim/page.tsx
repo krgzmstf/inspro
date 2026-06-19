@@ -397,7 +397,7 @@ export default function YonetimPage() {
                   { etiket: "Modül Verisi", deger: ozet.sayilar.modul, ikon: "🗂️", renk: "from-violet-500 to-purple-600" },
                   { etiket: "Dosya", deger: ozet.sayilar.dosya, ikon: "🖼️", alt: boyutBicim(ozet.dosya_boyut_bayt), renk: "from-rose-500 to-pink-600" },
                 ].map((k) => (
-                  <div key={k.etiket} className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+                  <div key={k.etiket} className="rounded-xl border border-sky-200 bg-[#f2f8fd] p-3 shadow-sm">
                     <div className={`flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br ${k.renk} text-base`}>{k.ikon}</div>
                     <div className="mt-2 text-2xl font-extrabold text-ink-900">{k.deger}</div>
                     <div className="text-[11px] font-semibold text-slate-500">{k.etiket}{k.alt ? ` · ${k.alt}` : ""}</div>
@@ -423,7 +423,7 @@ export default function YonetimPage() {
       {sekme === "kullanicilar" && (
         <div className="mt-5">
           {/* Yeni kullanıcı */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="rounded-2xl border border-sky-200 bg-[#f2f8fd] p-4 shadow-sm">
             <div className="text-sm font-bold text-ink-900">➕ Yeni kullanıcı ekle</div>
             <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
               <input value={yeniK.email} onChange={(e) => setYeniK({ ...yeniK, email: e.target.value })} placeholder="e-posta" className="rounded-lg border-2 border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500" />
@@ -439,7 +439,7 @@ export default function YonetimPage() {
           {/* Roller açıklaması */}
           <div className="mt-4 grid gap-2 sm:grid-cols-2">
             {ROLLER.map((r) => (
-              <div key={r} className="rounded-xl border border-slate-200 bg-white p-3">
+              <div key={r} className="rounded-xl border border-sky-200 bg-[#f2f8fd] p-3">
                 <div className="text-xs font-bold text-ink-900">{ROL_ETIKET[r]}</div>
                 <div className="mt-0.5 text-[11px] text-slate-500">{ROL_ACIKLAMA[r]}</div>
               </div>
@@ -464,7 +464,7 @@ export default function YonetimPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <select value={k.rol} onChange={(e) => rolKaydet(k.id, e.target.value as Rol, undefined)}
-                        className="rounded-lg border-2 border-slate-200 bg-white px-2 py-1 text-sm font-semibold outline-none focus:border-brand-500">
+                        className="rounded-lg border-2 border-sky-200 bg-[#f2f8fd] px-2 py-1 text-sm font-semibold outline-none focus:border-brand-500">
                         {ROLLER.map((r) => <option key={r} value={r}>{ROL_ETIKET[r]}</option>)}
                       </select>
                       {k.rol !== "yonetici" && (
@@ -566,7 +566,7 @@ export default function YonetimPage() {
             </p>
           ) : (
             <>
-              <div className="mt-3 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+              <div className="mt-3 overflow-hidden rounded-2xl border border-sky-200 bg-[#f2f8fd] shadow-sm">
                 <table className="w-full text-sm">
                   <thead className="bg-slate-50 text-left text-[11px] uppercase text-slate-400">
                     <tr>
@@ -619,7 +619,7 @@ export default function YonetimPage() {
       {/* ── MENÜ ── */}
       {sekme === "menu" && (
         <div className="mt-5">
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="rounded-2xl border border-sky-200 bg-[#f2f8fd] p-4 shadow-sm">
             <div className="flex items-center justify-between">
               <div className="text-sm font-bold text-ink-900">🧭 Ana panel menüsü</div>
               <button onClick={menuKaydet} className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-bold text-white transition hover:bg-brand-600">Kaydet</button>
@@ -652,7 +652,7 @@ export default function YonetimPage() {
       {/* ── SİTE ── */}
       {sekme === "site" && (
         <div className="mt-5">
-          <div className="max-w-lg rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="max-w-lg rounded-2xl border border-sky-200 bg-[#f2f8fd] p-4 shadow-sm">
             <div className="flex items-center justify-between">
               <div className="text-sm font-bold text-ink-900">🎨 Site / firma bilgileri</div>
               <button onClick={siteKaydet} className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-bold text-white transition hover:bg-brand-600">Kaydet</button>

@@ -538,7 +538,7 @@ export default function YeniProjePage() {
 
   if (yetkiHazir && !editId && projeSayisi >= limit) {
     return (
-      <div className="mx-auto max-w-lg rounded-2xl border border-slate-200 bg-white p-10 text-center shadow-sm">
+      <div className="mx-auto max-w-lg rounded-2xl border border-sky-200 bg-[#f2f8fd] p-10 text-center shadow-sm">
         <div className="text-4xl">📁</div>
         <h1 className="mt-3 text-lg font-bold text-slate-900">Proje limitine ulaştın</h1>
         <p className="mt-1 text-sm text-slate-500">Hesabın en fazla <b>{limit} proje</b> oluşturabilir. Yeni proje için önce mevcut bir projeyi silmelisin.</p>
@@ -579,7 +579,7 @@ export default function YeniProjePage() {
       {/* ═══════════ ADIM 1 ═══════════ */}
       {step === 1 && (
         <div className="mt-6 space-y-6">
-          <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <section className="rounded-2xl border border-sky-200 bg-[#f2f8fd] p-6 shadow-sm">
             <h2 className="text-lg font-bold text-slate-900">Proje Bilgileri</h2>
             <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <Field label="Proje Adı *">
@@ -637,7 +637,7 @@ export default function YeniProjePage() {
                   </span>
                   <div className="mt-1.5 flex flex-wrap gap-2">
                     {bodrumGruplari.map((g, i) => (
-                      <label key={i} className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-600">
+                      <label key={i} className="flex items-center gap-1 rounded-lg border border-sky-200 bg-[#f2f8fd] px-2 py-1 text-xs font-semibold text-slate-600">
                         B{i + 1}
                         <input value={g} onChange={(e) => bodrumGrupAyarla(i, e.target.value)}
                           className="w-10 rounded border border-slate-200 px-1 py-0.5 text-center text-xs font-bold outline-none focus:border-brand-500"
@@ -660,7 +660,7 @@ export default function YeniProjePage() {
                   </div>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {katGruplari.map((g, i) => (
-                      <label key={i} className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-600">
+                      <label key={i} className="flex items-center gap-1 rounded-lg border border-sky-200 bg-[#f2f8fd] px-2 py-1 text-xs font-semibold text-slate-600">
                         {i + 1}. Kat
                         <input value={g} onChange={(e) => katGrupAyarla(i, e.target.value)}
                           className="w-10 rounded border border-slate-200 px-1 py-0.5 text-center text-xs font-bold outline-none focus:border-brand-500"
@@ -696,7 +696,7 @@ export default function YeniProjePage() {
                     <input value={kat.ad} onChange={(e) => setKat(kat.id, { ad: e.target.value })}
                       className="w-36 rounded-lg border-2 border-slate-200 px-3 py-1.5 text-sm font-semibold outline-none focus:border-brand-500" />
                     <select value={kat.kullanim} onChange={(e) => setKat(kat.id, { kullanim: e.target.value as FloorUsage })}
-                      className="rounded-lg border-2 border-slate-200 bg-white px-3 py-1.5 text-sm outline-none focus:border-brand-500">
+                      className="rounded-lg border-2 border-sky-200 bg-[#f2f8fd] px-3 py-1.5 text-sm outline-none focus:border-brand-500">
                       {Object.entries(FLOOR_USAGE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                     </select>
                     {kat.benzerAdet && kat.benzerAdet > 1 && (
@@ -733,7 +733,7 @@ export default function YeniProjePage() {
       {step === 2 && (
         <div className="mt-6 space-y-6">
           {/* Bina geneli */}
-          <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <section className="rounded-2xl border border-sky-200 bg-[#f2f8fd] p-6 shadow-sm">
             <h2 className="text-lg font-bold text-slate-900">🏢 Bina Genel Bilgileri</h2>
             <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <Field label="Kat Yüksekliği (m)">
@@ -794,12 +794,12 @@ export default function YeniProjePage() {
               adet 4 = tek daire; adet 3 = 3 aynı + 1 ayrı.)
             </p>
             {katlar.map((kat) => (
-              <div key={kat.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div key={kat.id} className="rounded-2xl border border-sky-200 bg-[#f2f8fd] p-5 shadow-sm">
                 <div className="flex flex-wrap items-center gap-3">
                   <input value={kat.ad} onChange={(e) => setKat(kat.id, { ad: e.target.value })}
                     className="w-36 rounded-lg border-2 border-slate-200 px-3 py-1.5 text-sm font-bold outline-none focus:border-brand-500" />
                   <select value={kat.kullanim} onChange={(e) => setKat(kat.id, { kullanim: e.target.value as FloorUsage })}
-                    className="rounded-lg border-2 border-slate-200 bg-white px-3 py-1.5 text-sm outline-none focus:border-brand-500">
+                    className="rounded-lg border-2 border-sky-200 bg-[#f2f8fd] px-3 py-1.5 text-sm outline-none focus:border-brand-500">
                     {Object.entries(FLOOR_USAGE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                   </select>
                   {kat.benzerAdet && kat.benzerAdet > 1 && (
@@ -829,7 +829,7 @@ export default function YeniProjePage() {
                           <div className="flex flex-wrap items-center gap-2">
                             <span className="text-xs font-bold text-slate-400">#{di + 1}</span>
                             <select value={d.tip} onChange={(e) => tipDegistir(kat.id, d.id, e.target.value as ApartmentType)}
-                              className="rounded-lg border-2 border-slate-200 bg-white px-3 py-1.5 text-sm font-bold outline-none focus:border-brand-500">
+                              className="rounded-lg border-2 border-sky-200 bg-[#f2f8fd] px-3 py-1.5 text-sm font-bold outline-none focus:border-brand-500">
                               {APT_TYPES.map((t) => <option key={t} value={t}>{APT_TYPE_LABELS[t]}</option>)}
                             </select>
                             {/* Benzer var mı? → adet (tekrar girmeden çoğalt) */}
@@ -912,7 +912,7 @@ export default function YeniProjePage() {
                             {acikDetay === d.id ? "▴ Detayı kapat" : "▾ Bölüm Detayına Gir (metraj)"}
                           </button>
                           {acikDetay === d.id && (
-                            <div className="mt-3 rounded-xl border border-slate-200 bg-white p-3">
+                            <div className="mt-3 rounded-xl border border-sky-200 bg-[#f2f8fd] p-3">
                               {/* Pencereler (elektrik/su/kazan dışındaki bölümler için) */}
                               {!["elektrik", "su", "kazan"].includes(d.tip) && (
                                 <div className="mb-3 border-b border-slate-100 pb-3">
@@ -931,7 +931,7 @@ export default function YeniProjePage() {
                                         <div key={i} className="flex items-center gap-2">
                                           <span className="text-[11px] font-bold text-slate-400">{i + 1}.</span>
                                           <select value={p.tip} onChange={(e) => pencereGuncelle(kat.id, d.id, i, { tip: e.target.value })}
-                                            className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs outline-none focus:border-brand-500">
+                                            className="rounded-lg border border-sky-200 bg-[#f2f8fd] px-2 py-1 text-xs outline-none focus:border-brand-500">
                                             {DOGRAMA_TIPLERI.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
                                           </select>
                                           <input type="number" step="0.1" min="0" placeholder="m²" value={p.alan ?? ""}
@@ -957,7 +957,7 @@ export default function YeniProjePage() {
                                     className="w-full rounded-lg border-2 border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500"
                                   />
                                   {acikDetay === d.id && daireAra && daireEslesen.length > 0 && (
-                                    <ul className="absolute z-30 mt-1 max-h-60 w-full overflow-auto rounded-xl border border-slate-200 bg-white shadow-xl">
+                                    <ul className="absolute z-30 mt-1 max-h-60 w-full overflow-auto rounded-xl border border-sky-200 bg-[#f2f8fd] shadow-xl">
                                       {daireEslesen.map((p) => (
                                         <li key={p.kod}>
                                           <button type="button" onMouseDown={(e) => e.preventDefault()}
@@ -1006,7 +1006,7 @@ export default function YeniProjePage() {
           </section>
 
           {/* ═══ Bina Ana Kalem Bilgileri (pozdan) ═══ */}
-          <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <section className="rounded-2xl border border-sky-200 bg-[#f2f8fd] p-6 shadow-sm">
             <h2 className="text-lg font-bold text-slate-900">🧱 Bina Ana Kalem Bilgileri</h2>
             <p className="mt-1 text-sm text-slate-500">
               Kaba yapı, cephe, çatı, çevre kalemlerini <b>poz kütüphanesinden arayıp</b> ekleyin
@@ -1025,7 +1025,7 @@ export default function YeniProjePage() {
                 className="w-full rounded-xl border-2 border-slate-200 px-4 py-2.5 text-sm outline-none transition focus:border-brand-500"
               />
               {anaKalemAcik && anaKalemEslesen.length > 0 && (
-                <ul className="absolute z-20 mt-1 max-h-72 w-full overflow-auto rounded-xl border border-slate-200 bg-white shadow-xl">
+                <ul className="absolute z-20 mt-1 max-h-72 w-full overflow-auto rounded-xl border border-sky-200 bg-[#f2f8fd] shadow-xl">
                   {anaKalemEslesen.map((p) => (
                     <li key={p.kod}>
                       <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => anaKalemEklePoz(p)}
@@ -1104,7 +1104,7 @@ export default function YeniProjePage() {
                       </td>
                       <td className="px-3 py-1.5">
                         <select value={kat.holMalzeme ?? ""} onChange={(e) => setKat(kat.id, { holMalzeme: e.target.value || undefined })}
-                          className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-sm outline-none focus:border-brand-500">
+                          className="rounded-lg border border-sky-200 bg-[#f2f8fd] px-2 py-1 text-sm outline-none focus:border-brand-500">
                           <option value="">—</option>
                           {HOL_MALZEME.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                         </select>
@@ -1121,7 +1121,7 @@ export default function YeniProjePage() {
           </section>
 
           {/* ═══ Bina İşçilikleri ═══ */}
-          <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <section className="rounded-2xl border border-sky-200 bg-[#f2f8fd] p-6 shadow-sm">
             <h2 className="text-lg font-bold text-slate-900">👷 Bina İşçilikleri</h2>
             <p className="mt-1 text-sm text-slate-500">
               İşçilik kalemini <b>poz kütüphanesinden arayıp</b> seçin (ör: &quot;saten alçı&quot;,
@@ -1139,7 +1139,7 @@ export default function YeniProjePage() {
                 className="w-full rounded-xl border-2 border-slate-200 px-4 py-2.5 text-sm outline-none transition focus:border-brand-500"
               />
               {iscilikAcik && iscilikEslesen.length > 0 && (
-                <ul className="absolute z-20 mt-1 max-h-72 w-full overflow-auto rounded-xl border border-slate-200 bg-white shadow-xl">
+                <ul className="absolute z-20 mt-1 max-h-72 w-full overflow-auto rounded-xl border border-sky-200 bg-[#f2f8fd] shadow-xl">
                   {iscilikEslesen.map((p) => (
                     <li key={p.kod}>
                       <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => iscilikEklePoz(p)}

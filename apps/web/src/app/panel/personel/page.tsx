@@ -154,7 +154,7 @@ export default function PersonelPage() {
           <p className="mt-1 text-sm text-slate-500">Çalışan listesi (SGK, kişisel bilgiler) ve aylık puantaj.</p>
         </div>
         <select value={projectId} onChange={(e) => switchProject(e.target.value)}
-          className="rounded-xl border-2 border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold outline-none focus:border-brand-500">
+          className="rounded-xl border-2 border-sky-200 bg-[#f2f8fd] px-4 py-2.5 text-sm font-semibold outline-none focus:border-brand-500">
           {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
       </div>
@@ -218,7 +218,7 @@ export default function PersonelPage() {
           )}
 
           {liste.length > 0 && (
-            <div className="mt-4 overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div className="mt-4 overflow-x-auto rounded-2xl border border-sky-200 bg-[#f2f8fd] shadow-sm">
               <table className="w-full min-w-[820px] text-sm">
                 <thead>
                   <tr className="border-b border-slate-200 bg-slate-50 text-left text-[11px] font-bold uppercase text-slate-500">
@@ -312,7 +312,7 @@ export default function PersonelPage() {
           )}
 
           {firmalar.length > 0 && (
-            <div className="mt-4 overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div className="mt-4 overflow-x-auto rounded-2xl border border-sky-200 bg-[#f2f8fd] shadow-sm">
               <table className="w-full min-w-[760px] text-sm">
                 <thead>
                   <tr className="border-b border-slate-200 bg-slate-50 text-left text-[11px] font-bold uppercase text-slate-500">
@@ -365,7 +365,7 @@ export default function PersonelPage() {
           {liste.length === 0 ? (
             <p className="mt-4 text-sm text-slate-400">Önce &quot;Çalışan Listesi&quot;nden çalışan ekleyin.</p>
           ) : (
-            <div className="mt-4 overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div className="mt-4 overflow-x-auto rounded-2xl border border-sky-200 bg-[#f2f8fd] shadow-sm">
               <table className="text-xs">
                 <thead>
                   <tr className="bg-slate-50 text-slate-500">

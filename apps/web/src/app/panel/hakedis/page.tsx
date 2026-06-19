@@ -217,7 +217,7 @@ export default function HakedisPage() {
           <p className="mt-1 text-sm text-slate-500">Taşeron dönemsel istihkak: kümülatif imalat, teminat/stopaj/avans kesintileri, net ödeme.</p>
         </div>
         <select value={projectId} onChange={(e) => seçProje(e.target.value)}
-          className="rounded-xl border-2 border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold outline-none focus:border-brand-500">
+          className="rounded-xl border-2 border-sky-200 bg-[#f2f8fd] px-4 py-2.5 text-sm font-semibold outline-none focus:border-brand-500">
           {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
       </div>
@@ -232,7 +232,7 @@ export default function HakedisPage() {
               const t = hakedisHesapla(x).toplam;
               return (
                 <button key={x.id} onClick={() => duzenle(x)}
-                  className={`block w-full rounded-xl border-2 p-3 text-left transition ${h?.id === x.id ? "border-brand-500 bg-brand-500/5" : "border-slate-200 bg-white hover:border-slate-300"}`}>
+                  className={`block w-full rounded-xl border-2 p-3 text-left transition ${h?.id === x.id ? "border-brand-500 bg-brand-500/5" : "border-sky-200 bg-[#f2f8fd] hover:border-slate-300"}`}>
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-ink-800">Hakediş #{x.no}</span>
                     <span className="text-xs text-slate-400">{x.tarih}</span>
@@ -259,7 +259,7 @@ export default function HakedisPage() {
         ) : (
           <div className="space-y-5">
             {/* Üst bilgi */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="rounded-2xl border border-sky-200 bg-[#f2f8fd] p-5 shadow-sm">
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 <Fld label="Hakediş No"><input type="number" value={h.no} onChange={(e) => setH({ ...h, no: parseInt(e.target.value) || 1 })} className={inp} /></Fld>
                 <Fld label="Tarih"><input type="date" value={h.tarih} onChange={(e) => setH({ ...h, tarih: e.target.value })} className={inp} /></Fld>
@@ -316,7 +316,7 @@ export default function HakedisPage() {
             )}
 
             {/* Kalemler */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="rounded-2xl border border-sky-200 bg-[#f2f8fd] p-5 shadow-sm">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <h2 className="text-sm font-extrabold text-slate-900">İmalat Kalemleri ({h.kalemler.length})</h2>
                 <div className="flex gap-2">
@@ -365,7 +365,7 @@ export default function HakedisPage() {
             </div>
 
             {/* Not */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="rounded-2xl border border-sky-200 bg-[#f2f8fd] p-5 shadow-sm">
               <Fld label="Not (opsiyonel)"><textarea value={h.not} onChange={(e) => setH({ ...h, not: e.target.value })} rows={2} className={inp} /></Fld>
             </div>
 

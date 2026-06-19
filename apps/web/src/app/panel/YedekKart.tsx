@@ -49,7 +49,7 @@ export default function YedekKart() {
   }
 
   return (
-    <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div className="mt-6 rounded-2xl border border-sky-200 bg-[#f2f8fd] p-5 shadow-sm">
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-lg">💾</span>
         <h2 className="text-sm font-extrabold text-slate-800">Veri Yedekleme</h2>

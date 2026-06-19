@@ -168,7 +168,7 @@ export default function IsSurecleriPage() {
           <p className="mt-1 text-sm text-slate-500">İş programı, sorumlu, tarih, ilerleme + <b>bağımlılık okları</b> ile Gantt.</p>
         </div>
         <select value={projectId} onChange={(e) => switchProject(e.target.value)}
-          className="rounded-xl border-2 border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold outline-none focus:border-brand-500">
+          className="rounded-xl border-2 border-sky-200 bg-[#f2f8fd] px-4 py-2.5 text-sm font-semibold outline-none focus:border-brand-500">
           {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
       </div>
@@ -181,7 +181,7 @@ export default function IsSurecleriPage() {
           ["Tamamlanan", String(ozet.tamamlanan), "✅"],
           ["Geciken", String(ozet.geciken), "⏰"],
         ].map(([l, v], idx) => (
-          <div key={l} className={`flex items-center gap-3 rounded-2xl border p-4 shadow-sm ${idx === 3 && ozet.geciken > 0 ? "border-red-200 bg-red-50" : "border-slate-200 bg-white"}`}>
+          <div key={l} className={`flex items-center gap-3 rounded-2xl border p-4 shadow-sm ${idx === 3 && ozet.geciken > 0 ? "border-red-200 bg-red-50" : "border-sky-200 bg-[#f2f8fd]"}`}>
             <div>
               <div className="text-[10px] font-semibold uppercase text-slate-500">{l}</div>
               <div className={`text-xl font-extrabold ${idx === 3 && ozet.geciken > 0 ? "text-red-600" : "text-slate-900"}`}>{v}</div>
@@ -192,7 +192,7 @@ export default function IsSurecleriPage() {
 
       {/* Gantt + bağımlılık okları */}
       {tarihli.length > 0 && (
-        <div className="mt-6 overflow-x-auto rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="mt-6 overflow-x-auto rounded-2xl border border-sky-200 bg-[#f2f8fd] p-5 shadow-sm">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-extrabold text-slate-700">📅 Gantt — Bağımlılık Okları</h2>
             <span className="text-xs text-slate-400">{Math.round(totalDays)} gün · oklar: önce biten → sonra başlayan</span>
@@ -245,7 +245,7 @@ export default function IsSurecleriPage() {
             <button onClick={csvIndir} className="rounded-xl bg-ink-900 px-4 py-2 text-xs font-bold text-white transition hover:bg-ink-800">⬇ CSV</button>
           </div>
         </div>
-        <div className="mt-3 overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="mt-3 overflow-x-auto rounded-2xl border border-sky-200 bg-[#f2f8fd] shadow-sm">
           <table className="w-full min-w-[560px] text-xs">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50 text-left text-[11px] font-bold uppercase text-slate-500">
@@ -293,7 +293,7 @@ export default function IsSurecleriPage() {
                         ↳ {oncekiAdlar.length ? `${oncekiAdlar.length} iş` : "ekle"}
                       </button>
                       {acikDep === k.id && (
-                        <div className="absolute right-2 top-9 z-20 max-h-56 w-60 overflow-auto rounded-xl border border-slate-200 bg-white p-2 shadow-xl">
+                        <div className="absolute right-2 top-9 z-20 max-h-56 w-60 overflow-auto rounded-xl border border-sky-200 bg-[#f2f8fd] p-2 shadow-xl">
                           <div className="mb-1 text-[10px] font-bold uppercase text-slate-400">Önce bitmesi gerekenler</div>
                           {kalemler.filter((o) => o.id !== k.id).map((o) => (
                             <label key={o.id} className="flex cursor-pointer items-center gap-2 rounded px-1 py-0.5 text-xs hover:bg-slate-50">

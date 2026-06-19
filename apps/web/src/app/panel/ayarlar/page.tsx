@@ -58,7 +58,7 @@ export default function AyarlarPage() {
       </div>
 
       {/* Hesap özeti */}
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <section className="rounded-2xl border border-sky-200 bg-[#f2f8fd] p-5 shadow-sm">
         <div className="flex items-center gap-3">
           <div className="flex h-11 w-11 items-center justify-center rounded-full bg-ink-900 text-lg font-bold uppercase text-white">
             {(u?.ad_soyad || u?.email || "K").charAt(0)}
@@ -71,7 +71,7 @@ export default function AyarlarPage() {
       </section>
 
       {/* Şifre değiştir */}
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <section className="rounded-2xl border border-sky-200 bg-[#f2f8fd] p-5 shadow-sm">
         <h2 className="text-base font-bold text-ink-900">🔐 Şifre Değiştir</h2>
         <p className="mt-1 text-xs text-slate-500">Güvenliğin için önce mevcut şifreni gir.</p>
         {sifreMsj && (
@@ -101,7 +101,7 @@ export default function AyarlarPage() {
       </section>
 
       {/* Genel ayarlar */}
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <section className="rounded-2xl border border-sky-200 bg-[#f2f8fd] p-5 shadow-sm">
         <h2 className="text-base font-bold text-ink-900">🛠️ Genel Ayarlar</h2>
         <div className="mt-3 divide-y divide-slate-100">
           {/* Görünüm */}
@@ -142,7 +142,7 @@ export default function AyarlarPage() {
       </section>
 
       {/* Hesap işlemleri */}
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <section className="rounded-2xl border border-sky-200 bg-[#f2f8fd] p-5 shadow-sm">
         <h2 className="text-base font-bold text-ink-900">👤 Hesap</h2>
         <button onClick={cikis} className="mt-3 rounded-xl border-2 border-red-200 px-5 py-2 text-sm font-bold text-red-600 transition hover:bg-red-50">
           Çıkış Yap
