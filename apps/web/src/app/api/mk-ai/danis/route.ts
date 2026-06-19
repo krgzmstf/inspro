@@ -8,6 +8,7 @@ import {
 } from "@/lib/aiSaglayici";
 import { yonetmelikAra, type YonetmelikIsabet, type YonetmelikKayit } from "@/lib/yonetmelik";
 import { hesapOzeti } from "@/lib/mkAiSupabase";
+import { hizSiniri } from "@/lib/hizSiniri";
 
 /* ──────────────────────────────────────────────────────────
    mk_ai — Agentic danışma (araç çağıran sohbet + RAG)
@@ -60,6 +61,7 @@ const TEMEL_SISTEM =
   "(6) Geciken ödeme, bütçe aşımı veya yüksek risk görürsen kullanıcı sormasa bile kibarca uyar.";
 
 export async function POST(req: Request) {
+  const rl = hizSiniri(req, 30); if (rl) return rl;
   let body: Govde;
   try {
     body = await req.json();

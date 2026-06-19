@@ -21,6 +21,8 @@ import { fileURLToPath } from "node:url";
 const kok = join(dirname(fileURLToPath(import.meta.url)), "..");
 const apiDir = join(kok, "src", "app", "api");
 const stashDir = join(kok, ".cap-stash", "api");
+const mwDosya = join(kok, "src", "middleware.ts");
+const mwStash = join(kok, ".cap-stash", "middleware.ts");
 
 function calistir(komut, env = {}) {
   execSync(komut, { cwd: kok, stdio: "inherit", env: { ...process.env, ...env } });
@@ -35,6 +37,13 @@ if (existsSync(apiDir)) {
   }
   renameSync(apiDir, stashDir);
   console.log("• app/api geçici olarak kenara alındı");
+}
+
+// middleware.ts statik export'ta desteklenmez → onu da kenara al
+if (existsSync(mwDosya)) {
+  mkdirSync(join(kok, ".cap-stash"), { recursive: true });
+  renameSync(mwDosya, mwStash);
+  console.log("• middleware.ts geçici olarak kenara alındı");
 }
 
 let hata = null;
@@ -61,6 +70,10 @@ try {
   if (existsSync(stashDir)) {
     renameSync(stashDir, apiDir);
     console.log("• app/api geri yerine kondu");
+  }
+  if (existsSync(mwStash)) {
+    renameSync(mwStash, mwDosya);
+    console.log("• middleware.ts geri yerine kondu");
   }
 }
 

@@ -1,4 +1,5 @@
 import { InferenceClient } from "@huggingface/inference";
+import { hizSiniri } from "@/lib/hizSiniri";
 
 /* ──────────────────────────────────────────────────────────
    mk_ai — Görsel üretim / düzenleme (çok-sağlayıcılı)
@@ -108,6 +109,7 @@ async function geminiUret(key: string, prompt: string, gorsel?: { b64: string; m
 }
 
 export async function POST(req: Request) {
+  const rl = hizSiniri(req, 10); if (rl) return rl;
   let body: Govde;
   try {
     body = await req.json();

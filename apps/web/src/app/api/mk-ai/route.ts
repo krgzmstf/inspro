@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { aktifSaglayicilar, mkAiUret, type SaglayiciId } from "@/lib/aiSaglayici";
+import { hizSiniri } from "@/lib/hizSiniri";
 
 /* ──────────────────────────────────────────────────────────
    mk_ai — Proje Risk Yorumu (sunucu tarafı)
@@ -58,6 +59,7 @@ const SISTEM =
   "kritik yola odaklan. (5) Türkçe, kısa, abartısız yaz.";
 
 export async function POST(req: Request) {
+  const rl = hizSiniri(req, 30); if (rl) return rl;
   let body: Govde;
   try {
     body = await req.json();

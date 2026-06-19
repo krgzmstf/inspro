@@ -69,7 +69,7 @@ export async function PUT(req: Request) {
   const { email, ad_soyad, firma, rol } = body as { email?: string; ad_soyad?: string; firma?: string; rol?: string };
   if (!email || !email.includes("@")) return yanit("Geçerli e-posta gerekli.", 400);
 
-  const geciciSifre = "Ins" + Math.random().toString(36).slice(2, 10) + "!9";
+  const geciciSifre = "Ins" + crypto.randomUUID().replace(/-/g, "").slice(0, 10) + "!9";
   const { data: yeni, error } = await sb.auth.admin.createUser({
     email: email.trim(),
     password: geciciSifre,

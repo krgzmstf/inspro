@@ -1,4 +1,5 @@
 import { aktifSaglayicilar, mkAiSohbet, type SaglayiciId } from "@/lib/aiSaglayici";
+import { hizSiniri } from "@/lib/hizSiniri";
 
 /* ──────────────────────────────────────────────────────────
    mk_ai — Görsel prompt üretimi
@@ -35,6 +36,7 @@ const VARSAYILAN_PROMPT =
   "architectural photography, high detail, 8k, no text";
 
 export async function POST(req: Request) {
+  const rl = hizSiniri(req, 20); if (rl) return rl;
   let body: Govde;
   try {
     body = await req.json();
