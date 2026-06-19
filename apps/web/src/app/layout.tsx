@@ -1,7 +1,9 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import ThemeVars from "@/components/ThemeVars";
 import MkAiWidget from "./MkAiWidget";
+import PwaKayit from "@/components/PwaKayit";
+import PwaYukle from "@/components/PwaYukle";
 import "./globals.css";
 
 const inter = Inter({
@@ -31,6 +33,19 @@ export const metadata: Metadata = {
     type: "website",
     siteName: "insPRO",
   },
+  manifest: "/manifest.webmanifest",
+  appleWebApp: { capable: true, statusBarStyle: "default", title: "insPRO" },
+  icons: {
+    icon: [
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: "/apple-touch-icon.png",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#15315c",
 };
 
 export default function RootLayout({
@@ -45,6 +60,10 @@ export default function RootLayout({
         {children}
         {/* Tüm sayfalarda sağ altta yüzen mk_ai asistanı */}
         <MkAiWidget />
+        {/* PWA service worker kaydı (çevrimdışı + kurulabilirlik) */}
+        <PwaKayit />
+        {/* "Uygulamayı yükle" bandı */}
+        <PwaYukle />
       </body>
     </html>
   );

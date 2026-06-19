@@ -256,12 +256,12 @@ export default function Home() {
             >
               Panele Git
             </Link>
-            <a
-              href="#fiyat"
+            <Link
+              href="/giris"
               className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-brand-500/25 transition hover:bg-brand-600"
             >
               Ücretsiz Başla
-            </a>
+            </Link>
           </div>
         </div>
       </header>
@@ -301,12 +301,12 @@ export default function Home() {
               mobilde.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-4">
-              <a
-                href="#fiyat"
+              <Link
+                href="/giris"
                 className="rounded-xl bg-brand-500 px-7 py-3.5 text-base font-bold text-white shadow-xl shadow-brand-500/30 transition hover:bg-brand-600"
               >
                 Ücretsiz Başla →
-              </a>
+              </Link>
               <a
                 href="#nasil"
                 className="rounded-xl border border-slate-300 px-7 py-3.5 text-base font-semibold text-ink-900 transition hover:border-slate-400 hover:bg-slate-100"
@@ -623,8 +623,8 @@ export default function Home() {
                     </li>
                   ))}
                 </ul>
-                <a
-                  href="#"
+                <Link
+                  href="/giris"
                   className={
                     t.highlight
                       ? "mt-8 block rounded-xl bg-brand-500 py-3 text-center text-sm font-bold text-white transition hover:bg-brand-600"
@@ -632,7 +632,7 @@ export default function Home() {
                   }
                 >
                   {t.cta}
-                </a>
+                </Link>
               </div>
             ))}
           </div>
@@ -682,12 +682,12 @@ export default function Home() {
             deneyin — kurulum gerektirmez.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
-            <a
-              href="#fiyat"
+            <Link
+              href="/kayit"
               className="rounded-xl bg-brand-500 px-8 py-4 text-base font-bold text-white shadow-xl shadow-brand-500/30 transition hover:bg-brand-600"
             >
               Ücretsiz Hesap Oluştur
-            </a>
+            </Link>
             <span className="text-sm text-slate-500">
               Kredi kartı gerekmez · 2 dakikada kurulum
             </span>
