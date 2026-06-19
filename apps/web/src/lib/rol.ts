@@ -132,8 +132,8 @@ export function menuyeYetkili(rol: Rol, href: string, yetkiler?: string[] | null
   const path = href.split("?")[0];
   const liste = yetkiler && yetkiler.length > 0 ? yetkiler : ROL_MENU[rol];
   if (liste === "*") return true;
-  // Projeler (/panel), Profilim ve Sohbet herkese açık
-  if (path === "/panel" || path === "/panel/profil" || path === "/panel/sohbet") return true;
+  // Projeler (/panel), Profilim, Sohbet ve Ayarlar herkese açık
+  if (path === "/panel" || path === "/panel/profil" || path === "/panel/sohbet" || path === "/panel/ayarlar") return true;
   return (liste as string[]).some((h) => path === h || path.startsWith(h + "/"));
 }
 

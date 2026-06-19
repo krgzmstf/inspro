@@ -31,6 +31,7 @@ export const MENU_KATALOG: MenuOge[] = [
   { href: "/panel/bilgi", label: "Bilgi Tabanı", icon: "📚" },
   { href: "/panel/sohbet", label: "Sohbet", icon: "💬" },
   { href: "/panel/profil", label: "Profilim & Güvenlik", icon: "🪪" },
+  { href: "/panel/ayarlar", label: "Ayarlar", icon: "⚙️" },
   { href: "/panel/yonetim", label: "Yönetim", icon: "👤" },
 ];
 

@@ -263,6 +263,22 @@ export async function sifreyiGuncelle(yeniSifre: string): Promise<AuthSonuc> {
   } catch (e) { return { ok: false, mesaj: cevir(e) }; }
 }
 
+// ── Şifre değiştir (Ayarlar — mevcut şifre doğrulamalı) ──
+export async function sifreDegistir(mevcut: string, yeni: string): Promise<AuthSonuc> {
+  try {
+    const c = sb();
+    const { data: { user } } = await c.auth.getUser();
+    if (!user?.email) return { ok: false, mesaj: "Oturum bulunamadı." };
+    if (yeni.length < 6) return { ok: false, mesaj: "Yeni şifre en az 6 karakter olmalı." };
+    // Mevcut şifreyi doğrula (yanlışsa güncelleme yapma)
+    const { error: e1 } = await c.auth.signInWithPassword({ email: user.email, password: mevcut });
+    if (e1) return { ok: false, mesaj: "Mevcut şifre hatalı." };
+    const { error: e2 } = await c.auth.updateUser({ password: yeni });
+    if (e2) throw e2;
+    return { ok: true, mesaj: "Şifren başarıyla güncellendi." };
+  } catch (e) { return { ok: false, mesaj: cevir(e) }; }
+}
+
 export async function cikisYap(): Promise<void> {
   profilCacheSil();
   try { await sb().auth.signOut(); } catch { /* yok say */ }
