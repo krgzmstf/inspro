@@ -278,7 +278,7 @@ export default function PozlarPage() {
       </div>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
-        <div className="rounded-2xl border border-sky-200 bg-[#f2f8fd] p-5 shadow-sm">
+        <div className="rounded-2xl border border-sky-200 bg-[#f2f8fd] p-4 shadow-sm sm:p-5">
           <h2 className="text-sm font-extrabold text-slate-900">⬆ Poz Listesi İçe Aktar (Excel / CSV)</h2>
           <p className="mt-1 text-xs text-slate-500">
             <b>.xlsx, .xls veya .csv</b> dosyası yükleyin (KGM/İLBANK resmî listeler veya kendi
@@ -332,7 +332,7 @@ export default function PozlarPage() {
       {/* Özel poz ekle + başka kütüphaneden kopyala */}
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
         {/* Yeni özel poz */}
-        <div className="rounded-2xl border border-sky-200 bg-[#f2f8fd] p-5 shadow-sm">
+        <div className="rounded-2xl border border-sky-200 bg-[#f2f8fd] p-4 shadow-sm sm:p-5">
           <button onClick={() => setOzelAcik((v) => !v)} className="flex w-full items-center justify-between text-sm font-extrabold text-slate-900">
             ➕ Kendi Pozunu Ekle
             <span className="text-xs text-slate-400">{ozelAcik ? "▴" : "▾"}</span>
@@ -355,7 +355,7 @@ export default function PozlarPage() {
         </div>
 
         {/* Başka kütüphaneden kopyala */}
-        <div className="rounded-2xl border border-sky-200 bg-[#f2f8fd] p-5 shadow-sm">
+        <div className="rounded-2xl border border-sky-200 bg-[#f2f8fd] p-4 shadow-sm sm:p-5">
           <button onClick={() => setKopyaAcik((v) => !v)} className="flex w-full items-center justify-between text-sm font-extrabold text-slate-900">
             ⇄ Başka Kütüphaneden Poz Al
             <span className="text-xs text-slate-400">{kopyaAcik ? "▴" : "▾"}</span>
@@ -393,7 +393,7 @@ export default function PozlarPage() {
       <div className="mt-6 flex flex-wrap gap-3">
         <input value={arama} onChange={(e) => { setArama(e.target.value); setLimit(SAYFA); }}
           placeholder="Poz kodu (ör: 15.100) veya ad ara…"
-          className="min-w-56 flex-1 rounded-xl border-2 border-slate-200 px-4 py-2.5 text-sm outline-none transition focus:border-brand-500" />
+          className="min-w-0 flex-1 rounded-xl border-2 border-slate-200 px-3 py-2 text-sm sm:px-4 sm:py-2.5 outline-none transition focus:border-brand-500" />
         <select value={kategori} onChange={(e) => { setKategori(e.target.value); setLimit(SAYFA); }}
           className="max-w-64 rounded-xl border-2 border-sky-200 bg-[#f2f8fd] px-4 py-2.5 text-sm font-semibold outline-none focus:border-brand-500">
           <option value="">Tüm kategoriler</option>
@@ -408,11 +408,11 @@ export default function PozlarPage() {
         <table className="w-full min-w-0 text-[11px] sm:min-w-[860px] sm:text-sm">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-bold uppercase tracking-wide text-slate-500">
-              <th className="px-4 py-3">Poz</th>
-              <th className="px-3 py-3 text-right">Resmî (ÇŞB)</th>
-              <th className="px-3 py-3 text-right">Piyasa Min–Max</th>
-              <th className="px-3 py-3 text-right">Maliyette</th>
-              <th className="px-2 py-3" />
+              <th className="px-2 py-2 sm:px-4 sm:py-3">Poz</th>
+              <th className="px-1.5 py-2 text-right sm:px-3 sm:py-3">Resmî (ÇŞB)</th>
+              <th className="px-1.5 py-2 text-right sm:px-3 sm:py-3">Piyasa Min–Max</th>
+              <th className="px-1.5 py-2 text-right sm:px-3 sm:py-3">Maliyette</th>
+              <th className="px-1 py-2 sm:px-2 sm:py-3" />
             </tr>
           </thead>
           <tbody>
@@ -420,7 +420,7 @@ export default function PozlarPage() {
               const etkin = etkinFiyat(p);
               return (
                 <tr key={p.kod} className="border-b border-slate-100 hover:bg-slate-50/60">
-                  <td className="px-4 py-2.5">
+                  <td className="px-2 py-1.5 sm:px-4 sm:py-2.5">
                     <div className="flex items-center gap-2">
                       <span className="font-mono text-xs font-bold text-ink-800">{p.kod}</span>
                       <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold ${KAYNAK_RENK[p.kaynak]}`}>{p.kaynak}</span>
@@ -428,12 +428,12 @@ export default function PozlarPage() {
                     <div className="max-w-md text-slate-600">{p.ad}</div>
                     <div className="text-[10px] text-slate-400">{p.kategori}</div>
                   </td>
-                  <td className="px-3 py-2.5 text-right">
+                  <td className="px-1.5 py-1.5 text-right sm:px-3 sm:py-2.5">
                     <input type="number" defaultValue={p.resmiFiyat} onBlur={(e) => handleResmiDuzelt(p.kod, e.target.value)}
-                      className="w-24 rounded-lg border border-slate-200 px-2 py-1 text-right text-sm outline-none focus:border-brand-500" />
+                      className="w-16 rounded-lg border border-slate-200 px-1.5 py-1 text-right text-xs sm:w-24 sm:px-2 sm:text-sm outline-none focus:border-brand-500" />
                     <span className="ml-1 text-[10px] text-slate-400">/{p.birim}</span>
                   </td>
-                  <td className="px-3 py-2.5 text-right text-xs">
+                  <td className="px-1.5 py-1.5 text-right sm:px-3 sm:py-2.5 text-xs">
                     {p.piyasaMin != null ? (
                       <span className="font-semibold text-slate-700">
                         {formatTL(p.piyasaMin)}
@@ -443,13 +443,13 @@ export default function PozlarPage() {
                       <span className="text-slate-300">—</span>
                     )}
                   </td>
-                  <td className="px-3 py-2.5 text-right">
+                  <td className="px-1.5 py-1.5 text-right sm:px-3 sm:py-2.5">
                     <span className="font-bold text-emerald-700">{formatTL(etkin)}</span>
                     {p.piyasaMin != null && etkin < p.resmiFiyat && (
                       <div className="text-[9px] font-bold text-emerald-600">piyasa ↓</div>
                     )}
                   </td>
-                  <td className="px-2 py-2.5 text-center">
+                  <td className="px-1 py-1.5 text-center sm:px-2 sm:py-2.5">
                     <button onClick={() => handleDelete(p.kod)}
                       className="rounded-lg px-2 py-1 text-slate-300 transition hover:bg-red-50 hover:text-red-500">🗑</button>
                   </td>

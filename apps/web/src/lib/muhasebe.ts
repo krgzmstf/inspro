@@ -15,6 +15,7 @@
    —————————————————————————————————————————————————— */
 
 import { muhasebeBulutaYaz, muhasebeBuluttanSil } from "./muhasebeSenkron";
+import { islemKaydet } from "./islemLog";
 
 export type KayitTipi = "gelir" | "gider";
 export type OdemeDurumu = "acik" | "kismi" | "odendi";
@@ -158,12 +159,15 @@ export function addMuhasebe(
   };
   saveAll([...loadAll(), kayit]);
   void muhasebeBulutaYaz(kayit);
+  islemKaydet("olustur", "muhasebe", kayit.aciklama || kayit.taraf, { tutar: kayit.net, tip: kayit.tip });
   return kayit;
 }
 
 export function deleteMuhasebe(id: string) {
+  const k = loadAll().find((x) => x.id === id);
   saveAll(loadAll().filter((k) => k.id !== id));
   void muhasebeBuluttanSil(id);
+  islemKaydet("sil", "muhasebe", k ? (k.aciklama || k.taraf) : id);
 }
 
 /** Bir kaydı günceller; matrah/oran değişirse türetilenleri yeniden hesaplar.
@@ -199,6 +203,7 @@ export function odemeKaydet(id: string, ekTutar: number, hesapId?: string): Muha
   hepsi[idx] = guncel;
   saveAll(hepsi);
   void muhasebeBulutaYaz(guncel);
+  islemKaydet("odeme", "muhasebe", guncel.aciklama || guncel.taraf, { ekTutar });
   return guncel;
 }
 

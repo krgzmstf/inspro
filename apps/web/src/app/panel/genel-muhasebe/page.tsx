@@ -60,7 +60,7 @@ export default function GenelMuhasebePage() {
     <div className="mx-auto max-w-6xl">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-900">📊 Genel Muhasebe</h1>
+          <h1 className="break-words leading-tight text-base font-extrabold sm:text-2xl text-slate-900">📊 Genel Muhasebe</h1>
           <p className="mt-1 text-sm text-slate-500">Tüm dosyaların (projelerin) toplam gelir, gider ve bakiyesi — tek tabloda.</p>
         </div>
         {satirlar.length > 0 && (
@@ -73,17 +73,17 @@ export default function GenelMuhasebePage() {
 
       {/* Genel toplam kartları */}
       <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
-        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 shadow-sm">
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-3.5 shadow-sm sm:p-5">
           <div className="text-xs font-semibold uppercase text-emerald-600">Genel Toplam Gelir</div>
-          <div className="mt-1 text-2xl font-extrabold text-emerald-700">{formatTL(toplam.gelir)}</div>
+          <div className="mt-1 break-words leading-tight text-base font-extrabold sm:text-2xl text-emerald-700">{formatTL(toplam.gelir)}</div>
         </div>
-        <div className="rounded-2xl border border-red-200 bg-red-50 p-5 shadow-sm">
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-3.5 shadow-sm sm:p-5">
           <div className="text-xs font-semibold uppercase text-red-600">Genel Toplam Gider</div>
-          <div className="mt-1 text-2xl font-extrabold text-red-700">{formatTL(toplam.gider)}</div>
+          <div className="mt-1 break-words leading-tight text-base font-extrabold sm:text-2xl text-red-700">{formatTL(toplam.gider)}</div>
         </div>
-        <div className={`rounded-2xl border-2 p-5 shadow-sm ${toplam.bakiye >= 0 ? "border-ink-900 bg-ink-950 text-white" : "border-red-400 bg-red-100"}`}>
+        <div className={`rounded-2xl border-2 p-3.5 shadow-sm sm:p-5 ${toplam.bakiye >= 0 ? "border-ink-900 bg-ink-950 text-white" : "border-red-400 bg-red-100"}`}>
           <div className={`text-xs font-semibold uppercase ${toplam.bakiye >= 0 ? "text-white/60" : "text-red-600"}`}>Genel Bakiye</div>
-          <div className={`mt-1 text-2xl font-extrabold ${toplam.bakiye >= 0 ? "text-brand-400" : "text-red-700"}`}>{formatTL(toplam.bakiye)}</div>
+          <div className={`mt-1 break-words leading-tight text-base font-extrabold sm:text-2xl ${toplam.bakiye >= 0 ? "text-brand-400" : "text-red-700"}`}>{formatTL(toplam.bakiye)}</div>
         </div>
       </div>
 

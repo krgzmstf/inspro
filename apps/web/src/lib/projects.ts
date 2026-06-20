@@ -5,6 +5,7 @@
    ────────────────────────────────────────────────────────── */
 
 import { projeyiBulutaYaz, projeyiBuluttanSil } from "./projeSenkron";
+import { islemKaydet } from "./islemLog";
 
 export type ProjectType = "konut" | "villa" | "ticari";
 export type PhaseStatus = "bekliyor" | "devam" | "tamam";
@@ -223,6 +224,7 @@ export function createProject(
   };
   saveProjects([project, ...loadProjects()]);
   void projeyiBulutaYaz(project); // bulut senkronu (oturum varsa)
+  islemKaydet("olustur", "proje", project.name, { id: project.id, sehir: project.city });
   return project;
 }
 
@@ -232,8 +234,10 @@ export function updateProject(updated: Project) {
 }
 
 export function deleteProject(id: string) {
+  const ad = loadProjects().find((p) => p.id === id)?.name;
   saveProjects(loadProjects().filter((p) => p.id !== id));
   void projeyiBuluttanSil(id);
+  islemKaydet("sil", "proje", ad ?? id);
 }
 
 /** Bir keşif kalemi için kendi (gerçekleşen) birim fiyatını kaydeder. */

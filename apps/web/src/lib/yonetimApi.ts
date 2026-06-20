@@ -62,6 +62,27 @@ export const veriGetir = (tip: string) => iste<{ satirlar: YonetimVeri[] }>("/ve
 export const veriSilApi = (tip: string, id: string) =>
   iste("/veri?tip=" + encodeURIComponent(tip) + "&id=" + encodeURIComponent(id), { method: "DELETE" });
 
+export interface IslemLog {
+  id: string; kullanici_id: string | null; email: string | null;
+  eylem: string; modul: string; kayit: string | null;
+  detay: Record<string, unknown> | null; platform: string | null; created_at: string;
+}
+export interface LogOzet {
+  kullanici_id: string; email: string; adet: number; son: string;
+  eylemler: Record<string, number>;
+}
+/** İşlem günlüğü (süper admin). Filtreler: kullanici, eylem, modul, q, limit. */
+export const loglariGetir = (f: { kullanici?: string; eylem?: string; modul?: string; q?: string; limit?: number } = {}) => {
+  const p = new URLSearchParams();
+  if (f.kullanici) p.set("kullanici", f.kullanici);
+  if (f.eylem) p.set("eylem", f.eylem);
+  if (f.modul) p.set("modul", f.modul);
+  if (f.q) p.set("q", f.q);
+  if (f.limit) p.set("limit", String(f.limit));
+  const qs = p.toString();
+  return iste<{ loglar: IslemLog[]; ozet: LogOzet[] }>("/loglar" + (qs ? "?" + qs : ""));
+};
+
 /** Tek projeyi incele (sahip + tam nesne). */
 export const projeGetir = (owner: string, id: string) =>
   iste<{ proje: Record<string, unknown>; owner_email: string }>("/proje?owner=" + encodeURIComponent(owner) + "&id=" + encodeURIComponent(id));

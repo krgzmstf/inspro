@@ -33,6 +33,7 @@ export const MENU_KATALOG: MenuOge[] = [
   { href: "/panel/profil", label: "Profilim & Güvenlik", icon: "🪪" },
   { href: "/panel/ayarlar", label: "Ayarlar", icon: "⚙️" },
   { href: "/panel/yonetim", label: "Yönetim", icon: "👤" },
+  { href: "/panel/loglar", label: "İşlem Kayıtları", icon: "🧭" },
 ];
 
 /** Menü ayarı: gizlenecek modüller, yeniden adlandırma, sıralama. */

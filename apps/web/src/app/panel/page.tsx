@@ -185,7 +185,7 @@ export default function PanelPage() {
           </div>
         )}
 
-        <div className="grid gap-5 md:grid-cols-2">
+        <div className="grid gap-3 sm:gap-4 md:grid-cols-2">
           {projects.map((p) => {
             const progress = projectProgress(p);
             const activePhase =
@@ -195,22 +195,22 @@ export default function PanelPage() {
             return (
               <div
                 key={p.id}
-                className="group rounded-2xl border border-sky-200 bg-[#f2f8fd] p-5 shadow-sm transition hover:border-brand-500 hover:bg-[#eaf4fc] hover:shadow-md"
+                className="group rounded-2xl border border-sky-200 bg-[#f2f8fd] p-3.5 shadow-sm transition hover:border-brand-500 hover:bg-[#eaf4fc] hover:shadow-md sm:p-5"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <Link
                       href={`/panel/proje?id=${p.id}`}
-                      className="block truncate text-lg font-bold text-slate-900 transition group-hover:text-ink-800"
+                      className="block truncate text-base font-bold text-slate-900 transition group-hover:text-ink-800 sm:text-lg"
                     >
                       {p.name}
                     </Link>
-                    <div className="mt-0.5 text-xs text-slate-500">
+                    <div className="mt-0.5 text-[11px] text-slate-500 sm:text-xs">
                       {p.city} · {TYPE_LABELS[p.type]} ·{" "}
                       {p.area.toLocaleString("tr-TR")} m² · {p.floors} kat
                     </div>
                   </div>
-                  <span className="shrink-0 rounded-full bg-ink-900 px-3 py-1 text-xs font-bold text-white">
+                  <span className="shrink-0 rounded-full bg-ink-900 px-2.5 py-1 text-[11px] font-bold text-white sm:px-3 sm:text-xs">
                     %{progress}
                   </span>
                 </div>

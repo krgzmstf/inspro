@@ -13,6 +13,8 @@
    Geçici: localStorage. Supabase'e geçişte tek bu katman döner.
    ────────────────────────────────────────────────────────── */
 
+import { islemKaydet } from "./islemLog";
+
 export type KalemDurum = "bekliyor" | "devam" | "tamam";
 
 export interface AsamaKalem {
@@ -187,6 +189,7 @@ export function addAsamaKalem(
     durum: "bekliyor",
   };
   saveAll([...loadAll(), kalem]);
+  islemKaydet("olustur", "is-kalemi", kalem.ad, { asama, projectId });
   return kalem;
 }
 
@@ -195,7 +198,9 @@ export function updateAsamaKalem(id: string, patch: Partial<AsamaKalem>) {
 }
 
 export function deleteAsamaKalem(id: string) {
+  const ad = loadAll().find((k) => k.id === id)?.ad;
   saveAll(loadAll().filter((k) => k.id !== id));
+  islemKaydet("sil", "is-kalemi", ad ?? id);
 }
 
 /** Kalemi listede yukarı/aşağı taşır (sira değiştirir). */

@@ -182,9 +182,9 @@ export default function PersonelPage() {
           )}
 
           {form && (
-            <form onSubmit={kaydet} className="rounded-2xl border-2 border-brand-500/40 bg-white p-5 shadow-md">
+            <form onSubmit={kaydet} className="rounded-2xl border-2 border-brand-500/40 bg-white p-4 shadow-md sm:p-5">
               <h2 className="text-base font-bold text-slate-900">{form.ad ? "Çalışanı Düzenle" : "Yeni Çalışan"}</h2>
-              <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-3">
                 <F label="Ad *"><input value={form.ad} onChange={(e) => setForm({ ...form, ad: e.target.value })} className={inp} /></F>
                 <F label="Soyad"><input value={form.soyad} onChange={(e) => setForm({ ...form, soyad: e.target.value })} className={inp} /></F>
                 <F label="Tür">
@@ -431,7 +431,7 @@ export default function PersonelPage() {
   );
 }
 
-const inp = "w-full rounded-xl border-2 border-slate-200 px-3 py-2 text-sm outline-none transition focus:border-brand-500";
+const inp = "w-full rounded-xl border-2 border-slate-200 px-2.5 py-1.5 text-[13px] outline-none transition focus:border-brand-500 sm:px-3 sm:py-2 sm:text-sm";
 function F({ label, children }: { label: string; children: React.ReactNode }) {
-  return <label className="block"><span className="text-xs font-semibold text-slate-600">{label}</span><div className="mt-1">{children}</div></label>;
+  return <label className="block"><span className="text-[11px] font-semibold text-slate-600 sm:text-xs">{label}</span><div className="mt-0.5 sm:mt-1">{children}</div></label>;
 }

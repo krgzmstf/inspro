@@ -433,7 +433,7 @@ export default function MuhasebePage() {
 
           <div className="mt-5 grid gap-6 lg:grid-cols-[380px_1fr]">
             {/* Kayıt ekleme */}
-            <form onSubmit={handleEkle} className="h-fit rounded-2xl border border-sky-200 bg-[#f2f8fd] p-5 shadow-sm">
+            <form onSubmit={handleEkle} className="h-fit rounded-2xl border border-sky-200 bg-[#f2f8fd] p-4 shadow-sm sm:p-5">
               <h2 className="text-sm font-extrabold text-slate-700">Yeni Hareket</h2> 
               <div className="mt-3 grid grid-cols-2 gap-2">
                 <button type="button" onClick={() => handleTipDegis("gider")}
@@ -442,29 +442,29 @@ export default function MuhasebePage() {
                   className={`rounded-xl border-2 py-2 text-sm font-bold transition ${tip === "gelir" ? "border-emerald-400 bg-emerald-50 text-emerald-600" : "border-slate-200 text-slate-500"}`}>+ Gelir</button>
               </div>
 
-              <label className="mt-3 block text-sm font-semibold text-slate-700">Kategori
+              <label className="mt-3 block text-[13px] font-semibold text-slate-700 sm:text-sm">Kategori
                 <select value={kategori} onChange={(e) => setKategori(e.target.value)}
-                  className="mt-1 w-full rounded-xl border-2 border-sky-200 bg-[#f2f8fd] px-3 py-2 text-sm outline-none focus:border-brand-500">
+                  className="mt-1 w-full rounded-xl border-2 border-sky-200 bg-[#f2f8fd] px-2.5 py-1.5 text-[13px] sm:px-3 sm:py-2 sm:text-sm outline-none focus:border-brand-500">
                   {kategoriler.map((k) => <option key={k}>{k}</option>)}
                 </select>
               </label>
 
               <div className="mt-3 grid grid-cols-2 gap-2">
-                <label className="block text-sm font-semibold text-slate-700">Matrah (₺, KDV hariç) *
+                <label className="block text-[13px] font-semibold text-slate-700 sm:text-sm">Matrah (₺, KDV hariç) *
                   <input type="number" min="0" step="0.01" value={matrah} onChange={(e) => setMatrah(e.target.value)}
-                    placeholder="0" className="mt-1 w-full rounded-xl border-2 border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500" />
+                    placeholder="0" className="mt-1 w-full rounded-xl border-2 border-slate-200 px-2.5 py-1.5 text-[13px] sm:px-3 sm:py-2 sm:text-sm outline-none focus:border-brand-500" />
                 </label>
-                <label className="block text-sm font-semibold text-slate-700">KDV Oranı
+                <label className="block text-[13px] font-semibold text-slate-700 sm:text-sm">KDV Oranı
                   <select value={kdvOran} onChange={(e) => setKdvOran(Number(e.target.value))}
-                    className="mt-1 w-full rounded-xl border-2 border-sky-200 bg-[#f2f8fd] px-3 py-2 text-sm outline-none focus:border-brand-500">
+                    className="mt-1 w-full rounded-xl border-2 border-sky-200 bg-[#f2f8fd] px-2.5 py-1.5 text-[13px] sm:px-3 sm:py-2 sm:text-sm outline-none focus:border-brand-500">
                     {KDV_ORANLARI.map((o) => <option key={o} value={o}>%{o}</option>)}
                   </select>
                 </label>
               </div>
 
-              <label className="mt-3 block text-sm font-semibold text-slate-700">KDV Tevkifatı
+              <label className="mt-3 block text-[13px] font-semibold text-slate-700 sm:text-sm">KDV Tevkifatı
                 <select value={tevkifatOran} onChange={(e) => setTevkifatOran(Number(e.target.value))}
-                  className="mt-1 w-full rounded-xl border-2 border-sky-200 bg-[#f2f8fd] px-3 py-2 text-sm outline-none focus:border-brand-500">
+                  className="mt-1 w-full rounded-xl border-2 border-sky-200 bg-[#f2f8fd] px-2.5 py-1.5 text-[13px] sm:px-3 sm:py-2 sm:text-sm outline-none focus:border-brand-500">
                   {TEVKIFAT_ORANLARI.map((t) => <option key={t.etiket} value={t.oran}>{t.etiket}</option>)}
                 </select>
               </label>
@@ -477,49 +477,49 @@ export default function MuhasebePage() {
                 <Satir k={tip === "gider" ? "Ödenecek (net)" : "Tahsil edilecek (net)"} v={onizleme.net} kalin renk="brand" />
               </div>
 
-              <label className="mt-3 block text-sm font-semibold text-slate-700">{tip === "gider" ? "Tedarikçi / Usta" : "Müşteri / Taraf"}
+              <label className="mt-3 block text-[13px] font-semibold text-slate-700 sm:text-sm">{tip === "gider" ? "Tedarikçi / Usta" : "Müşteri / Taraf"}
                 <input list="cari-rehber" value={taraf} onChange={(e) => setTaraf(e.target.value)} placeholder="rehberden seç / yaz"
-                  className="mt-1 w-full rounded-xl border-2 border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500" />
+                  className="mt-1 w-full rounded-xl border-2 border-slate-200 px-2.5 py-1.5 text-[13px] sm:px-3 sm:py-2 sm:text-sm outline-none focus:border-brand-500" />
               </label>
               <div className="mt-3 grid grid-cols-2 gap-2">
-                <label className="block text-sm font-semibold text-slate-700">Belge / Fatura No
+                <label className="block text-[13px] font-semibold text-slate-700 sm:text-sm">Belge / Fatura No
                   <input value={belgeNo} onChange={(e) => setBelgeNo(e.target.value)} placeholder="ör: A-001234"
-                    className="mt-1 w-full rounded-xl border-2 border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500" />
+                    className="mt-1 w-full rounded-xl border-2 border-slate-200 px-2.5 py-1.5 text-[13px] sm:px-3 sm:py-2 sm:text-sm outline-none focus:border-brand-500" />
                 </label>
-                <label className="block text-sm font-semibold text-slate-700">Açıklama
+                <label className="block text-[13px] font-semibold text-slate-700 sm:text-sm">Açıklama
                   <input value={aciklama} onChange={(e) => setAciklama(e.target.value)} placeholder="ör: 12 ton demir"
-                    className="mt-1 w-full rounded-xl border-2 border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500" />
+                    className="mt-1 w-full rounded-xl border-2 border-slate-200 px-2.5 py-1.5 text-[13px] sm:px-3 sm:py-2 sm:text-sm outline-none focus:border-brand-500" />
                 </label>
               </div>
               <div className="mt-3 grid grid-cols-2 gap-2">
-                <label className="block text-sm font-semibold text-slate-700">İşlem Tarihi
+                <label className="block text-[13px] font-semibold text-slate-700 sm:text-sm">İşlem Tarihi
                   <input type="date" value={tarih} onChange={(e) => setTarih(e.target.value)}
-                    className="mt-1 w-full rounded-xl border-2 border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500" />
+                    className="mt-1 w-full rounded-xl border-2 border-slate-200 px-2.5 py-1.5 text-[13px] sm:px-3 sm:py-2 sm:text-sm outline-none focus:border-brand-500" />
                 </label>
-                <label className="block text-sm font-semibold text-slate-700">Vade Tarihi
+                <label className="block text-[13px] font-semibold text-slate-700 sm:text-sm">Vade Tarihi
                   <input type="date" value={vadeTarihi} onChange={(e) => setVadeTarihi(e.target.value)}
-                    className="mt-1 w-full rounded-xl border-2 border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500" />
+                    className="mt-1 w-full rounded-xl border-2 border-slate-200 px-2.5 py-1.5 text-[13px] sm:px-3 sm:py-2 sm:text-sm outline-none focus:border-brand-500" />
                 </label>
               </div>
 
-              <label className="mt-3 block text-sm font-semibold text-slate-700">Ödeme Durumu
+              <label className="mt-3 block text-[13px] font-semibold text-slate-700 sm:text-sm">Ödeme Durumu
                 <select value={durum} onChange={(e) => setDurum(e.target.value as OdemeDurumu)}
-                  className="mt-1 w-full rounded-xl border-2 border-sky-200 bg-[#f2f8fd] px-3 py-2 text-sm outline-none focus:border-brand-500">
+                  className="mt-1 w-full rounded-xl border-2 border-sky-200 bg-[#f2f8fd] px-2.5 py-1.5 text-[13px] sm:px-3 sm:py-2 sm:text-sm outline-none focus:border-brand-500">
                   <option value="odendi">{tip === "gider" ? "Ödendi" : "Tahsil edildi"}</option>
                   <option value="acik">Açık (vadeli)</option>
                 </select>
               </label>
               {durum === "odendi" && hesaplar.length > 0 && (
-                <label className="mt-3 block text-sm font-semibold text-slate-700">{tip === "gider" ? "Ödendiği hesap" : "Tahsil edilen hesap"}
+                <label className="mt-3 block text-[13px] font-semibold text-slate-700 sm:text-sm">{tip === "gider" ? "Ödendiği hesap" : "Tahsil edilen hesap"}
                   <select value={hesapId} onChange={(e) => setHesapId(e.target.value)}
-                    className="mt-1 w-full rounded-xl border-2 border-sky-200 bg-[#f2f8fd] px-3 py-2 text-sm outline-none focus:border-brand-500">
+                    className="mt-1 w-full rounded-xl border-2 border-sky-200 bg-[#f2f8fd] px-2.5 py-1.5 text-[13px] sm:px-3 sm:py-2 sm:text-sm outline-none focus:border-brand-500">
                     <option value="">— Belirtilmedi —</option>
                     {hesaplar.map((h) => <option key={h.id} value={h.id}>{h.ad}</option>)}
                   </select>
                 </label>
               )}
 
-              {error && <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm font-bold text-red-600">{error}</p>}
+              {error && <p className="mt-3 rounded-lg bg-red-50 px-2.5 py-1.5 text-[13px] sm:px-3 sm:py-2 sm:text-sm font-bold text-red-600">{error}</p>}
               <button type="submit"
                 className={`mt-4 w-full rounded-xl py-2.5 text-sm font-bold text-white transition ${tip === "gider" ? "bg-red-500 hover:bg-red-600" : "bg-emerald-500 hover:bg-emerald-600"}`}>
                 {tip === "gider" ? "Gider Ekle" : "Gelir Ekle"}
@@ -802,18 +802,18 @@ export default function MuhasebePage() {
               <div className="grid grid-cols-2 gap-3">
                 <label className="block text-xs font-bold text-slate-500">Matrah (₺)
                   <input type="number" value={mMatrah} onChange={(e) => setMMatrah(e.target.value)}
-                    className="mt-1 w-full rounded-xl border-2 border-slate-100 bg-slate-50 px-3 py-2 text-sm font-bold outline-none focus:border-brand-500" />
+                    className="mt-1 w-full rounded-xl border-2 border-slate-100 bg-slate-50 px-2.5 py-1.5 text-[13px] sm:px-3 sm:py-2 sm:text-sm font-bold outline-none focus:border-brand-500" />
                 </label>
                 <label className="block text-xs font-bold text-slate-500">KDV Oranı
                   <select value={mKdv} onChange={(e) => setMKdv(Number(e.target.value))}
-                    className="mt-1 w-full rounded-xl border-2 border-slate-100 bg-slate-50 px-3 py-2 text-sm font-bold outline-none focus:border-brand-500">
+                    className="mt-1 w-full rounded-xl border-2 border-slate-100 bg-slate-50 px-2.5 py-1.5 text-[13px] sm:px-3 sm:py-2 sm:text-sm font-bold outline-none focus:border-brand-500">
                     {KDV_ORANLARI.map((o) => <option key={o} value={o}>%{o}</option>)}
                   </select>
                 </label>
               </div>
               <label className="block text-xs font-bold text-slate-500">KDV Tevkifatı
                 <select value={mTevkifat} onChange={(e) => setMTevkifat(Number(e.target.value))}
-                  className="mt-1 w-full rounded-xl border-2 border-slate-100 bg-slate-50 px-3 py-2 text-sm font-bold outline-none focus:border-brand-500">
+                  className="mt-1 w-full rounded-xl border-2 border-slate-100 bg-slate-50 px-2.5 py-1.5 text-[13px] sm:px-3 sm:py-2 sm:text-sm font-bold outline-none focus:border-brand-500">
                   {TEVKIFAT_ORANLARI.map((t) => <option key={t.etiket} value={t.oran}>{t.etiket}</option>)}
                 </select>
               </label>
@@ -828,24 +828,24 @@ export default function MuhasebePage() {
               <div className="grid grid-cols-2 gap-3">
                 <label className="block text-xs font-bold text-slate-500">Kategori
                   <select value={mKategori} onChange={(e) => setMKategori(e.target.value)}
-                    className="mt-1 w-full rounded-xl border-2 border-slate-100 bg-slate-50 px-3 py-2 text-sm font-bold outline-none focus:border-brand-500">
+                    className="mt-1 w-full rounded-xl border-2 border-slate-100 bg-slate-50 px-2.5 py-1.5 text-[13px] sm:px-3 sm:py-2 sm:text-sm font-bold outline-none focus:border-brand-500">
                     {GIDER_KATEGORILERI.map((k) => <option key={k}>{k}</option>)}
                   </select>
                 </label>
                 <label className="block text-xs font-bold text-slate-500">Taraf
                   <input list="cari-rehber" value={mTaraf} onChange={(e) => setMTaraf(e.target.value)}
-                    className="mt-1 w-full rounded-xl border-2 border-slate-100 bg-slate-50 px-3 py-2 text-sm font-bold outline-none focus:border-brand-500" />
+                    className="mt-1 w-full rounded-xl border-2 border-slate-100 bg-slate-50 px-2.5 py-1.5 text-[13px] sm:px-3 sm:py-2 sm:text-sm font-bold outline-none focus:border-brand-500" />
                 </label>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <label className="block text-xs font-bold text-slate-500">Tarih
                   <input type="date" value={mTarih} onChange={(e) => setMTarih(e.target.value)}
-                    className="mt-1 w-full rounded-xl border-2 border-slate-100 bg-slate-50 px-3 py-2 text-sm font-bold outline-none focus:border-brand-500" />
+                    className="mt-1 w-full rounded-xl border-2 border-slate-100 bg-slate-50 px-2.5 py-1.5 text-[13px] sm:px-3 sm:py-2 sm:text-sm font-bold outline-none focus:border-brand-500" />
                 </label>
                 <label className="block text-xs font-bold text-slate-500">Ödenen Hesap
                   <select value={mHesap} onChange={(e) => setMHesap(e.target.value)}
-                    className="mt-1 w-full rounded-xl border-2 border-slate-100 bg-slate-50 px-3 py-2 text-sm font-bold outline-none focus:border-brand-500">
+                    className="mt-1 w-full rounded-xl border-2 border-slate-100 bg-slate-50 px-2.5 py-1.5 text-[13px] sm:px-3 sm:py-2 sm:text-sm font-bold outline-none focus:border-brand-500">
                     {hesaplar.map((h) => <option key={h.id} value={h.id}>{h.ad}</option>)}
                   </select>
                 </label>
@@ -874,7 +874,7 @@ export default function MuhasebePage() {
 
               <label className="block text-xs font-bold text-slate-500">İşlemin Yapıldığı Hesap
                 <select value={odemeHesap} onChange={(e) => setOdemeHesap(e.target.value)}
-                  className="mt-1 w-full rounded-xl border-2 border-slate-100 bg-slate-50 px-3 py-2 text-sm font-bold outline-none focus:border-brand-500">
+                  className="mt-1 w-full rounded-xl border-2 border-slate-100 bg-slate-50 px-2.5 py-1.5 text-[13px] sm:px-3 sm:py-2 sm:text-sm font-bold outline-none focus:border-brand-500">
                   {hesaplar.map((h) => <option key={h.id} value={h.id}>{h.ad}</option>)}
                 </select>
               </label>
@@ -899,9 +899,9 @@ function Kart({ renk, baslik, deger, altKisim }: { renk: string, baslik: string,
     ink: "border-sky-200 bg-[#f2f8fd] text-slate-900 shadow-sm",
   };
   return (
-    <div className={`rounded-2xl border p-4 ${renkSinif[renk] || renkSinif.ink}`}>
-      <div className="text-[10px] font-extrabold uppercase tracking-widest opacity-70">{baslik}</div>
-      <div className="mt-1 text-lg font-extrabold">{formatTL(deger)}</div>
+    <div className={`rounded-2xl border p-3 sm:p-4 ${renkSinif[renk] || renkSinif.ink}`}>
+      <div className="text-[9px] font-extrabold uppercase tracking-widest opacity-70 sm:text-[10px]">{baslik}</div>
+      <div className="mt-1 break-words text-base font-extrabold leading-tight sm:text-lg">{formatTL(deger)}</div>
       <div className="mt-1 text-[10px] font-semibold opacity-60">{altKisim}</div>
     </div>
   );
@@ -950,7 +950,7 @@ function KasaSekme({ hesaplar, onEkle, onSil }: { hesaplar: FinansHesap[], onEkl
 
   return (
     <div className="mt-5 grid gap-6 lg:grid-cols-[340px_1fr]">
-      <form onSubmit={handleSubmit} className="h-fit rounded-2xl border border-sky-200 bg-[#f2f8fd] p-5 shadow-sm">
+      <form onSubmit={handleSubmit} className="h-fit rounded-2xl border border-sky-200 bg-[#f2f8fd] p-4 shadow-sm sm:p-5">
         <h2 className="text-sm font-extrabold text-slate-700">Yeni Hesap</h2>
         <div className="mt-3 grid grid-cols-2 gap-2">
           <button type="button" onClick={() => setTip("kasa")}
@@ -958,19 +958,19 @@ function KasaSekme({ hesaplar, onEkle, onSil }: { hesaplar: FinansHesap[], onEkl
           <button type="button" onClick={() => setTip("banka")}
             className={`rounded-xl border-2 py-2 text-xs font-bold transition ${tip === "banka" ? "border-brand-500 bg-brand-50 text-brand-600" : "border-slate-100 text-slate-400"}`}>🏦 Banka</button>    
         </div>
-        <label className="mt-3 block text-sm font-semibold text-slate-700">Hesap Adı 
+        <label className="mt-3 block text-[13px] font-semibold text-slate-700 sm:text-sm">Hesap Adı 
           <input value={ad} onChange={(e) => setAd(e.target.value)} placeholder={tip === "kasa" ? "Merkez Kasa" : "Ziraat TL"}
-            className="mt-1 w-full rounded-xl border-2 border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500" />
+            className="mt-1 w-full rounded-xl border-2 border-slate-200 px-2.5 py-1.5 text-[13px] sm:px-3 sm:py-2 sm:text-sm outline-none focus:border-brand-500" />
         </label>
         {tip === "banka" && (
-          <label className="mt-3 block text-sm font-semibold text-slate-700">IBAN     
+          <label className="mt-3 block text-[13px] font-semibold text-slate-700 sm:text-sm">IBAN     
             <input value={iban} onChange={(e) => setIban(e.target.value)} placeholder="TR.."
-              className="mt-1 w-full rounded-xl border-2 border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500" />
+              className="mt-1 w-full rounded-xl border-2 border-slate-200 px-2.5 py-1.5 text-[13px] sm:px-3 sm:py-2 sm:text-sm outline-none focus:border-brand-500" />
           </label>
         )}
-        <label className="mt-3 block text-sm font-semibold text-slate-700">Açılış Bakiyesi (₺)
+        <label className="mt-3 block text-[13px] font-semibold text-slate-700 sm:text-sm">Açılış Bakiyesi (₺)
           <input type="number" step="0.01" value={acilis} onChange={(e) => setAcilis(e.target.value)} placeholder="0"
-            className="mt-1 w-full rounded-xl border-2 border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500" />
+            className="mt-1 w-full rounded-xl border-2 border-slate-200 px-2.5 py-1.5 text-[13px] sm:px-3 sm:py-2 sm:text-sm outline-none focus:border-brand-500" />
         </label>
         <button type="submit" className="mt-4 w-full rounded-xl bg-brand-500 py-2.5 text-sm font-bold text-white transition hover:bg-brand-600">Hesap Ekle</button>
       </form>

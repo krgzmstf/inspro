@@ -99,7 +99,7 @@ export default function PanelLayout({
           <span className="text-xs font-medium uppercase tracking-widest text-white/50">Panel</span>
         </div>
         <nav className="flex-1 min-h-0 space-y-1 overflow-y-auto overscroll-contain p-4">
-          {navListesi.filter((item) => menuyeYetkili(rol, item.href, yetkiler) && (item.href !== "/panel/yonetim" || superAdmin)).map((item) => (
+          {navListesi.filter((item) => menuyeYetkili(rol, item.href, yetkiler) && ((item.href !== "/panel/yonetim" && item.href !== "/panel/loglar") || superAdmin)).map((item) => (
             <Link
               key={item.label}
               href={item.href}

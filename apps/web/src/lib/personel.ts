@@ -9,6 +9,8 @@
    Geçici: localStorage.
    ────────────────────────────────────────────────────────── */
 
+import { islemKaydet } from "./islemLog";
+
 export const PERSONEL_TURLERI = [
   "Çalışan", "Taşeron / Usta", "Mühendis", "Mimar", "Şantiye Şefi", "Müşavir", "Diğer",
 ] as const;
@@ -71,12 +73,15 @@ export function bosPersonel(projectId: string): Personel {
 export function savePersonel(p: Personel) {
   const list = pLoad();
   const i = list.findIndex((x) => x.id === p.id);
-  if (i >= 0) list[i] = p;
-  else list.push(p);
+  const ad = `${p.ad ?? ""} ${p.soyad ?? ""}`.trim();
+  if (i >= 0) { list[i] = p; islemKaydet("guncelle", "personel", ad); }
+  else { list.push(p); islemKaydet("olustur", "personel", ad); }
   pSave(list);
 }
 
 export function deletePersonel(id: string) {
+  const p = pLoad().find((x) => x.id === id);
+  islemKaydet("sil", "personel", p ? `${p.ad ?? ""} ${p.soyad ?? ""}`.trim() : id);
   pSave(pLoad().filter((p) => p.id !== id));
   // ilgili puantaj kayıtlarını da temizle
   savePuantajAll(loadPuantajAll().filter((k) => k.personelId !== id));

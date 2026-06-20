@@ -12,6 +12,8 @@
    Maliyet en düşük geçerli fiyatla hesaplanır (etkinFiyat).
    ────────────────────────────────────────────────────────── */
 
+import { islemKaydet } from "./islemLog";
+
 export const POZ_DATA_DATE = "ÇŞB 2026";
 export const CSB_JSON_URL = "/data/csb-pozlar-2026.json";
 
@@ -174,6 +176,7 @@ export function updateResmiFiyat(libId: LibId, kod: string, yeniFiyat: number, n
       : p,
   );
   savePozlar(libId, pozlar);
+  islemKaydet("guncelle", "poz", kod, { yeniFiyat });
   return pozlar;
 }
 
@@ -202,6 +205,7 @@ export function upsertPozlar(libId: LibId, yeniPozlar: Poz[]): Poz[] {
   }
   const sonuc = [...harita.values()];
   savePozlar(libId, sonuc);
+  islemKaydet("ice-aktar", "poz", pozKutuphaneAdi(libId), { eklenen: yeniPozlar.length });
   return sonuc;
 }
 
@@ -218,6 +222,7 @@ export function yeniOzelPoz(kod: string, ad: string, birim: string, kategori: st
 export function deletePoz(libId: LibId, kod: string): Poz[] {
   const pozlar = loadPozlar(libId).filter((p) => p.kod !== kod);
   savePozlar(libId, pozlar);
+  islemKaydet("sil", "poz", kod, { kutuphane: pozKutuphaneAdi(libId) });
   return pozlar;
 }
 
