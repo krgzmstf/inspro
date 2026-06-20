@@ -9,8 +9,11 @@
 
 import { createClient } from "@supabase/supabase-js";
 
-const URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
-const ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
+// Ortam değişkenine yapıştırırken boşluk/satır sonu karışabiliyor → temizle (client.ts gibi).
+const temiz = (s?: string) => (s ?? "").replace(/\s+/g, "");
+const envUrl = temiz(process.env.NEXT_PUBLIC_SUPABASE_URL);
+const URL = envUrl.startsWith("http") ? envUrl : "https://api-inspro.yazeproje.com";
+const ANON = temiz(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
 export interface HesapOzeti {
   baglandi: boolean;

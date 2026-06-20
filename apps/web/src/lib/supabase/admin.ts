@@ -8,8 +8,16 @@
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
-const URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
-const SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
+// Üretim varsayılanı (herkese açık URL — gizli değil). Vercel ortam değişkeni
+// eksik/bozuk olsa bile sunucu doğru Supabase örneğine bağlanır.
+const URETIM_URL = "https://api-inspro.yazeproje.com";
+
+// Ortam değişkenine yapıştırırken boşluk/satır sonu karışabiliyor; Kong böyle bir
+// apikey'i reddeder → getUser "Geçersiz oturum" döner. client.ts gibi temizle.
+const temiz = (s?: string) => (s ?? "").replace(/\s+/g, "");
+const envUrl = temiz(process.env.NEXT_PUBLIC_SUPABASE_URL);
+const URL = envUrl.startsWith("http") ? envUrl : URETIM_URL;
+const SERVICE = temiz(process.env.SUPABASE_SERVICE_ROLE_KEY);
 
 export function adminClient(): SupabaseClient {
   return createClient(URL, SERVICE, { auth: { autoRefreshToken: false, persistSession: false } });
