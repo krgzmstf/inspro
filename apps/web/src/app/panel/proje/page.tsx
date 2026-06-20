@@ -197,7 +197,7 @@ function ProjeDetayInner() {
             Aşamaya tıklayıp içine iş kalemleri açın
           </span>
         </div>
-        <ol className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <ol className="mt-4 grid grid-cols-3 gap-2 sm:gap-3 lg:grid-cols-4">
           {project.phases.map((ph, i) => {
             const ui = STATUS_UI[ph.status];
             const oz = sayilar[ph.name];
@@ -205,10 +205,10 @@ function ProjeDetayInner() {
               <li key={ph.name}>
                 <button
                   onClick={() => asamaAc(ph.name)}
-                  className={`flex w-full items-center gap-3 rounded-xl border-2 p-3.5 text-left transition hover:shadow-md ${ui.ring}`}
+                  className={`flex h-full w-full flex-col gap-1.5 rounded-xl border-2 p-2 text-left transition hover:shadow-md sm:p-3 ${ui.ring}`}
                 >
                   <span
-                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sm font-extrabold ${
+                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-extrabold sm:h-8 sm:w-8 sm:text-sm ${
                       ph.status === "tamam"
                         ? "bg-emerald-500 text-white"
                         : ph.status === "devam"
@@ -218,24 +218,21 @@ function ProjeDetayInner() {
                   >
                     {ph.status === "tamam" ? "✓" : i + 1}
                   </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-bold text-slate-900">
-                      {ph.name}
-                    </span>
-                    <span className="mt-1 flex items-center gap-2">
-                      <span
-                        className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-bold ${ui.chip}`}
-                      >
-                        {ui.label}
-                      </span>
-                      {oz && oz.toplam > 0 && (
-                        <span className="text-[10px] font-bold text-slate-400">
-                          {oz.tamam}/{oz.toplam} kalem · %{oz.yuzde}
-                        </span>
-                      )}
-                    </span>
+                  <span className="line-clamp-2 text-[11px] font-bold leading-tight text-slate-900 sm:text-sm">
+                    {ph.name}
                   </span>
-                  <span className="shrink-0 text-slate-300">›</span>
+                  <span className="mt-auto flex flex-col gap-1">
+                    <span
+                      className={`inline-block w-fit rounded-full px-1.5 py-0.5 text-[9px] font-bold sm:text-[10px] ${ui.chip}`}
+                    >
+                      {ui.label}
+                    </span>
+                    {oz && oz.toplam > 0 && (
+                      <span className="text-[9px] font-bold text-slate-400 sm:text-[10px]">
+                        {oz.tamam}/{oz.toplam} · %{oz.yuzde}
+                      </span>
+                    )}
+                  </span>
                 </button>
               </li>
             );
@@ -661,16 +658,16 @@ function TakipPanel({
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[720px] text-sm">
+        <table className="w-full min-w-0 text-[11px] sm:min-w-[720px] sm:text-sm">
           <thead>
-            <tr className="border-b border-slate-200 text-left text-[10px] font-bold uppercase text-slate-500">
-              <th className="px-3 py-2">#</th>
-              <th className="px-3 py-2">İş / Kişi</th>
-              <th className="px-3 py-2">Başlangıç</th>
-              <th className="px-3 py-2">Bitiş</th>
-              <th className="px-3 py-2 text-center">Onay</th>
-              <th className="px-3 py-2 text-right">Alınan (₺)</th>
-              <th className="px-3 py-2 text-center">Ödeme</th>
+            <tr className="border-b border-slate-200 text-left text-[9px] font-bold uppercase text-slate-500 sm:text-[10px]">
+              <th className="hidden px-1 py-1.5 sm:table-cell sm:px-3 sm:py-2">#</th>
+              <th className="px-1 py-1.5 sm:px-3 sm:py-2">İş / Kişi</th>
+              <th className="px-1 py-1.5 sm:px-3 sm:py-2">Başl.</th>
+              <th className="px-1 py-1.5 sm:px-3 sm:py-2">Bitiş</th>
+              <th className="px-1 py-1.5 text-center sm:px-3 sm:py-2">Onay</th>
+              <th className="px-1 py-1.5 text-right sm:px-3 sm:py-2">Alınan ₺</th>
+              <th className="px-1 py-1.5 text-center sm:px-3 sm:py-2">Ödeme</th>
             </tr>
           </thead>
           <tbody>
@@ -678,40 +675,40 @@ function TakipPanel({
               const onayli = k.durum === "tamam";
               return (
                 <tr key={k.id} className="border-b border-slate-100 hover:bg-slate-50/50">
-                  <td className="px-3 py-2 text-xs text-slate-400">{i + 1}</td>
-                  <td className="px-3 py-2">
-                    <div className={`text-sm font-semibold ${onayli ? "text-slate-400 line-through" : "text-slate-800"}`}>{k.ad}</div>
-                    {k.personelAd && <div className="text-[11px] text-slate-400">👤 {k.personelAd}</div>}
+                  <td className="hidden px-1 py-1.5 text-xs text-slate-400 sm:table-cell sm:px-3 sm:py-2">{i + 1}</td>
+                  <td className="px-1 py-1.5 sm:px-3 sm:py-2">
+                    <div className={`text-[11px] font-semibold sm:text-sm ${onayli ? "text-slate-400 line-through" : "text-slate-800"}`}>{k.ad}</div>
+                    {k.personelAd && <div className="text-[9px] text-slate-400 sm:text-[11px]">👤 {k.personelAd}</div>}
                   </td>
-                  <td className="px-3 py-2 text-xs text-slate-500">{k.baslangic || "—"}</td>
-                  <td className="px-3 py-2">
+                  <td className="px-1 py-1.5 text-[10px] text-slate-500 sm:px-3 sm:py-2 sm:text-xs">{k.baslangic || "—"}</td>
+                  <td className="px-1 py-1.5 sm:px-3 sm:py-2">
                     {onayli ? (
                       <input type="date" value={k.bitis ?? ""}
                         onChange={(e) => { updateAsamaKalem(k.id, { bitis: e.target.value }); onYenile(); }}
-                        className="rounded-lg border border-slate-200 px-2 py-1 text-xs text-slate-700 outline-none focus:border-brand-500" />
+                        className="w-[86px] rounded-lg border border-slate-200 px-1 py-1 text-[10px] text-slate-700 outline-none focus:border-brand-500 sm:w-auto sm:px-2 sm:text-xs" />
                     ) : (
-                      <span className="text-xs text-slate-300">—</span>
+                      <span className="text-[10px] text-slate-300 sm:text-xs">—</span>
                     )}
                   </td>
-                  <td className="px-3 py-2 text-center">
+                  <td className="px-1 py-1.5 text-center sm:px-3 sm:py-2">
                     {onayli ? (
                       <button onClick={() => onayGeriAl(k)} title="Onayı geri al"
-                        className="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-700 hover:bg-emerald-200">✓ Onaylı</button>
+                        className="rounded-full bg-emerald-100 px-1.5 py-1 text-[9px] font-bold text-emerald-700 hover:bg-emerald-200 sm:px-2.5 sm:text-[11px]">✓ Onaylı</button>
                     ) : (
                       <button onClick={() => onayla(k)}
-                        className="rounded-full bg-brand-500 px-3 py-1 text-[11px] font-bold text-white hover:bg-brand-600">Onayla</button>
+                        className="rounded-full bg-brand-500 px-2 py-1 text-[9px] font-bold text-white hover:bg-brand-600 sm:px-3 sm:text-[11px]">Onayla</button>
                     )}
                   </td>
-                  <td className="px-3 py-2 text-right">
+                  <td className="px-1 py-1.5 text-right sm:px-3 sm:py-2">
                     <input type="number" min="0" step="0.01" value={k.alinan ?? ""}
                       onChange={(e) => { updateAsamaKalem(k.id, { alinan: e.target.value === "" ? undefined : Number(e.target.value) }); onYenile(); }}
                       placeholder={k.fiyat ? String(k.fiyat) : "0"}
-                      className="w-24 rounded-lg border border-slate-200 px-2 py-1 text-right text-xs text-slate-700 outline-none focus:border-brand-500" />
+                      className="w-14 rounded-lg border border-slate-200 px-1 py-1 text-right text-[10px] text-slate-700 outline-none focus:border-brand-500 sm:w-24 sm:px-2 sm:text-xs" />
                   </td>
-                  <td className="px-3 py-2 text-center">
+                  <td className="px-1 py-1.5 text-center sm:px-3 sm:py-2">
                     <button
                       onClick={() => { updateAsamaKalem(k.id, { odendi: !k.odendi }); onYenile(); }}
-                      className={`rounded-full px-2.5 py-1 text-[11px] font-bold transition ${
+                      className={`rounded-full px-1.5 py-1 text-[9px] font-bold transition sm:px-2.5 sm:text-[11px] ${
                         k.odendi ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200" : "bg-amber-100 text-amber-700 hover:bg-amber-200"
                       }`}>
                       {k.odendi ? "Ödendi" : "Bekliyor"}
