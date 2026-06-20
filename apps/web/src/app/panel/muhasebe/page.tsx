@@ -392,7 +392,7 @@ export default function MuhasebePage() {
       )}
 
       {/* Özet kartları */}
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Kart renk="emerald" baslik="Toplam Gelir (brüt)" deger={ozet.toplamGelir} altKisim={`Tahsil: ${formatTL(ozet.tahsilEdilen)}`} />
         <Kart renk="red" baslik="Toplam Gider (brüt)" deger={ozet.toplamGider} altKisim={`Ödenen: ${formatTL(ozet.odenen)}`} />
         <Kart renk="amber" baslik="Açık Alacak" deger={ozet.acikAlacak} altKisim="Müşteriden tahsil edilecek" />
@@ -423,7 +423,7 @@ export default function MuhasebePage() {
           {projeObj && (
             <div className="mt-5 rounded-2xl bg-slate-900 p-5 text-white shadow-xl">
               <h2 className="text-sm font-bold text-brand-400">📊 Proje Finansal Sağlık (Canlı)</h2>
-              <div className="mt-4 grid gap-4 sm:grid-cols-3">
+              <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
                 <MiniKart baslik="Hedef Bütçe" deger={projeObj.budget} />
                 <MiniKart baslik="Keşif (CSB)" deger={kesifCsb} />
                 <MiniKart baslik="Keşif (Piyasa)" deger={kesifPiyasa} gider={ozet.toplamGider} />
@@ -539,7 +539,7 @@ export default function MuhasebePage() {
                 </div>
               ) : (
                 <div className="mt-3 overflow-x-auto rounded-2xl border border-sky-200 bg-[#f2f8fd] shadow-sm">
-                  <table className="w-full min-w-[760px] text-sm">
+                  <table className="w-full min-w-0 text-[11px] sm:min-w-[760px] sm:text-sm">
                     <thead>
                       <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-bold uppercase text-slate-500">
                         <th className="px-3 py-2.5">Tarih</th>
@@ -662,7 +662,7 @@ export default function MuhasebePage() {
               <p className="mt-3 rounded-2xl border-2 border-dashed border-slate-300 bg-white/60 p-8 text-center text-sm text-slate-500">Soldan bir cari seçin.</p>        
             ) : (
               <div className="mt-3 overflow-x-auto rounded-2xl border border-sky-200 bg-[#f2f8fd] shadow-sm">
-                <table className="w-full min-w-[480px] text-sm">
+                <table className="w-full min-w-0 text-[11px] sm:min-w-[480px] sm:text-sm">
                   <thead>
                     <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-bold uppercase text-slate-500">
                       <th className="px-3 py-2.5">Tarih</th>
@@ -792,8 +792,8 @@ export default function MuhasebePage() {
       {/* MODALLAR */}
       {muhMod && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
-            <h2 className="text-lg font-extrabold text-slate-900">Muhasebeleştir</h2>
+          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white p-4 shadow-2xl sm:p-6">
+            <h2 className="text-base font-extrabold text-slate-900 sm:text-lg">Muhasebeleştir</h2>
             <p className="mt-1 text-sm text-slate-500">
               {muhMod.asama} &gt; <b>{muhMod.ad}</b> kalemini kesinleştirin.
             </p>
@@ -862,8 +862,8 @@ export default function MuhasebePage() {
 
       {odemeKayit && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl">
-            <h2 className="text-lg font-extrabold text-slate-900">{odemeKayit.tip === "gider" ? "Ödeme Kaydet" : "Tahsilat Kaydet"}</h2>
+          <div className="max-h-[90vh] w-full max-w-sm overflow-y-auto rounded-2xl bg-white p-4 shadow-2xl sm:p-6">
+            <h2 className="text-base font-extrabold text-slate-900 sm:text-lg">{odemeKayit.tip === "gider" ? "Ödeme Kaydet" : "Tahsilat Kaydet"}</h2>
             <p className="mt-1 text-sm text-slate-500">{odemeKayit.taraf} — {odemeKayit.aciklama}</p>
 
             <div className="mt-4 space-y-4">

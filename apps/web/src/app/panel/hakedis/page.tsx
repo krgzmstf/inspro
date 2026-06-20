@@ -260,7 +260,7 @@ export default function HakedisPage() {
           <div className="space-y-5">
             {/* Üst bilgi */}
             <div className="rounded-2xl border border-sky-200 bg-[#f2f8fd] p-5 shadow-sm">
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 <Fld label="Hakediş No"><input type="number" value={h.no} onChange={(e) => setH({ ...h, no: parseInt(e.target.value) || 1 })} className={inp} /></Fld>
                 <Fld label="Tarih"><input type="date" value={h.tarih} onChange={(e) => setH({ ...h, tarih: e.target.value })} className={inp} /></Fld>
                 <Fld label="Taşeron / Yüklenici"><input list="cari-rehber" value={h.taseron} onChange={(e) => setH({ ...h, taseron: e.target.value })} className={inp} /></Fld>
@@ -325,7 +325,7 @@ export default function HakedisPage() {
                 </div>
               </div>
               <div className="mt-3 overflow-x-auto">
-                <table className="w-full min-w-[820px] text-sm">
+                <table className="w-full min-w-0 text-[11px] sm:min-w-[820px] sm:text-sm">
                   <thead><tr className="text-left text-[11px] font-bold uppercase text-slate-500">
                     <th className="px-2 py-2">İmalat</th><th className="px-2 py-2 w-16">Birim</th><th className="px-2 py-2 w-24 text-right">Sözleşme</th><th className="px-2 py-2 w-28 text-right">B.Fiyat</th><th className="px-2 py-2 w-24 text-right">Önceki Küm.</th><th className="px-2 py-2 w-24 text-right">Bu Küm.</th><th className="px-2 py-2 w-28 text-right">Bu Dönem ₺</th><th className="px-2 py-2 w-20">İlerleme</th><th /></tr></thead>
                   <tbody>

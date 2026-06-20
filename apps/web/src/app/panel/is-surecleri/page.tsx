@@ -174,7 +174,7 @@ export default function IsSurecleriPage() {
       </div>
 
       {/* Özet */}
-      <div className="mt-6 grid gap-4 sm:grid-cols-4">
+      <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
         {[
           ["Genel İlerleme", `%${ozet.genelIlerleme}`, "📊"],
           ["Toplam İş", String(ozet.toplam), "📋"],
@@ -246,7 +246,7 @@ export default function IsSurecleriPage() {
           </div>
         </div>
         <div className="mt-3 overflow-x-auto rounded-2xl border border-sky-200 bg-[#f2f8fd] shadow-sm">
-          <table className="w-full min-w-[560px] text-xs">
+          <table className="w-full min-w-0 text-[10px] sm:min-w-[560px] sm:text-xs">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50 text-left text-[11px] font-bold uppercase text-slate-500">
                 <th className="px-2 py-2">İş Kalemi</th>

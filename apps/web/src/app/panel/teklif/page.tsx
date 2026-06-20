@@ -222,7 +222,7 @@ export default function TeklifPage() {
           <div className="space-y-5">
             {/* Müşteri + teklif bilgileri */}
             <div className="rounded-2xl border border-sky-200 bg-[#f2f8fd] p-5 shadow-sm">
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 <Fld label="Teklif No"><input value={t.no} onChange={(e) => setT({ ...t, no: e.target.value })} className={inp} /></Fld>
                 <Fld label="Tarih"><input type="date" value={t.tarih} onChange={(e) => setT({ ...t, tarih: e.target.value })} className={inp} /></Fld>
                 <Fld label="Geçerlilik (gün)"><input type="number" value={t.gecerlilikGun} onChange={(e) => setT({ ...t, gecerlilikGun: parseInt(e.target.value) || 0 })} className={inp} /></Fld>
@@ -256,7 +256,7 @@ export default function TeklifPage() {
                 <button onClick={kalemEkle} className="rounded-lg bg-brand-500 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-brand-600">+ Satır</button>
               </div>
               <div className="mt-3 overflow-x-auto">
-                <table className="w-full min-w-[640px] text-sm">
+                <table className="w-full min-w-0 text-[11px] sm:min-w-[640px] sm:text-sm">
                   <thead><tr className="text-left text-[11px] font-bold uppercase text-slate-500">
                     <th className="px-2 py-2">Açıklama</th><th className="px-2 py-2 w-24">Miktar</th><th className="px-2 py-2 w-20">Birim</th><th className="px-2 py-2 w-28 text-right">Birim Fiyat</th><th className="px-2 py-2 w-28 text-right">Tutar</th><th /></tr></thead>
                   <tbody>

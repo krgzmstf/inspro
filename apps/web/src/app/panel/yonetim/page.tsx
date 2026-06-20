@@ -425,7 +425,7 @@ export default function YonetimPage() {
           {/* Yeni kullanıcı */}
           <div className="rounded-2xl border border-sky-200 bg-[#f2f8fd] p-4 shadow-sm">
             <div className="text-sm font-bold text-ink-900">➕ Yeni kullanıcı ekle</div>
-            <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-2 lg:grid-cols-5">
               <input value={yeniK.email} onChange={(e) => setYeniK({ ...yeniK, email: e.target.value })} placeholder="e-posta" className="rounded-lg border-2 border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500" />
               <input value={yeniK.ad_soyad} onChange={(e) => setYeniK({ ...yeniK, ad_soyad: e.target.value })} placeholder="ad soyad" className="rounded-lg border-2 border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500" />
               <input value={yeniK.firma} onChange={(e) => setYeniK({ ...yeniK, firma: e.target.value })} placeholder="firma" className="rounded-lg border-2 border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500" />
@@ -506,7 +506,7 @@ export default function YonetimPage() {
 
                   {acikDuzen === k.id && (
                     <div className="mt-3 rounded-xl border border-slate-100 bg-slate-50 p-3">
-                      <div className="grid gap-2 sm:grid-cols-3">
+                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                         <label className="text-xs font-semibold text-slate-600">Ad soyad
                           <input value={duzen.ad_soyad} onChange={(e) => setDuzen({ ...duzen, ad_soyad: e.target.value })}
                             className="mt-1 w-full rounded-lg border-2 border-slate-200 px-2 py-1.5 text-sm outline-none focus:border-brand-500" />
@@ -687,9 +687,9 @@ export default function YonetimPage() {
       {/* ── PROJE İNCELE / DÜZENLE MODALI ── */}
       {inceleAcik && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setInceleAcik(false)}>
-          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-4 shadow-2xl sm:p-5" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-extrabold text-ink-900">🏗️ Proje incele / düzenle</h3>
+              <h3 className="text-base font-extrabold text-ink-900 sm:text-lg">🏗️ Proje incele / düzenle</h3>
               <button onClick={() => setInceleAcik(false)} className="text-slate-400 hover:text-ink-900">✕</button>
             </div>
             {inceleYuk || !inceleMeta ? (

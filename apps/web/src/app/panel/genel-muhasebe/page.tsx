@@ -72,7 +72,7 @@ export default function GenelMuhasebePage() {
       </div>
 
       {/* Genel toplam kartları */}
-      <div className="mt-6 grid gap-4 sm:grid-cols-3">
+      <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
         <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 shadow-sm">
           <div className="text-xs font-semibold uppercase text-emerald-600">Genel Toplam Gelir</div>
           <div className="mt-1 text-2xl font-extrabold text-emerald-700">{formatTL(toplam.gelir)}</div>
@@ -96,7 +96,7 @@ export default function GenelMuhasebePage() {
         </div>
       ) : (
         <div className="mt-6 overflow-x-auto rounded-2xl border border-sky-200 bg-[#f2f8fd] shadow-sm">
-          <table className="w-full min-w-[720px] text-sm">
+          <table className="w-full min-w-0 text-[11px] sm:min-w-[720px] sm:text-sm">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50 text-left text-[11px] font-bold uppercase text-slate-500">
                 <th className="px-4 py-3">Dosya</th>

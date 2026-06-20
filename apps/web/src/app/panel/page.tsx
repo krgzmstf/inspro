@@ -124,7 +124,7 @@ export default function PanelPage() {
       </div>
 
       {/* Özet kartları — komuta merkezi */}
-      <div className="mt-6 grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
+      <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         {[
           ["Aktif Proje", String(projects.length), "🏗️", "border-sky-200 bg-[#eaf4fc]"],
           ["Toplam Alan", `${totalArea.toLocaleString("tr-TR")} m²`, "📐", "border-amber-200 bg-[#fdf8ee]"],

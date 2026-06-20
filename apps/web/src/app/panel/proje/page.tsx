@@ -282,7 +282,7 @@ function ProjeDetayInner() {
           <h2 className="text-lg font-extrabold text-slate-900">🏢 Bina & Daire Bilgileri</h2>
 
           {project.bina && (
-            <div className="mt-4 grid gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
               {[
                 ["Kat Yüksekliği", project.bina.katYuksekligi != null ? `${project.bina.katYuksekligi} m` : null],
                 ["Çatı", project.bina.catiTipi ? `${ROOF_LABELS[project.bina.catiTipi]}${project.bina.catiAlan ? ` · ${project.bina.catiAlan} m²` : ""}` : null],
@@ -350,7 +350,7 @@ function ProjeDetayInner() {
       {/* Yakında gelecek modüller */}
       <section className="mt-10">
         <h2 className="text-lg font-extrabold text-slate-900">Proje Modülleri</h2>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Link
             href={`/panel/metraj?proje=${project.id}`}
             className="group rounded-2xl border-2 border-brand-500/40 bg-white p-5 shadow-sm transition hover:border-brand-500 hover:shadow-md"
@@ -494,10 +494,10 @@ function AsamaModal({
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 sm:p-8" onClick={onKapat}>
       <div className="w-full max-w-2xl rounded-2xl bg-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
         {/* Başlık */}
-        <div className="flex items-start justify-between gap-4 border-b border-slate-200 p-5">
+        <div className="flex items-start justify-between gap-4 border-b border-slate-200 p-4 sm:p-5">
           <div>
-            <div className="text-[11px] font-bold uppercase tracking-wide text-brand-600">İnşaat Yol Haritası</div>
-            <h3 className="text-lg font-extrabold text-slate-900">{asama}</h3>
+            <div className="text-[10px] font-bold uppercase tracking-wide text-brand-600 sm:text-[11px]">İnşaat Yol Haritası</div>
+            <h3 className="text-base font-extrabold text-slate-900 sm:text-lg">{asama}</h3>
             {kalemler.length > 0 && (
               <div className="mt-1 flex flex-wrap gap-x-3 text-xs font-semibold text-slate-500">
                 <span>{tamam}/{kalemler.length} kalem tamam · %{yuzde}</span>

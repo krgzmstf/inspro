@@ -235,7 +235,7 @@ export default function MetrajPage() {
             </div>
           </div>
           <div className="mt-3 overflow-x-auto rounded-xl border border-slate-200">
-            <table className="w-full min-w-[640px] text-sm">
+            <table className="w-full min-w-0 text-[11px] sm:min-w-[640px] sm:text-sm">
               <thead>
                 <tr className="bg-slate-50 text-left text-[11px] font-bold uppercase tracking-wide text-slate-500">
                   <th className="px-3 py-2">Aşama</th>
@@ -390,7 +390,7 @@ export default function MetrajPage() {
               </div>
             ) : (
               <div className="mt-5 overflow-x-auto rounded-2xl border border-sky-200 bg-[#f2f8fd] shadow-sm">
-                <table className="w-full min-w-[640px] text-sm">
+                <table className="w-full min-w-0 text-[11px] sm:min-w-[640px] sm:text-sm">
                   <thead>
                     <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-bold uppercase tracking-wide text-slate-500">
                       <th className="px-4 py-3">Mahal</th>
@@ -629,7 +629,7 @@ function AutoKesif({
       </div>
 
       <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200">
-        <table className="w-full min-w-[900px] text-sm">
+        <table className="w-full min-w-0 text-[11px] sm:min-w-[900px] sm:text-sm">
           <thead>
             <tr className="bg-slate-50 text-left text-[11px] font-bold uppercase tracking-wide text-slate-500">
               <th className="px-3 py-2">Proje Kalemi</th>
@@ -701,7 +701,7 @@ function AutoKesif({
         </table>
       </div>
 
-      <div className="mt-3 grid gap-3 sm:grid-cols-3">
+      <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-center">
           <div className="text-[10px] font-semibold uppercase text-slate-500">Kamu (ÇŞB) Maliyeti</div>
           <div className="text-lg font-extrabold text-slate-900">{formatTL(csbToplam)}</div>

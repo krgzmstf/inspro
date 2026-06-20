@@ -735,7 +735,7 @@ export default function YeniProjePage() {
           {/* Bina geneli */}
           <section className="rounded-2xl border border-sky-200 bg-[#f2f8fd] p-6 shadow-sm">
             <h2 className="text-lg font-bold text-slate-900">🏢 Bina Genel Bilgileri</h2>
-            <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <Field label="Kat Yüksekliği (m)">
                 <input type="number" step="0.1" value={bina.katYuksekligi ?? ""} className={inputCls}
                   onChange={(e) => setBina({ ...bina, katYuksekligi: numOrU(e.target.value) })} />
@@ -1045,7 +1045,7 @@ export default function YeniProjePage() {
               <p className="mt-4 text-xs text-slate-400">Henüz ana kalem eklenmedi.</p>
             ) : (
               <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200">
-                <table className="w-full min-w-[640px] text-sm">
+                <table className="w-full min-w-0 text-[11px] sm:min-w-[640px] sm:text-sm">
                   <thead>
                     <tr className="bg-slate-50 text-left text-[11px] font-bold uppercase text-slate-500">
                       <th className="px-3 py-2">Poz No</th>
@@ -1080,7 +1080,7 @@ export default function YeniProjePage() {
             {/* Kat bazlı: kat m², perde m², hol */}
             <h3 className="mt-6 text-sm font-extrabold text-slate-700">Kat Bazlı Metrajlar</h3>
             <div className="mt-2 overflow-x-auto rounded-xl border border-slate-200">
-              <table className="w-full min-w-[560px] text-sm">
+              <table className="w-full min-w-0 text-[11px] sm:min-w-[560px] sm:text-sm">
                 <thead>
                   <tr className="bg-slate-50 text-left text-[11px] font-bold uppercase text-slate-500">
                     <th className="px-3 py-2">Kat</th>
@@ -1159,7 +1159,7 @@ export default function YeniProjePage() {
               <p className="mt-4 text-xs text-slate-400">Henüz işçilik eklenmedi.</p>
             ) : (
               <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200">
-                <table className="w-full min-w-[720px] text-sm">
+                <table className="w-full min-w-0 text-[11px] sm:min-w-[720px] sm:text-sm">
                   <thead>
                     <tr className="bg-slate-50 text-left text-[11px] font-bold uppercase text-slate-500">
                       <th className="px-3 py-2">Poz No</th>

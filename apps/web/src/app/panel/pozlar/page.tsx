@@ -405,7 +405,7 @@ export default function PozlarPage() {
       </p>
 
       <div className="mt-3 overflow-x-auto rounded-2xl border border-sky-200 bg-[#f2f8fd] shadow-sm">
-        <table className="w-full min-w-[860px] text-sm">
+        <table className="w-full min-w-0 text-[11px] sm:min-w-[860px] sm:text-sm">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-bold uppercase tracking-wide text-slate-500">
               <th className="px-4 py-3">Poz</th>

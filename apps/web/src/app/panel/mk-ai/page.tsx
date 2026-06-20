@@ -405,7 +405,7 @@ export default function MkAiPage() {
           </div>
 
           {/* Kategori skorları */}
-          <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {rapor.kategoriler.map((k) => (
               <div key={k.kategori} className="rounded-2xl border border-sky-200 bg-[#f2f8fd] p-4 shadow-sm">
                 <div className="flex items-center justify-between">
@@ -424,7 +424,7 @@ export default function MkAiPage() {
             <div className="mt-5 rounded-2xl border border-sky-200 bg-[#f2f8fd] p-5 shadow-sm">
               <h2 className="text-sm font-extrabold text-slate-900">📈 Projeksiyon</h2>
               <p className="mt-0.5 text-xs text-slate-400">Mevcut ilerleme ve harcama hızına göre tahmin (EVM mantığı).</p>
-              <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 {rapor.projeksiyon.nihaiMaliyet !== undefined && (
                   <Kutu l="Tahmini nihai maliyet (EAC)" v={formatTL(rapor.projeksiyon.nihaiMaliyet)}
                     alt={rapor.projeksiyon.butceAsimYuzde !== undefined ? `bütçe sapması %${Math.round(rapor.projeksiyon.butceAsimYuzde)}` : undefined}
